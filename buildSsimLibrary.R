@@ -32,7 +32,7 @@ myscenario <- scenario(myproject, "Test")
 ## PRE PROCESSING
 
 # Transition table
-# TODO duplicates in this table when "3" is removed
+# TODO duplicates in this table when "3" is removed =?> in email
 # TODO Check only one rule per source cause dist cannot have multiple destination
 
 transTbl <- sqlFetch(db, "vegtransf_rv02i") %>% 
@@ -79,11 +79,7 @@ transTblWithNames <- transTbl %>%
   rename(EVHR_Name = StateLabelYID) %>% 
   
   mutate(StateClassIDSource = paste0(EVCB_Name, " : ", EVHB_Name), 
-         StateClassIDDest = paste0(EVCR_Name, " : ", EVHR_Name)) %>% 
-
-#   left_join(dplyr::select(distCrosswalk, c(VDIST, FDIST, d_type_f)), 
-#             by = "VDIST") %>% 
-#   rename(TransitionTypeID = d_type_f) %>% 
+         StateClassIDDest = paste0(EVCR_Name, " : ", EVHR_Name)) %>%
   
   mutate(Probability = 1)
 
