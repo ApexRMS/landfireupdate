@@ -15,7 +15,46 @@ nwEVT <- raster("data/raw/nw_evt2.0_tiff/nw_evt20.tif")
 nwEVH <- raster("data/raw/nw_evh2.0class1.4_tiff/nw_evh_m.tif")
 nwEVC <- raster("data/raw/nw_evc2.0class1.4_tiff/nw_evc_m.tif")
 
+# Change the origin of each raster
+origin(nwEVT) <- origin(nwMapzones)
+origin(nwEVH) <- origin(nwMapzones)
+origin(nwEVC) <- origin(nwMapzones)
+
 ## Crop data to Mapzones
 nwEVTCropped <- crop(nwEVT, nwMapzones)
 nwEVHCropped <- crop(nwEVH, nwMapzones)
 nwEVCCropped <- crop(nwEVC, nwMapzones)
+
+## Mask after cropping
+nwEVTMasked <- mask(nwEVTCropped, nwMapzones)
+nwEVHMasked <- mask(nwEVHCropped, nwMapzones)
+nwEVCMasked <- mask(nwEVCCropped, nwMapzones)
+
+## Save clean data
+writeRaster(nwEVTMasked, "data/clean/nw_EVT_clean.tif",
+            overwrite = TRUE)
+writeRaster(nwEVHMasked, "data/clean/nw_EVH_clean.tif",
+            overwrite = TRUE)
+writeRaster(nwEVCMasked, "data/clean/nw_EVC_clean.tif",
+            overwrite = TRUE)
+
+## Crop data to smaller extent
+# Create smaller extent
+theExt <- extent(-1566350, -1181080, 2506991, 2892261)
+
+# Crop
+nwMapzonesSmall <- crop(nwMapzones, theExt)
+nwEVTMaskedSmall <- crop(nwEVTMasked, theExt)
+nwEVHMaskedSmall <- crop(nwEVHMasked, theExt)
+nwEVCMaskedSmall <- crop(nwEVCMasked, theExt)
+
+## Save cropped data
+writeRaster(nwMapzonesSmall, "data/clean/cropped/nw_Mapzones_small.tif",
+            overwrite = TRUE)
+writeRaster(nwEVTMaskedSmall, "data/clean/cropped/nw_EVT_clean_small.tif",
+            overwrite = TRUE)
+writeRaster(nwEVHMaskedSmall, "data/clean/cropped/nw_EVH_clean_small.tif",
+            overwrite = TRUE)
+writeRaster(nwEVCMaskedSmall, "data/clean/cropped/nw_EVC_clean_small.tif",
+            overwrite = TRUE)
+
