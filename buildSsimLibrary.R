@@ -160,3 +160,11 @@ transTblWithNamesDatasheet <- transTblWithNames %>%
                 StateClassIDSource, StateClassIDDest,
                 TransitionTypeID, Probability)
 saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
+
+
+######
+
+
+trans_vdist <- raw$VDIST %>% unique()
+key_Vdist <- distCrosswalk$VDIST %>% unique()
+trans_vdist[which(!(trans_vdist %in% key_Vdist))]
