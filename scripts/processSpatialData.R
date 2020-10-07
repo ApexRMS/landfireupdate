@@ -5,6 +5,7 @@
 
 ##  Load packages
 library(raster) # Raster packages deals with tiff files (grid files)
+library(tidyverse)
 
 ## Load spatial data
 # Mapzones for north west GeoRegion
@@ -59,3 +60,18 @@ writeRaster(nwEVCMaskedSmall, "data/clean/cropped/nw_EVC_clean_small.tif",
             overwrite = TRUE)
 writeRaster(fdistMaskedSmall, "data/clean/cropped/nw_fDIST_clean_small.tif",
             overwrite = TRUE)
+
+# -------------------------------------------------------------------------
+
+### Layerizing FDIST
+
+fdist <- raster("data/clean/cropped/nw_fDIST_clean_small.tif")
+
+fdistStack <- layerize(fdist)
+layerValues <- as.numeric(str_remove(names(fdistStack), "X"))
+multiplierFileNames <- paste0("data/clean/cropped/FDIST/FDIST_value_", 
+                              layerValues, ".tif")
+
+mapply(writeRaster, 
+       filename = multiplierFileNames, 
+       x = as.list(fdistStack))
