@@ -35,7 +35,7 @@ myscenario <- scenario(myproject, "Test")
 # TODO duplicates in this table when "3" is removed =?> in email
 # TODO Check only one rule per source cause dist cannot have multiple destination
 
-transTbl <- sqlFetch(db, "vegtransf_rv02i") %>% 
+transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>% 
   mutate_if(is.factor, as.character) %>%
   dplyr::select(MZ, VDIST, EVT7B, EVT7B_Name, # EVT7R, EVT7R_Name, 
                 EVCB, EVHB, EVCR, EVHR) %>% 
