@@ -19,11 +19,14 @@ db <-
 ## Load crosswalk 
 distCrosswalk <- 
   read_csv("data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v02_20200925.csv") %>% 
+  # Remove unimportant categories
   dplyr::select(-c(d_severity, d_severity_1, 
                    `Tree Rules`,  `Shrub Rules`, `Herb Rules`)) %>% 
+  # Rename for easier handling
   rename(d_type_f = d_type_1, d_time_f = d_time_1)
 
 ### Building Library
+# Create library with a project ("Definitions") and a scenario ("Test")
 libraryName <- "LandFire_Test_SmallExtent.ssim"
 mylibrary <- ssimLibrary(paste0("library/", libraryName), overwrite = TRUE)
 myproject <- project(mylibrary, "Definitions", overwrite = TRUE)
@@ -32,22 +35,27 @@ myscenario <- scenario(myproject, "Test")
 ## PRE PROCESSING
 
 # Transition table
-# (DONE) duplicates in this table when "3" is removed =?> in email
+# (DONE) duplicates in this table when "3" is removed
 # TODO Check only one rule per source cause dist cannot have multiple destination
 
 transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>% 
+  # Turn all factors into strings
   mutate_if(is.factor, as.character) %>%
-  dplyr::select(MZ, VDIST, EVT7B, EVT7B_Name, # EVT7R, EVT7R_Name, 
+  # Select variables of importance then rename them
+  dplyr::select(MZ, VDIST, EVT7B, EVT7B_Name,
                 EVCB, EVHB, EVCR, EVHR) %>% 
   rename(StratumIDSource = MZ, 
          SecondaryStratumID = EVT7B_Name) %>% 
+  # Take unique values
   unique()
 
+## Old test for QA
 # raw <- sqlFetch(db, "vegtransf_rv02i_d")
 # test <- raw[which(duplicated(transTbl)),]
 # View(test)
 
 # EVC and EVH
+
 EVClookup <- sqlFetch(db, "EVC_LUT") %>% 
   mutate_if(is.factor, as.character) %>% 
   mutate(CLASSNAMES = ifelse(is.na(.$CLASSNAMES), 
@@ -152,19 +160,46 @@ stateClasses <- data.frame(
 saveDatasheet(myproject, stateClasses, "stsim_StateClass")
 
 ## TRANSITION TYPES
-# TODO change that cause not joined 
+vdistLookup <-  sqlFetch(db, "VDIST") %>% 
+  dplyr::select(value, d_type, d_severity, d_time)
 
-transitionTypes <- 
-  data.frame(Name = paste0(distCrosswalk$d_type, " : ", 
-                           distCrosswalk$d_time), 
-             ID = distCrosswalk$FDIST) %>%
+transitionTypes <- vdistLookup %>% 
+  rename(ID = value) %>% 
+  mutate(d_type = str_replace_all(string = .$d_type, 
+                                  pattern = " ", 
+                                  replacement = "_")) %>% 
+  mutate(Name = paste(d_type, d_severity, d_time, sep = "_")) %>% 
+  dplyr::select(ID, Name) %>% 
   unique()
+
 saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
+
+
+# SCENARIO TEST -----------------------------------------------------------
 
 ## TRANSITIONS
 
+# Deterministic
+deterministicTransitions <- data.frame(
+  StateClassIDSource = unique(stateClasses$Name),
+  Location = paste0("A", c(1:length(unique(stateClasses$Name))))
+)
+
+saveDatasheet(myscenario, deterministicTransitions, 
+              "stsim_DeterministicTransition") 
+
+# Probabilistic
 transTblWithNamesDatasheet <- transTblWithNames %>%
+  left_join(transitionTypes, by = c("VDIST" = "ID")) %>% 
+  rename(TransitionTypeID = Name) %>% 
   dplyr::select(StratumIDSource, SecondaryStratumID,
                 StateClassIDSource, StateClassIDDest, 
-                Probability)
+                TransitionTypeID, Probability)
+
 saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
+
+## TRANSITION MULTIPLIERS
+
+
+
+## INITIONAL CONDITIONS etc..
