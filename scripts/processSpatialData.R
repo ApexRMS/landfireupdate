@@ -63,7 +63,7 @@ writeRaster(fdistMaskedSmall, "data/clean/cropped/nw_fDIST_clean_small.tif",
 
 # -------------------------------------------------------------------------
 
-### Layerizing FDIST
+## Layerizing FDIST
 
 fdist <- raster("data/clean/cropped/nw_fDIST_clean_small.tif")
 
@@ -75,3 +75,16 @@ multiplierFileNames <- paste0("data/clean/cropped/FDIST/FDIST_value_",
 mapply(writeRaster, 
        filename = multiplierFileNames, 
        x = as.list(fdistStack))
+
+# -------------------------------------------------------------------------
+
+## Create composite state class map
+
+nwEVCMaskedSmall <- raster("data/clean/cropped/nw_EVC_clean_small.tif")
+nwEVHMaskedSmall <- raster("data/clean/cropped/nw_EVH_clean_small.tif")
+
+# Formula is ECV * 1000 + EVH
+
+stateClasses <- nwEVCMaskedSmall*1000 + nwEVHMaskedSmall
+writeRaster(stateClasses, "data/clean/cropped/nw_EVC_EVH_StateClasses.tif",
+            overwrite = TRUE)

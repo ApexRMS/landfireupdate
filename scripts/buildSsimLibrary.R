@@ -167,6 +167,9 @@ transitionTypes <- vdistLookup %>%
   rename(ID = value) %>% 
   mutate(d_type = str_replace_all(string = .$d_type, 
                                   pattern = " ", 
+                                  replacement = "_"), 
+         d_time = str_replace_all(string = .$d_time, 
+                                  pattern = " ", 
                                   replacement = "_")) %>% 
   mutate(Name = paste(d_type, d_severity, d_time, sep = "_")) %>% 
   dplyr::select(ID, Name) %>% 
@@ -200,6 +203,45 @@ saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
 
 ## TRANSITION MULTIPLIERS
 
+fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_small.tif")
+allValues <- unique(fDISTCropped)
 
+transitionTypesCropped <- transitionTypes %>% 
+  filter(ID %in% allValues)
+  
+multiplierGroupNames <- paste0(transitionTypesCropped$Name, " [Type]")
+multiplierFileNames <- paste0(getwd(), 
+                              "/data/clean/cropped/FDIST/FDIST_value_", 
+                              transitionTypesCropped$ID, ".tif")
 
-## INITIONAL CONDITIONS etc..
+spatialMultiplier <- data.frame(
+  TransitionGroupID = multiplierGroupNames,
+  MultiplierFileName = multiplierFileNames
+)
+
+saveDatasheet(myscenario, spatialMultiplier, 
+              "stsim_TransitionSpatialMultiplier")
+
+## INITIONAL CONDITIONS
+
+initialConditionsSpatial <- data.frame(
+  StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses.tif"),
+  StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_small.tif"), 
+  SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_small.tif") 
+)
+
+saveDatasheet(myscenario, initialConditionsSpatial, 
+              "stsim_InitialConditionsSpatial")
+  
+## RUN CONTROL
+
+runControl <- data.frame(
+  MinimumIteration = 1,
+  MaximumIteration = 1, 
+  MinimumTimestep = 2017,
+  MaximumTimestep = 2018, 
+  IsSpatial = TRUE
+)
+
+saveDatasheet(myscenario, runControl, 
+              "stsim_RunControl")
