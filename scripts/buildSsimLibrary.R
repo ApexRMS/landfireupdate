@@ -11,7 +11,7 @@ library(RODBC)
 
 ## Load database
 landFireDB <- 
-  "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_09_22.accdb"
+  "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_10_06.accdb"
 db <- 
   odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=", 
                            landFireDB))
