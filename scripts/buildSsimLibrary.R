@@ -32,7 +32,7 @@ myscenario <- scenario(myproject, "Test")
 ## PRE PROCESSING
 
 # Transition table
-# TODO duplicates in this table when "3" is removed =?> in email
+# (DONE) duplicates in this table when "3" is removed =?> in email
 # TODO Check only one rule per source cause dist cannot have multiple destination
 
 transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>% 
@@ -43,9 +43,9 @@ transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>%
          SecondaryStratumID = EVT7B_Name) %>% 
   unique()
 
-#raw <- sqlFetch(db, "vegtransf_rv02i")
-#test <- raw[which(duplicated(transTbl)),]
-#View(test)
+# raw <- sqlFetch(db, "vegtransf_rv02i_d")
+# test <- raw[which(duplicated(transTbl)),]
+# View(test)
 
 # EVC and EVH
 EVClookup <- sqlFetch(db, "EVC_LUT") %>% 
@@ -65,7 +65,13 @@ EVHlookup <- sqlFetch(db, "EVH_LUT") %>%
   rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES)
 
 # JOIN Transitions to EVC/EVH 
-# TODO non matching VDIST => ex 733 leads to NA transitiontypes => need to give all the values that are not showing up
+# raw <- sqlFetch(db, "vegtransf_rv02i_d")
+# trans_vdist <- raw$VDIST %>% unique()
+# key_Vdist <- distCrosswalk$VDIST %>% unique()
+# trans_vdist[which(!(trans_vdist %in% key_Vdist))]
+# TODO non matching VDIST => ex 733 leads to NA transitiontypes => 
+#                       need to give all the values that are not showing up
+# => fixed cause not joining anymore
 
 transTblWithNames <- transTbl %>% 
   
@@ -106,7 +112,6 @@ saveDatasheet(ssimObject = myproject, data = term,
               name = "stsim_Terminology")
 
 ## STRATUMS
-# TODO duplications of the stratums as well
 
 primary <- data.frame(ID = transTblWithNames$StratumIDSource, 
                       Name = transTblWithNames$StratumIDSource) %>% 
@@ -149,7 +154,10 @@ saveDatasheet(myproject, stateClasses, "stsim_StateClass")
 ## TRANSITION TYPES
 # TODO change that cause not joined 
 
-transitionTypes <- data.frame(Name = transTblWithNames$TransitionTypeID) %>% 
+transitionTypes <- 
+  data.frame(Name = paste0(distCrosswalk$d_type, " : ", 
+                           distCrosswalk$d_time), 
+             ID = distCrosswalk$FDIST) %>%
   unique()
 saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
 
@@ -157,14 +165,6 @@ saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
 
 transTblWithNamesDatasheet <- transTblWithNames %>%
   dplyr::select(StratumIDSource, SecondaryStratumID,
-                StateClassIDSource, StateClassIDDest,
-                TransitionTypeID, Probability)
+                StateClassIDSource, StateClassIDDest, 
+                Probability)
 saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
-
-
-######
-
-
-trans_vdist <- raw$VDIST %>% unique()
-key_Vdist <- distCrosswalk$VDIST %>% unique()
-trans_vdist[which(!(trans_vdist %in% key_Vdist))]
