@@ -36,7 +36,7 @@ myscenario <- scenario(myproject, "Test")
 
 # Transition table
 # (DONE) duplicates in this table when "3" is removed
-# TODO Check only one rule per source cause dist cannot have multiple destination
+# Should be Unique for VDIST, PrimaryStratum, EvT, SourceStateClass
 
 transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>% 
   # Turn all factors into strings
@@ -49,7 +49,14 @@ transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>%
   # Take unique values
   unique()
 
-## Old test for QA
+## Old tests for QA
+# the_list <- transTbl %>%
+#   group_split(VDIST, SecondaryStratumID, StratumIDSource, EVCB, EVHB)
+# the_vec <- sapply(the_list, nrow)
+# larger <- which(the_vec > 1)
+# the_list_of_larger <- the_list[larger]
+# the_list_of_larger[1]
+
 # raw <- sqlFetch(db, "vegtransf_rv02i_d")
 # test <- raw[which(duplicated(transTbl)),]
 # View(test)
@@ -73,13 +80,11 @@ EVHlookup <- sqlFetch(db, "EVH_LUT") %>%
   rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES)
 
 # JOIN Transitions to EVC/EVH 
+
 # raw <- sqlFetch(db, "vegtransf_rv02i_d")
 # trans_vdist <- raw$VDIST %>% unique()
 # key_Vdist <- distCrosswalk$VDIST %>% unique()
 # trans_vdist[which(!(trans_vdist %in% key_Vdist))]
-# TODO non matching VDIST => ex 733 leads to NA transitiontypes => 
-#                       need to give all the values that are not showing up
-# => fixed cause not joining anymore
 
 transTblWithNames <- transTbl %>% 
   
@@ -148,7 +153,7 @@ state_y <- data.frame(
 saveDatasheet(myproject, state_y, "stsim_StateLabelY")
 
 # Make IDS
-IDs = c((transTblWithNames$EVCB*1000 + transTblWithNames$EVHB), 
+IDs <- c((transTblWithNames$EVCB*1000 + transTblWithNames$EVHB), 
         (transTblWithNames$EVCR*1000 + transTblWithNames$EVHR))
 
 stateClasses <- data.frame(
@@ -173,18 +178,25 @@ transitionTypes <- vdistLookup %>%
                                   replacement = "_")) %>% 
   mutate(Name = paste(d_type, d_severity, d_time, sep = "_")) %>% 
   dplyr::select(ID, Name) %>% 
+  filter(ID != 0) %>% 
   unique()
 
 saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
 
-
 # SCENARIO TEST -----------------------------------------------------------
 
 ## TRANSITIONS
+# Determine what can be applied
+fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_small.tif")
+allValues <- unique(fDISTCropped)
+transitionTypesCropped <- transitionTypes %>% 
+  filter(ID %in% allValues)
 
 # Deterministic
+# TODO specify the stratum here ?
 deterministicTransitions <- data.frame(
   StateClassIDSource = unique(stateClasses$Name),
+  # TODO maybe generate grid
   Location = paste0("A", c(1:length(unique(stateClasses$Name))))
 )
 
@@ -199,16 +211,20 @@ transTblWithNamesDatasheet <- transTblWithNames %>%
                 StateClassIDSource, StateClassIDDest, 
                 TransitionTypeID, Probability)
 
+# test <- transTblWithNamesDatasheet %>% 
+#   dplyr::select(StratumIDSource, StateClassIDSource) %>%
+#   unique() %>% 
+#   mutate(StateClassIDDest = StateClassIDSource) %>% 
+#   mutate(TransitionTypeID = "No_Disturbance_NA_NA", Probability = 1) 
+
+transTblWithNamesDatasheet <- transTblWithNamesDatasheet %>% 
+  # bind_rows(Test) %>% 
+  filter(TransitionTypeID %in% transitionTypesCropped$Name)
+
 saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
 
 ## TRANSITION MULTIPLIERS
 
-fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_small.tif")
-allValues <- unique(fDISTCropped)
-
-transitionTypesCropped <- transitionTypes %>% 
-  filter(ID %in% allValues)
-  
 multiplierGroupNames <- paste0(transitionTypesCropped$Name, " [Type]")
 multiplierFileNames <- paste0(getwd(), 
                               "/data/clean/cropped/FDIST/FDIST_value_", 
@@ -232,7 +248,7 @@ initialConditionsSpatial <- data.frame(
 
 saveDatasheet(myscenario, initialConditionsSpatial, 
               "stsim_InitialConditionsSpatial")
-  
+
 ## RUN CONTROL
 
 runControl <- data.frame(
@@ -248,3 +264,13 @@ saveDatasheet(myscenario, runControl,
 
 ## End the db connection
 odbcClose(db)
+
+# -------------------------------------------------------------------------
+
+# raw_filtered <- raw %>%
+#   filter(MZ %in% c(10,19)) %>%
+#   filter(VDIST %in% allValues) %>%
+#   filter(EVT7B %in% unique(raster("data/clean/cropped/nw_EVT_clean_small.tif"))) %>% 
+
+## Checks
+# the_stack <- stack(raster(""))
