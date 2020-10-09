@@ -21,10 +21,10 @@ nwEVC <- raster("data/raw/nw_evc2.0class1.4_tiff/nw_evc_m.tif")
 # fDIST
 fdist <- raster("data/raw/NW_FDIST2014_TIFF/nw_fdist2014.tif")
 
-# -------------------------------------------------------------------------
-
 # Change the origin of mapzone raster
 origin(nwMapzones) <- origin(nwEVT)
+
+# -------------------------------------------------------------------------
 
 ## Crop data to Mapzones
 nwEVTCropped <- crop(nwEVT, nwMapzones)
