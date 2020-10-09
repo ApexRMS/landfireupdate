@@ -52,14 +52,15 @@ fdistCropped <- raster("data/clean/nw_fDIST_clean.tif")
 
 ## Crop data to smaller extent
 # Create smaller extent
-theExt <- extent(-1417400, -1371131, 2614395, 2655111)
+theExt <- extent(-1397043,-1394116, 2634559, 2637018)
+factor <- 1
 
 # Crop
-nwMapzonesSmall <- crop(nwMapzones, theExt/2)
-nwEVTMaskedSmall <- crop(nwEVTCropped, theExt/2)
-nwEVHMaskedSmall <- crop(nwEVHCropped, theExt/2)
-nwEVCMaskedSmall <- crop(nwEVCCropped, theExt/2)
-fdistMaskedSmall <- crop(fdistCropped, theExt/2)
+nwMapzonesSmall <- crop(nwMapzones, theExt/factor)
+nwEVTMaskedSmall <- crop(nwEVTCropped, theExt/factor)
+nwEVHMaskedSmall <- crop(nwEVHCropped, theExt/factor)
+nwEVCMaskedSmall <- crop(nwEVCCropped, theExt/factor)
+fdistMaskedSmall <- crop(fdistCropped, theExt/factor)
 
 ## Save cropped data
 writeRaster(nwMapzonesSmall, "data/clean/cropped/nw_Mapzones_small.tif",
