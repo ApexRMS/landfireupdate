@@ -245,3 +245,6 @@ runControl <- data.frame(
 
 saveDatasheet(myscenario, runControl, 
               "stsim_RunControl")
+
+## End the db connection
+odbcClose(db)
