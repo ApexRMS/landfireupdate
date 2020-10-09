@@ -7,6 +7,8 @@
 library(raster) # Raster packages deals with tiff files (grid files)
 library(tidyverse)
 
+# -------------------------------------------------------------------------
+
 ## Load spatial data
 # Mapzones for north west GeoRegion
 nwMapzones <- raster("data/raw/nw_mapzone_tiff/nw_mapzone.tif")
@@ -18,6 +20,8 @@ nwEVC <- raster("data/raw/nw_evc2.0class1.4_tiff/nw_evc_m.tif")
 
 # fDIST
 fdist <- raster("data/raw/NW_FDIST2014_TIFF/nw_fdist2014.tif")
+
+# -------------------------------------------------------------------------
 
 # Change the origin of mapzone raster
 origin(nwMapzones) <- origin(nwEVT)
@@ -38,16 +42,24 @@ writeRaster(nwEVCCropped, "data/clean/nw_EVC_clean.tif",
 writeRaster(fdistCropped, "data/clean/nw_fDIST_clean.tif",
             overwrite = TRUE)
 
+# -------------------------------------------------------------------------
+
+# Load Clean data
+nwEVTCropped <- raster("data/clean/nw_EVT_clean.tif")
+nwEVHCropped <- raster("data/clean/nw_EVH_clean.tif")
+nwEVCCropped <- raster("data/clean/nw_EVC_clean.tif")
+fdistCropped <- raster("data/clean/nw_fDIST_clean.tif")
+
 ## Crop data to smaller extent
 # Create smaller extent
 theExt <- extent(-1417400, -1371131, 2614395, 2655111)
 
 # Crop
-nwMapzonesSmall <- crop(nwMapzones, theExt)
-nwEVTMaskedSmall <- crop(nwEVTCropped, theExt)
-nwEVHMaskedSmall <- crop(nwEVHCropped, theExt)
-nwEVCMaskedSmall <- crop(nwEVCCropped, theExt)
-fdistMaskedSmall <- crop(fdistCropped, theExt)
+nwMapzonesSmall <- crop(nwMapzones, theExt/2)
+nwEVTMaskedSmall <- crop(nwEVTCropped, theExt/2)
+nwEVHMaskedSmall <- crop(nwEVHCropped, theExt/2)
+nwEVCMaskedSmall <- crop(nwEVCCropped, theExt/2)
+fdistMaskedSmall <- crop(fdistCropped, theExt/2)
 
 ## Save cropped data
 writeRaster(nwMapzonesSmall, "data/clean/cropped/nw_Mapzones_small.tif",
@@ -74,7 +86,8 @@ multiplierFileNames <- paste0("data/clean/cropped/FDIST/FDIST_value_",
 
 mapply(writeRaster, 
        filename = multiplierFileNames, 
-       x = as.list(fdistStack))
+       x = as.list(fdistStack), 
+       overwrite=T)
 
 # -------------------------------------------------------------------------
 
