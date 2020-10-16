@@ -274,8 +274,19 @@ runControl <- data.frame(
   IsSpatial = TRUE
 )
 
-saveDatasheet(myscenario, runControl, 
-              "stsim_RunControl")
+saveDatasheet(myscenario, runControl, "stsim_RunControl")
+
+## Output Options
+
+outputOptionsSummary <- 
+  data.frame(SummaryOutputSC = TRUE, SummaryOutputSCTimesteps = 1, 
+             SummaryOutputTR = TRUE, SummaryOutputTRTimesteps = 1)
+outputOptionsSpatial <- 
+  data.frame(RasterOutputSC = TRUE, RasterOutputSCTimesteps = 1,
+             RasterOutputTR = FALSE, RasterOutputTRTimesteps = 1)
+
+saveDatasheet(myscenario, outputOptionsSummary, "stsim_OutputOptions")
+saveDatasheet(myscenario, outputOptionsSpatial, "stsim_OutputOptionsSpatial")
 
 ## End the db connection
 odbcClose(db)
