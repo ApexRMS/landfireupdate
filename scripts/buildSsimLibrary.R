@@ -52,7 +52,7 @@ transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>%
   dplyr::select(MZ, VDIST, EVT7B, EVT7B_Name,
                 EVCB, EVHB, EVCR, EVHR) %>% 
   rename(StratumIDSource = EVT7B_Name) %>% 
-  # Change the naming convention of MapZones e.g. from "1" to "MX01"
+  # Change the naming convention of MapZones e.g. from "1" to "MZ01"
   mutate(SecondaryStratumID = 
            paste0("MZ", str_pad(MZ, 2, "left", "0"))) %>% 
   # Take unique values
