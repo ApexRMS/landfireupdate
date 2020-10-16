@@ -9,7 +9,7 @@ Intructions to run on small extent:
   - Syncrosim: `2.2.19`, download it [here](https://syncrosim.com/download/) 
   - StSim: `3.2.21`, download it [here](https://syncrosim.com/packages/)
 
-2. Download the Access database dependency AccessDatabaseEngine_X64.exe from https://www.microsoft.com/en-us/download/details.aspx?id=13255
+2. Download and install the Access database dependency AccessDatabaseEngine_X64.exe from https://www.microsoft.com/en-us/download/details.aspx?id=13255
 
 3. Open the `a236.Rproj` file in Rstudio
 
