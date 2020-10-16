@@ -177,12 +177,31 @@ transitionTypesCropped <- transitionTypes %>%
   filter(ID %in% allValues)
 
 # Deterministic
-# TODO specify the stratum here ?
-deterministicTransitions <- data.frame(
-  StateClassIDSource = unique(stateClasses$Name),
-  # TODO maybe generate grid
-  Location = paste0("A", c(1:length(unique(stateClasses$Name))))
-)
+# TODO specify the stratum here ??
+
+# Create the grid
+# This wrangles the locations of state classes in the UI
+# TODO come back here for the colors later, the df is already being splitted once
+LocationDf <- stateClasses %>% 
+  mutate(letter = ifelse(str_detect(StateLabelXID, "Tree"), "A", 
+                         ifelse(str_detect(StateLabelXID, "Shrub"), "B",
+                                ifelse(str_detect(StateLabelXID, "Herb"), "C", "D")))) %>% 
+  arrange(letter, StateLabelYID) %>% 
+  split(f = .$letter) %>% 
+  lapply(., function(x){x %>% mutate(row = 1:nrow(x))}) %>% 
+  bind_rows() %>% 
+  mutate(Location = paste0(letter, row)) %>% 
+  dplyr::select(Name, Location)
+
+# Join the locations to the state classes df
+stateClassesjoined <- stateClasses %>% 
+  left_join(LocationDf, by = "Name")
+
+# Extract the columns for the datasheet
+deterministicTransitions <- stateClassesjoined %>% 
+  dplyr::select(Name, Location) %>% 
+  rename(StateClassIDSource = Name) %>% 
+  unique()
 
 saveDatasheet(myscenario, deterministicTransitions, 
               "stsim_DeterministicTransition") 
