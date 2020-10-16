@@ -333,8 +333,8 @@ saveDatasheet(myscenario, spatialMultiplier,
 
 initialConditionsSpatial <- data.frame(
   StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses.tif"),
-  StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_small.tif"), 
-  SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_small.tif"))
+  StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_small.tif"), 
+  SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_small.tif"))
 
 saveDatasheet(myscenario, initialConditionsSpatial, 
               "stsim_InitialConditionsSpatial")
