@@ -149,23 +149,42 @@ stateClasses <- data.frame(
 saveDatasheet(myproject, stateClasses, "stsim_StateClass")
 
 ## TRANSITION TYPES
-vdistLookup <-  sqlFetch(db, "VDIST") %>% 
-  dplyr::select(value, d_type, d_severity, d_time)
+vdistLookup <-  sqlFetch(db, "VDIST") %>%
+  mutate_if(is.factor, as.character) %>% 
+  dplyr::select(value, d_type, d_severity, d_time) %>% 
+  rename(ID = value,  TransitionGroupID = d_type) %>%
+  filter(ID != 0) %>%
+  mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = ", "))
 
 transitionTypes <- vdistLookup %>% 
-  rename(ID = value) %>% 
-  mutate(d_type = str_replace_all(string = .$d_type, 
-                                  pattern = " ", 
-                                  replacement = "_"), 
-         d_time = str_replace_all(string = .$d_time, 
-                                  pattern = " ", 
-                                  replacement = "_")) %>% 
-  mutate(Name = paste(d_type, d_severity, d_time, sep = "_")) %>% 
   dplyr::select(ID, Name) %>% 
-  filter(ID != 0) %>% 
   unique()
 
 saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
+
+## Transition Groups
+## TODO ask about IsAuto, dont remember what that is
+TransitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
+  mutate_if(is.factor, as.character) %>% 
+  bind_rows(vdistLookup %>% 
+              dplyr::select(Name = TransitionGroupID) %>% 
+              unique())
+
+saveDatasheet(myproject, TransitionGroups, "stsim_TransitionGroup")
+
+## Transition Types by groups
+TypesByGroup <- vdistLookup %>% 
+  dplyr::select(Name, TransitionGroupID) %>% 
+  unique() %>% 
+  rename(TransitionTypeID = Name)
+
+saveDatasheet(myproject, TypesByGroup, "stsim_TransitionTypeGroup")
+
+## Transition simulation groups
+SimulationGroups <- data.frame(
+  TransitionGroupID = unique(vdistLookup$TransitionGroupID))
+
+saveDatasheet(myproject, SimulationGroups, "stsim_TransitionSimulationGroup")
 
 # SCENARIO TEST -----------------------------------------------------------
 
