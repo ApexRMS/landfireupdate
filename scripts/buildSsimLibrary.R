@@ -151,13 +151,14 @@ saveDatasheet(myproject, stateClasses, "stsim_StateClass")
 ## TRANSITION TYPES
 vdistLookup <-  sqlFetch(db, "VDIST") %>%
   mutate_if(is.factor, as.character) %>% 
-  dplyr::select(value, d_type, d_severity, d_time) %>% 
+  dplyr::select(value, d_type, d_severity, d_time, R, G, B) %>% 
   rename(ID = value,  TransitionGroupID = d_type) %>%
   filter(ID != 0) %>%
-  mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = ", "))
+  mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = ", ")) %>% 
+  mutate(Color = paste("255". R, G, B, sep = ","))
 
 transitionTypes <- vdistLookup %>% 
-  dplyr::select(ID, Name) %>% 
+  dplyr::select(ID, Name, Color) %>% 
   unique()
 
 saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
