@@ -43,8 +43,10 @@ transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>%
   # Select variables of importance then rename them
   dplyr::select(MZ, VDIST, EVT7B, EVT7B_Name,
                 EVCB, EVHB, EVCR, EVHR) %>% 
-  rename(StratumIDSource = MZ, 
-         SecondaryStratumID = EVT7B_Name) %>% 
+  rename(StratumIDSource = EVT7B_Name) %>% 
+  # Change the naming convention of MapZones e.g. from "1" to "MX01"
+  mutate(SecondaryStratumID = 
+           paste0("MZ", str_pad(MZ, 2, "left", "0"))) %>% 
   # Take unique values
   unique()
 
@@ -72,7 +74,8 @@ transTblWithNames <- transTbl %>%
   left_join(EVClookup, by = c("EVCB" = "EVC_ID")) %>% 
   rename(EVCB_Name = StateLabelXID) %>% 
   left_join(EVClookup, by = c("EVCR" = "EVC_ID")) %>% 
-  rename(EVCR_Name = StateLabelXID) %>% 
+  rename(EVCR_Name = StateLabelXID) %>%
+  
   left_join(EVHlookup, by = c("EVHB" = "EVH_ID")) %>% 
   rename(EVHB_Name = StateLabelYID) %>% 
   left_join(EVHlookup, by = c("EVHR" = "EVH_ID")) %>% 
@@ -83,11 +86,11 @@ transTblWithNames <- transTbl %>%
   
   mutate(Probability = 1)
 
-# Primary stratum
-allZones <- unique(transTbl$MZ)
+# Primary stratums 
+allEVT <- unique(transTbl$StratumIDSource)
 
-# Secondary stratums 
-allEVT <- unique(c(transTbl$EVT7B_Name, transTbl$EVT7R_Name))
+# Secondary stratum
+allZones <- unique(transTbl$SecondaryStratumID)
 
 ### DATASHEETS
 
@@ -97,8 +100,8 @@ term <- data.frame(
   AmountUnits = "Hectares", 
   StateLabelX = "EVC", 
   StateLabelY = "EVH", 
-  PrimaryStratumLabel = "MapZones",
-  SecondaryStratumLabel = "EVT",
+  PrimaryStratumLabel = "EVT",
+  SecondaryStratumLabel = "MapZones",
   # TertiaryStratumLabel = "ESP", 
   TimestepUnits = "Timestep"
 )
@@ -107,12 +110,12 @@ saveDatasheet(ssimObject = myproject, data = term,
 
 ## STRATUMS
 
-primary <- data.frame(ID = transTblWithNames$StratumIDSource, 
+primary <- data.frame(ID = transTblWithNames$EVT7B, 
                       Name = transTblWithNames$StratumIDSource) %>% 
   unique()
 saveDatasheet(myproject, primary, "Stratum")
 
-secondary <- data.frame(ID = transTblWithNames$EVT7B, 
+secondary <- data.frame(ID = transTblWithNames$MZ, 
                         Name = transTblWithNames$SecondaryStratumID) %>% 
   unique()
 saveDatasheet(myproject, secondary, "SecondaryStratum")
@@ -135,7 +138,7 @@ saveDatasheet(myproject, state_y, "stsim_StateLabelY")
 
 # Make IDS
 IDs <- c((transTblWithNames$EVCB*1000 + transTblWithNames$EVHB), 
-        (transTblWithNames$EVCR*1000 + transTblWithNames$EVHR))
+         (transTblWithNames$EVCR*1000 + transTblWithNames$EVHR))
 
 stateClasses <- data.frame(
   ID = IDs,
