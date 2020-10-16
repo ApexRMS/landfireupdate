@@ -118,7 +118,8 @@ primaryWithColors <- sqlFetch(db, "nw_evt200") %>%
   unique() %>% 
   rename(ID = VALUE) %>% 
   mutate(Color = paste("255", R, G, B, sep = ",")) %>% 
-  right_join(primary, by = "ID")
+  right_join(primary, by = "ID") %>% 
+  dplyr::select(ID, Color, Name)
   
 saveDatasheet(myproject, primaryWithColors, "Stratum")
 
