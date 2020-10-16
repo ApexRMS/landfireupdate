@@ -155,7 +155,7 @@ vdistLookup <-  sqlFetch(db, "VDIST") %>%
   rename(ID = value,  TransitionGroupID = d_type) %>%
   filter(ID != 0) %>%
   mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = ", ")) %>% 
-  mutate(Color = paste("255". R, G, B, sep = ","))
+  mutate(Color = paste("255", R, G, B, sep = ","))
 
 transitionTypes <- vdistLookup %>% 
   dplyr::select(ID, Name, Color) %>% 
