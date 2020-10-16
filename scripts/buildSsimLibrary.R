@@ -111,13 +111,19 @@ saveDatasheet(ssimObject = myproject, data = term,
 ## STRATUMS
 
 primary <- data.frame(ID = transTblWithNames$EVT7B, 
-                      Name = transTblWithNames$StratumIDSource) %>% 
-  unique()
-saveDatasheet(myproject, primary, "Stratum")
+                      Name = transTblWithNames$StratumIDSource) %>% unique()
+# Colors
+primaryWithColors <- sqlFetch(db, "nw_evt200") %>% 
+  dplyr::select(VALUE, R, G, B) %>% 
+  unique() %>% 
+  rename(ID = VALUE) %>% 
+  mutate(Color = paste("255", R, G, B, sep = ",")) %>% 
+  right_join(primary, by = "ID")
+  
+saveDatasheet(myproject, primaryWithColors, "Stratum")
 
 secondary <- data.frame(ID = transTblWithNames$MZ, 
-                        Name = transTblWithNames$SecondaryStratumID) %>% 
-  unique()
+                        Name = transTblWithNames$SecondaryStratumID) %>% unique()
 saveDatasheet(myproject, secondary, "SecondaryStratum")
 
 ## STATE CLASSES
