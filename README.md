@@ -11,7 +11,7 @@ Intructions to run on small extent:
 
 2. Download the Access database 
 
-3. Open the a236.Rproj file in Rstudio
+3. Open the `a236.Rproj` file in Rstudio
 
 4. Open the script in `scripts/buildSsimLibrary.R`, then source or Run the script to build the library
 
