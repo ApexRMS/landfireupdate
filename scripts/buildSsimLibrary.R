@@ -35,7 +35,6 @@ myscenario <- scenario(myproject, "Test")
 ## PRE PROCESSING
 
 # Transition table
-# (DONE) duplicates in this table when "3" is removed
 # Should be Unique for VDIST, PrimaryStratum, EvT, SourceStateClass
 
 transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>% 
@@ -48,18 +47,6 @@ transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>%
          SecondaryStratumID = EVT7B_Name) %>% 
   # Take unique values
   unique()
-
-## Old tests for QA
-# the_list <- transTbl %>%
-#   group_split(VDIST, SecondaryStratumID, StratumIDSource, EVCB, EVHB)
-# the_vec <- sapply(the_list, nrow)
-# larger <- which(the_vec > 1)
-# the_list_of_larger <- the_list[larger]
-# the_list_of_larger[1]
-
-# raw <- sqlFetch(db, "vegtransf_rv02i_d")
-# test <- raw[which(duplicated(transTbl)),]
-# View(test)
 
 # EVC and EVH
 
@@ -79,13 +66,7 @@ EVHlookup <- sqlFetch(db, "EVH_LUT") %>%
   dplyr::select(VALUE, CLASSNAMES) %>% 
   rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES)
 
-# JOIN Transitions to EVC/EVH 
-
-# raw <- sqlFetch(db, "vegtransf_rv02i_d")
-# trans_vdist <- raw$VDIST %>% unique()
-# key_Vdist <- distCrosswalk$VDIST %>% unique()
-# trans_vdist[which(!(trans_vdist %in% key_Vdist))]
-
+# JOIN Transitions to EVC/EVH
 transTblWithNames <- transTbl %>% 
   
   left_join(EVClookup, by = c("EVCB" = "EVC_ID")) %>% 
@@ -211,14 +192,7 @@ transTblWithNamesDatasheet <- transTblWithNames %>%
                 StateClassIDSource, StateClassIDDest, 
                 TransitionTypeID, Probability)
 
-# test <- transTblWithNamesDatasheet %>% 
-#   dplyr::select(StratumIDSource, StateClassIDSource) %>%
-#   unique() %>% 
-#   mutate(StateClassIDDest = StateClassIDSource) %>% 
-#   mutate(TransitionTypeID = "No_Disturbance_NA_NA", Probability = 1) 
-
 transTblWithNamesDatasheet <- transTblWithNamesDatasheet %>% 
-  # bind_rows(Test) %>% 
   filter(TransitionTypeID %in% transitionTypesCropped$Name)
 
 saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
@@ -266,6 +240,24 @@ saveDatasheet(myscenario, runControl,
 odbcClose(db)
 
 # -------------------------------------------------------------------------
+# QA Code
+
+## Old tests for QA
+# the_list <- transTbl %>%
+#   group_split(VDIST, SecondaryStratumID, StratumIDSource, EVCB, EVHB)
+# the_vec <- sapply(the_list, nrow)
+# larger <- which(the_vec > 1)
+# the_list_of_larger <- the_list[larger]
+# the_list_of_larger[1]
+
+# raw <- sqlFetch(db, "vegtransf_rv02i_d")
+# test <- raw[which(duplicated(transTbl)),]
+# View(test)
+
+# raw <- sqlFetch(db, "vegtransf_rv02i_d")
+# trans_vdist <- raw$VDIST %>% unique()
+# key_Vdist <- distCrosswalk$VDIST %>% unique()
+# trans_vdist[which(!(trans_vdist %in% key_Vdist))]
 
 # raw_filtered <- raw %>%
 #   filter(MZ %in% c(10,19)) %>%
@@ -274,3 +266,5 @@ odbcClose(db)
 
 ## Checks
 # the_stack <- stack(raster(""))
+
+# -------------------------------------------------------------------------
