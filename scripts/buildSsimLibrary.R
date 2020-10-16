@@ -31,7 +31,6 @@ distCrosswalk <-
   # Rename for easier handling
   rename(d_type_f = d_type_1, d_time_f = d_time_1)
 
-
 # Build the SyncroSim Library ---------------------------------------------
 
 # Create library with a project ("Definitions") and a scenario ("Test")
