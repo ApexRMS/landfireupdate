@@ -284,7 +284,8 @@ outputOptionsSummary <-
              SummaryOutputTR = TRUE, SummaryOutputTRTimesteps = 1)
 outputOptionsSpatial <- 
   data.frame(RasterOutputSC = TRUE, RasterOutputSCTimesteps = 1,
-             RasterOutputTR = FALSE, RasterOutputTRTimesteps = 1)
+             RasterOutputST = TRUE, RasterOutputSTTimesteps = 1,
+             RasterOutputTR = TRUE, RasterOutputTRTimesteps = 1)
 
 saveDatasheet(myscenario, outputOptionsSummary, "stsim_OutputOptions")
 saveDatasheet(myscenario, outputOptionsSpatial, "stsim_OutputOptionsSpatial")
