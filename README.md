@@ -11,12 +11,12 @@ Intructions to run on small extent:
 
 2. Download the Access database 
 
-2. Open the a236.Rproj file in Rstudio
+3. Open the a236.Rproj file in Rstudio
 
-3. Open the script in `scripts/buildSsimLibrary.R`, then source or Run the script to build the library
+4. Open the script in `scripts/buildSsimLibrary.R`, then source or Run the script to build the library
 
-4. Ensure you have all the package necessary: `tidyverse`, `rsyncrosim`, `raster`, `RODBC`
+5. Ensure you have all the package necessary: `tidyverse`, `rsyncrosim`, `raster`, `RODBC`
 
-4. Open the new library `LandFire_Test_SmallExtent.ssim` in the `library` folder.
+6. Open the new library `LandFire_Test_SmallExtent.ssim` in the `library` folder.
 
-5. Click on the Test scenario and run it.
+7. Click on the Test scenario and run it.
