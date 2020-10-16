@@ -124,6 +124,7 @@ term <- data.frame(
   # TertiaryStratumLabel = "ESP", 
   TimestepUnits = "Timestep"
 )
+
 saveDatasheet(ssimObject = myproject, data = term, 
               name = "stsim_Terminology")
 
@@ -263,7 +264,6 @@ primaryFiltered <- primary %>%
   filter(ID %in% allPrimaries)
 
 # Deterministic
-# TODO specify the stratum here ??
 
 # This wrangles the locations of state classes in the UI and stores thus 
 # information in a dataframe for joining later
@@ -308,7 +308,8 @@ transTblWithNamesDatasheet <- transTblWithNames %>%
 
 # Filter for values present in the smaller extent
 transTblWithNamesDatasheet <- transTblWithNamesDatasheet %>% 
-  filter(TransitionTypeID %in% transitionTypesCropped$Name)
+  filter(TransitionTypeID %in% transitionTypesCropped$Name) %>% 
+  filter(StratumIDSource %in% primaryFiltered$Name)
 
 saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
 
