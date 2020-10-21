@@ -40,7 +40,7 @@ distCrosswalk <-
 
 libraryName <- "LandFire_Test_SmallExtent.ssim"
 mylibrary <- ssimLibrary(paste0("library/", libraryName), overwrite = TRUE)
-myproject <- project(mylibrary, "Definitions", overwrite = TRUE)
+myproject <- rsyncrosim::project(mylibrary, "Definitions", overwrite = TRUE)
 myscenario <- scenario(myproject, "Test")
 
 ## PRE PROCESSING
