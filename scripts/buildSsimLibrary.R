@@ -321,7 +321,7 @@ saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
 # Collect the names and cretae path files
 multiplierGroupNames <- paste0(transitionTypesCropped$Name, " [Type]")
 multiplierFileNames <- paste0(getwd(), 
-                              "/data/clean/cropped/FDIST/FDIST_value_", 
+                              "/data/clean/cropped/FDIST/MZ19/FDIST_value_", 
                               transitionTypesCropped$ID, ".tif")
 
 # Compose and save the data frame
