@@ -4,9 +4,12 @@
 ### Extract tables from db and script library
 
 ##  Load packages
+# The package rgdal is also required. Rstudio might detect this requirement. If
+# it doesn't, simply run: install.packages("rgdal")
 
 library(tidyverse)
 library(rsyncrosim)
+library(rgdal)
 library(raster)
 library(RODBC)
 
