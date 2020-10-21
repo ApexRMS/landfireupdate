@@ -7,9 +7,8 @@
 library(raster) # Raster packages deals with tiff files (grid files)
 library(tidyverse)
 
-# -------------------------------------------------------------------------
+# Load spatial data -------------------------------------------------------
 
-## Load spatial data
 # Mapzones for north west GeoRegion
 nwMapzones <- raster("data/raw/nw_mapzone_tiff/nw_mapzone.tif")
 
@@ -24,9 +23,8 @@ fdist <- raster("data/raw/NW_FDIST2014_TIFF/nw_fdist2014.tif")
 # Change the origin of mapzone raster
 origin(nwMapzones) <- origin(nwEVT)
 
-# -------------------------------------------------------------------------
+# Crop data to Mapzones ---------------------------------------------------
 
-## Crop data to Mapzones
 nwEVTCropped <- crop(nwEVT, nwMapzones)
 nwEVHCropped <- crop(nwEVH, nwMapzones)
 nwEVCCropped <- crop(nwEVC, nwMapzones)
@@ -42,13 +40,15 @@ writeRaster(nwEVCCropped, "data/clean/nw_EVC_clean.tif",
 writeRaster(fdistCropped, "data/clean/nw_fDIST_clean.tif",
             overwrite = TRUE)
 
-# -------------------------------------------------------------------------
+# Load Clean data ---------------------------------------------------------
 
-# Load Clean data
+nwMapzones <- raster("data/raw/nw_mapzone_tiff/nw_mapzone.tif")
 nwEVTCropped <- raster("data/clean/nw_EVT_clean.tif")
 nwEVHCropped <- raster("data/clean/nw_EVH_clean.tif")
 nwEVCCropped <- raster("data/clean/nw_EVC_clean.tif")
 fdistCropped <- raster("data/clean/nw_fDIST_clean.tif")
+
+# Smaller extent ----------------------------------------------------------
 
 ## Crop data to smaller extent
 # Create smaller extent
@@ -74,8 +74,6 @@ writeRaster(nwEVCMaskedSmall, "data/clean/cropped/nw_EVC_clean_small.tif",
 writeRaster(fdistMaskedSmall, "data/clean/cropped/nw_fDIST_clean_small.tif",
             overwrite = TRUE)
 
-# -------------------------------------------------------------------------
-
 ## Layerizing FDIST
 
 fdist <- raster("data/clean/cropped/nw_fDIST_clean_small.tif")
@@ -90,7 +88,6 @@ mapply(writeRaster,
        x = as.list(fdistStack), 
        overwrite=T)
 
-# -------------------------------------------------------------------------
 
 ## Create composite state class map
 
@@ -102,3 +99,97 @@ nwEVHMaskedSmall <- raster("data/clean/cropped/nw_EVH_clean_small.tif")
 stateClasses <- nwEVCMaskedSmall*1000 + nwEVHMaskedSmall
 writeRaster(stateClasses, "data/clean/cropped/nw_EVC_EVH_StateClasses.tif",
             overwrite = TRUE)
+
+# MAPZONE 19 Extent -------------------------------------------------------
+
+library(rgrass7)
+
+unlink("grass/LF", recursive = T)
+
+initGRASS(gisBase = "C:/Program Files/GRASS GIS 7.8", gisDbase = "grass",  
+          location = "LF", mapset = "PERMANENT", override = TRUE)
+execGRASS("g.proj", proj4 = projection(nwEVTCropped), flags="c")
+execGRASS("g.mapset", mapset="Mapzone19", flags="c")
+
+execGRASS("r.in.gdal", input = filename(nwMapzones), output = "MZ", 
+          flag = "o")
+execGRASS("r.in.gdal", input = filename(fdistCropped), output = "fDIST", 
+          flag = "o")
+execGRASS("r.in.gdal", input = filename(nwEVTCropped), output = "EVT", 
+          flag = "o")
+execGRASS("r.in.gdal", input = filename(nwEVCCropped), output = "EVC", 
+          flag = "o")
+execGRASS("r.in.gdal", input = filename(nwEVHCropped), output = "EVH", 
+          flag = "o")
+
+# execGRASS("g.extension", extension = "r.clip", operation = "add")
+
+execGRASS("g.region", raster = "MZ")
+execGRASS("r.mapcalc", expression = "MZ_19=(MZ==19)", 
+          flags = c("overwrite"))
+execGRASS("r.null", map = "MZ_19", setnull = "0")
+
+execGRASS("r.out.gdal", input = "MZ_19", output = "MZ19.tif", 
+          flags = c("overwrite"))
+
+execGRASS("r.to.vect", input = "MZ_19", output = "MZ_19_vect", type = "area", 
+          flags = c("overwrite"))
+
+execGRASS("g.region", vector = "MZ_19_vect")
+execGRASS("r.out.gdal", input = "MZ_19", 
+          output = "data/clean/cropped/nw_Mapzones_MZ19.tif", 
+          flags = c("overwrite"))
+
+for (val in unique(fdistCropped)){
+  if (val > 0) {
+    theName <- paste0("FDIST_value_", val)
+    
+    
+    execGRASS("r.mapcalc", expression = paste0(theName, "=(fDIST==", val, ")"), 
+              flags = c("overwrite"))
+    execGRASS("r.out.gdal", input = theName,
+              output = paste0("data/clean/cropped/FDIST/MZ19/", theName, ".tif"), 
+              flags = c("overwrite"))
+  }
+}
+
+execGRASS("r.out.gdal", input = "EVT", 
+          output = "data/clean/cropped/nw_EVT_clean_MZ19.tif", 
+          flags = c("overwrite"))
+execGRASS("r.out.gdal", input = "fDIST", 
+          output = "data/clean/cropped/nw_fDIST_clean_MZ19.tif", 
+          flags = c("overwrite"))
+
+execGRASS("r.mapcalc", expression = "StateClass=((EVC*1000)+EVH)",
+          flags = c("overwrite"))
+
+execGRASS("r.out.gdal", input = "EVT", 
+          output = "data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif", 
+          flags = c("overwrite"))
+
+# Tiling ------------------------------------------------------------------
+
+nCell <- ncell(raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif"))
+nCores <- 60
+
+tiles <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
+values(tiles) <- rep(1:nCores, each = nCell/nCores)[1:nCell]
+
+# tiles <- nwEVTCropped
+# nCells <- which(!is.na(nwEVTCropped))
+# nCores <- 60
+# 
+# if (nCells %% nCores-1 > 0){
+#   tileSize <- trunc(nCells / (nCores-1))
+#   lastTileSize <- nCells - (tileSize * (nCores-1))
+#   tileSizes <- c(rep(tileSize, nCores-1), lastTileSize)
+# }
+# 
+# for (tile in 1:nCores){
+#   
+#   from <- 1 + tileSize*tile
+#   to <- tileSize*tile
+#   
+#   tiles[from:to] <- tile
+#   print(tile)
+# }

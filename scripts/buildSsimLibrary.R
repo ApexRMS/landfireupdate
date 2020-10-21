@@ -253,8 +253,8 @@ saveDatasheet(myproject, SimulationGroups, "stsim_TransitionSimulationGroup")
 # disturbance type exist in this small extent
 
 # Load raster
-fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_small.tif")
-EVTCropped <- raster("data/clean/cropped/nw_EVT_clean_small.tif")
+fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
+EVTCropped <- raster("data/clean/cropped/nw_EVT_clean_MZ19.tif")
 
 # Get all avlues
 allValues <- unique(fDISTCropped)
@@ -335,9 +335,9 @@ saveDatasheet(myscenario, spatialMultiplier,
 ## Initial conditions
 
 initialConditionsSpatial <- data.frame(
-  StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses.tif"),
-  StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_small.tif"), 
-  SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_small.tif"))
+  StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif"),
+  StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_MZ19.tif"), 
+  SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_MZ19.tif"))
 
 saveDatasheet(myscenario, initialConditionsSpatial, 
               "stsim_InitialConditionsSpatial")
