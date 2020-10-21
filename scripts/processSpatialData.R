@@ -175,6 +175,10 @@ nCores <- 60
 tiles <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
 values(tiles) <- rep(1:nCores, each = nCell/nCores)[1:nCell]
 
+writeRaster(tiles, "data/clean/cropped/Tiling_MZ19.tif")
+
+# -------------------------------------------------------------------------
+
 # tiles <- nwEVTCropped
 # nCells <- which(!is.na(nwEVTCropped))
 # nCores <- 60
