@@ -17,7 +17,7 @@ library(RODBC)
 # Database path
 
 landFireDB <- 
-  "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_10_06.accdb"
+  "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_10_21.accdb"
 # Connect to database 
 
 db <- 
@@ -391,9 +391,9 @@ odbcClose(db)
 # trans_vdist[which(!(trans_vdist %in% key_Vdist))]
 
 # raw_filtered <- raw %>%
-#   filter(MZ %in% c(10,19)) %>%
+#   filter(MZ %in% c(19)) %>%
 #   filter(VDIST %in% allValues) %>%
-#   filter(EVT7B %in% unique(raster("data/clean/cropped/nw_EVT_clean_small.tif"))) %>% 
+#   filter(EVT7B %in% unique(raster("data/clean/cropped/nw_EVT_clean_small.tif")))
 
 ## Checks
 # the_stack <- stack(raster(""))
