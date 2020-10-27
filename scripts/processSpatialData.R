@@ -212,6 +212,46 @@ values(tiles) <- rep(1:nCores, each = nCell/nCores)[1:nCell]
 tilesMasked <- mask(tiles, MZ19)
 writeRaster(tiles, "data/clean/cropped/Tiling_MZ19.tif", overwrite = TRUE)
 
+# Cropping for test -------------------------------------------------------
+
+MZ19 <- raster("data/clean/cropped/nw_Mapzones_MZ19.tif")
+EVT19 <- raster("data/clean/cropped/nw_EVT_clean_MZ19.tif")
+Fdist19 <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
+StateClass19 <- raster("data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif")
+
+x <- 100000
+theExt <- extent(-1378715, -1354773+x, 2909746, 2938249+x)
+
+MZ19Cropped <- crop(MZ19, theExt)
+EVT19Cropped <- crop(EVT19, theExt)
+Fdist19Cropped <- crop(Fdist19, theExt)
+StateClass19Cropped <- crop(StateClass19, theExt)
+
+writeRaster(MZ19Cropped, "data/clean/cropped/nw_Mapzones_MZ19_cropped.tif", 
+            overwrite = TRUE)
+writeRaster(EVT19Cropped, "data/clean/cropped/nw_EVT_clean_MZ19_cropped.tif", 
+            overwrite = TRUE)
+writeRaster(Fdist19Cropped, "data/clean/cropped/nw_fDIST_clean_MZ19_cropped.tif", 
+            overwrite = TRUE)
+writeRaster(StateClass19Cropped, "data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19_cropped.tif",
+            overwrite = TRUE)
+
+for (file in list.files("data/clean/cropped/FDIST/MZ19/", full.names = TRUE)){
+  if (!stringr::str_detect(basename(file), "cropped")){
+    rast <- raster(file)
+    theName <- paste0("data/clean/cropped/FDIST/MZ19/", 
+                      tools::file_path_sans_ext(basename(file)),"_cropped.tif")
+    writeRaster(crop(rast, theExt), theName, overwrite = TRUE)
+  }
+}
+
+nCell <- ncell(raster("data/clean/cropped/nw_fDIST_clean_MZ19_cropped.tif"))
+nCores <- 3
+
+tiles <- raster("data/clean/cropped/nw_fDIST_clean_MZ19_cropped.tif")
+values(tiles) <- rep(1:nCores, each = nCell/nCores)[1:nCell]
+writeRaster(tiles, "data/clean/cropped/Tiling_MZ19_cropped.tif", overwrite = TRUE)
+
 # -------------------------------------------------------------------------
 
 # tiles <- nwEVTCropped

@@ -253,8 +253,10 @@ saveDatasheet(myproject, SimulationGroups, "stsim_TransitionSimulationGroup")
 # disturbance type exist in this small extent
 
 # Load raster
-fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
-EVTCropped <- raster("data/clean/cropped/nw_EVT_clean_MZ19.tif")
+# fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
+fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_MZ19_cropped.tif")
+# EVTCropped <- raster("data/clean/cropped/nw_EVT_clean_MZ19.tif")
+EVTCropped <- raster("data/clean/cropped/nw_EVT_clean_MZ19_cropped.tif")
 
 # Get all avlues
 allValues <- unique(fDISTCropped)
@@ -320,9 +322,12 @@ saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
 
 # Collect the names and cretae path files
 multiplierGroupNames <- paste0(transitionTypesCropped$Name, " [Type]")
+# multiplierFileNames <- paste0(getwd(), 
+#                               "/data/clean/cropped/FDIST/MZ19/FDIST_value_", 
+#                               transitionTypesCropped$ID, ".tif")
 multiplierFileNames <- paste0(getwd(), 
                               "/data/clean/cropped/FDIST/MZ19/FDIST_value_", 
-                              transitionTypesCropped$ID, ".tif")
+                              transitionTypesCropped$ID, "_cropped.tif")
 
 # Compose and save the data frame
 spatialMultiplier <- data.frame(
@@ -334,10 +339,14 @@ saveDatasheet(myscenario, spatialMultiplier,
 
 ## Initial conditions
 
+# initialConditionsSpatial <- data.frame(
+#   StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif"),
+#   StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_MZ19.tif"), 
+#   SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_MZ19.tif"))
 initialConditionsSpatial <- data.frame(
-  StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif"),
-  StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_MZ19.tif"), 
-  SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_MZ19.tif"))
+  StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19_cropped.tif"),
+  StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_MZ19_cropped.tif"), 
+  SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_MZ19_cropped.tif"))
 
 saveDatasheet(myscenario, initialConditionsSpatial, 
               "stsim_InitialConditionsSpatial")
