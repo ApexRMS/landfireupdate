@@ -3,7 +3,8 @@
 ### September 2020
 ### Extract tables from db and script library
 
-##  Load packages
+# Load packages -----------------------------------------------------------
+
 # The package rgdal is also required. Rstudio might detect this requirement. If
 # it doesn't, simply run: install.packages("rgdal")
 
@@ -12,12 +13,15 @@ library(rsyncrosim)
 library(rgdal)
 library(raster)
 library(RODBC)
+library(readxl)
 
-## Access Database
+# Access database ---------------------------------------------------------
+
 # Database path
 
 landFireDB <- 
   "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_10_21.accdb"
+
 # Connect to database 
 
 db <- 
@@ -27,18 +31,19 @@ db <-
 ## Load crosswalk 
 
 distCrosswalk <- 
-  read_csv("data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v02_20200925.csv") %>% 
+  read_xlsx("data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx") %>% 
   # Remove unimportant categories
-  dplyr::select(-c(d_severity, d_severity_1, 
+  dplyr::select(-c(d_severity...3, d_severity...10, d_type...9, d_time...11,
                    `Tree Rules`,  `Shrub Rules`, `Herb Rules`)) %>% 
   # Rename for easier handling
-  rename(d_type_f = d_type_1, d_time_f = d_time_1)
+  rename(d_type_f = d_type...2, d_time_f = d_time...4)
 
 # Build the SyncroSim Library ---------------------------------------------
 
 # Create library with a project ("Definitions") and a scenario ("Test")
 
-libraryName <- "LandFire_Test_SmallExtent.ssim"
+# libraryName <- "LandFire_Test_SmallExtent.ssim"
+libraryName <- "LandFire_Test_SmallExtent_2.ssim"
 mylibrary <- ssimLibrary(paste0("library/", libraryName), overwrite = TRUE)
 myproject <- rsyncrosim::project(mylibrary, "Definitions", overwrite = TRUE)
 myscenario <- scenario(myproject, "Test")
