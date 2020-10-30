@@ -278,9 +278,11 @@ primaryFiltered <- primary %>%
 # information in a dataframe for joining later
 
 LocationDf <- stateClasses %>% 
+  # Create unique positions for them
   mutate(letter = ifelse(str_detect(StateLabelXID, "Tree"), "A", 
                          ifelse(str_detect(StateLabelXID, "Shrub"), "B",
                                 ifelse(str_detect(StateLabelXID, "Herb"), "C", "D")))) %>% 
+  # Arrange, split and lapply across all rows
   arrange(letter, StateLabelYID) %>% 
   split(f = .$letter) %>% 
   lapply(., function(x){x %>% mutate(row = 1:nrow(x))}) %>% 
@@ -380,6 +382,18 @@ outputOptionsSpatial <-
 saveDatasheet(myscenario, outputOptionsSummary, "stsim_OutputOptions")
 saveDatasheet(myscenario, outputOptionsSpatial, "stsim_OutputOptionsSpatial")
 
+## Spatial multiprocessing 
+
+spatial_multi <- datasheet(myscenario, "corestime_Multiprocessing")
+# spatial_multi <- add_row(spatial_multi, 
+#         MaskFileName = file.path(getwd(), 
+#                                  "data/clean/cropped/nw_Mapzones_MZ19.tif"))
+spatial_multi <- add_row(spatial_multi, 
+        MaskFileName = file.path(getwd(), 
+                                 "data/clean/cropped/Tiling_MZ19_cropped.tif"))
+
+saveDatasheet(myscenario, spatial_multi, "corestime_Multiprocessing")
+
 ## End the db connection
 odbcClose(db)
 
@@ -407,8 +421,5 @@ odbcClose(db)
 #   filter(MZ %in% c(19)) %>%
 #   filter(VDIST %in% allValues) %>%
 #   filter(EVT7B %in% unique(raster("data/clean/cropped/nw_EVT_clean_small.tif")))
-
-## Checks
-# the_stack <- stack(raster(""))
 
 # -------------------------------------------------------------------------
