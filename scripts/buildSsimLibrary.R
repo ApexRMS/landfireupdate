@@ -223,7 +223,6 @@ transitionTypes <- vdistLookup %>%
 saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
 
 ## Transition Groups
-## TODO ask about IsAuto, dont remember what that is
 # For groups, we append the disturbance class to the existing datasheet
 
 TransitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
