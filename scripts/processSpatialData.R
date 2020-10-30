@@ -114,7 +114,7 @@ writeRaster(tiles, "data/clean/cropped/Tiling_small.tif", overwrite = TRUE)
 
 # MAPZONE 19 Extent -------------------------------------------------------
 
-unlink("grass/LF", recursive = T)
+# unlink("grass/LF", recursive = T)
 
 initGRASS(gisBase = "C:/Program Files/GRASS GIS 7.8", gisDbase = "grass",  
           location = "LF", mapset = "PERMANENT", override = TRUE)
@@ -196,9 +196,9 @@ for (val in unique(Fdist19Masked)){
     execGRASS("r.out.gdal", input = theName,
               output = file, 
               flags = c("overwrite"))
-    rast <- raster(file)
-    rastMasked <- mask(rast, Fdist19Masked)
-    writeRaster(rastMasked, file, overwrite = TRUE)
+    # rast <- raster(file)
+    # rastMasked <- mask(rast, Fdist19Masked)
+    # writeRaster(rastMasked, file, overwrite = TRUE)
   }
 }
 
@@ -208,6 +208,7 @@ nCell <- ncell(raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif"))
 nCores <- 10
 
 tiles <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
+# TODO NA values
 values(tiles) <- rep(1:nCores, each = nCell/nCores)[1:nCell]
 
 tilesMasked <- mask(tiles, MZ19)
@@ -220,7 +221,7 @@ EVT19 <- raster("data/clean/cropped/nw_EVT_clean_MZ19.tif")
 Fdist19 <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
 StateClass19 <- raster("data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif")
 
-x <- 100000
+x <- 220000
 theExt <- extent(-1378715, -1354773+x, 2909746, 2938249+x)
 
 MZ19Cropped <- crop(MZ19, theExt)
@@ -245,6 +246,8 @@ for (file in list.files("data/clean/cropped/FDIST/MZ19/", full.names = TRUE)){
     writeRaster(crop(rast, theExt), theName, overwrite = TRUE)
   }
 }
+
+# Tiling, less cores
 
 nCell <- ncell(raster("data/clean/cropped/nw_fDIST_clean_MZ19_cropped.tif"))
 nCores <- 3
