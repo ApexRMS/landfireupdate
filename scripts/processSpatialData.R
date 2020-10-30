@@ -218,7 +218,6 @@ nCell <- ncell(raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif"))
 nCores <- 10
 
 tiles <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
-# TODO NA values
 values(tiles) <- rep(1:nCores, each = (nCell/nCores + 1))[1:nCell]
 
 tilesMasked <- mask(tiles, MZ19)
