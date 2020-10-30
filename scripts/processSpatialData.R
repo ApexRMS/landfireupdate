@@ -79,6 +79,8 @@ writeRaster(fdistMaskedSmall, "data/clean/cropped/nw_fDIST_clean_small.tif",
 
 fdist <- raster("data/clean/cropped/nw_fDIST_clean_small.tif")
 
+# For small extent, it is okay to use raster::layerize
+
 fdistStack <- layerize(fdist)
 layerValues <- as.numeric(str_remove(names(fdistStack), "X"))
 multiplierFileNames <- paste0("data/clean/cropped/FDIST/FDIST_value_", 
@@ -88,7 +90,6 @@ mapply(writeRaster,
        filename = multiplierFileNames, 
        x = as.list(fdistStack), 
        overwrite=T)
-
 
 ## Create composite state class map
 
@@ -201,7 +202,7 @@ for (val in unique(Fdist19Masked)){
   }
 }
 
-# Tiling ------------------------------------------------------------------
+# Tiling for spatial multiprocessing --------------------------------------
 
 nCell <- ncell(raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif"))
 nCores <- 10
