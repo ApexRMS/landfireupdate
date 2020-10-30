@@ -219,7 +219,7 @@ nCores <- 10
 
 tiles <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
 # TODO NA values
-values(tiles) <- rep(1:nCores, each = nCell/nCores)[1:nCell]
+values(tiles) <- rep(1:nCores, each = (nCell/nCores + 1))[1:nCell]
 
 tilesMasked <- mask(tiles, MZ19)
 writeRaster(tiles, "data/clean/cropped/Tiling_MZ19.tif", overwrite = TRUE)
