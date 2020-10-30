@@ -3,6 +3,10 @@
 ### September 2020
 ### Cleaning spatial data obtained from client
 
+## This code requires GRASS. Download GRASS here:
+## https://grass.osgeo.org/download/
+## On windows/Mac, reboot your computer after the installation
+
 ##  Load packages
 library(raster) # Raster packages deals with tiff files (grid files)
 library(tidyverse)
