@@ -86,6 +86,7 @@ layerValues <- as.numeric(str_remove(names(fdistStack), "X"))
 multiplierFileNames <- paste0("data/clean/cropped/FDIST/FDIST_value_", 
                               layerValues, ".tif")
 
+# Use mapply to save all files with coded name
 mapply(writeRaster, 
        filename = multiplierFileNames, 
        x = as.list(fdistStack), 
@@ -102,7 +103,7 @@ stateClasses <- nwEVCMaskedSmall*1000 + nwEVHMaskedSmall
 writeRaster(stateClasses, "data/clean/cropped/nw_EVC_EVH_StateClasses.tif",
             overwrite = TRUE)
 
-# Tiling
+# Tiling for spatial multiprocessing
 
 nCell <- ncell(fdist)
 nCores <- 10
@@ -114,13 +115,15 @@ writeRaster(tiles, "data/clean/cropped/Tiling_small.tif", overwrite = TRUE)
 
 # MAPZONE 19 Extent -------------------------------------------------------
 
-# unlink("grass/LF", recursive = T)
-
+# GRASS initiating the session
 initGRASS(gisBase = "C:/Program Files/GRASS GIS 7.8", gisDbase = "grass",  
           location = "LF", mapset = "PERMANENT", override = TRUE)
+
+# Setting the right projection and creating new mapset
 execGRASS("g.proj", proj4 = projection(nwEVTCropped), flags="c")
 execGRASS("g.mapset", mapset="Mapzone19", flags="c")
 
+# Import all data
 execGRASS("r.in.gdal", input = filename(nwMapzones), output = "MZ", 
           flag = "o")
 execGRASS("r.in.gdal", input = filename(fdistCropped), output = "fDIST", 
@@ -134,7 +137,10 @@ execGRASS("r.in.gdal", input = filename(nwEVHCropped), output = "EVH",
 
 # execGRASS("g.extension", extension = "r.clip", operation = "add")
 
+# Set the computational region
 execGRASS("g.region", raster = "MZ")
+
+# Create binary raster and reclassify
 execGRASS("r.mapcalc", expression = "MZ_19=(MZ==19)", 
           flags = c("overwrite"))
 execGRASS("r.null", map = "MZ_19", setnull = "0")
@@ -146,12 +152,15 @@ execGRASS("r.reclass",
           output = "MZ_19_rcl", 
           flags = c("overwrite"))
 
+# Copy reclassified map (necessary to operate on it in GRASS)
 execGRASS("r.mapcalc", expression = "MZ_19_rcl_new = MZ_19_rcl")
 
+# Vectorize the result to change the region of computation just after
 execGRASS("r.to.vect", input = "MZ_19_rcl_new", output = "MZ_19_vect", type = "area", 
           flags = c("overwrite"))
-
 execGRASS("g.region", vector = "MZ_19_vect")
+
+# Export only in the region (way to crop data)
 execGRASS("r.out.gdal", input = "MZ_19_rcl_new", 
           output = "data/clean/cropped/nw_Mapzones_MZ19.tif", 
           flags = c("overwrite"))
@@ -168,7 +177,8 @@ execGRASS("r.out.gdal", input = "StateClass",
           output = "data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif", 
           flags = c("overwrite"))
 
-# Masking
+# Masking (re importing in R to do it due to a bug in rgrass7 which prevents us
+# from doing it in R)
 MZ19 <- raster("data/clean/cropped/nw_Mapzones_MZ19.tif")
 EVT19 <- raster("data/clean/cropped/nw_EVT_clean_MZ19.tif")
 Fdist19 <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
@@ -185,8 +195,7 @@ writeRaster(Fdist19Masked, "data/clean/cropped/nw_fDIST_clean_MZ19.tif",
 writeRaster(StateClass19Masked, "data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif", 
             overwrite = TRUE)
 
-# Layerizing
-
+# Layerizing in a loop
 for (val in unique(Fdist19Masked)){
   if (val > 0) {
     theName <- paste0("FDIST_value_", val)
@@ -196,9 +205,6 @@ for (val in unique(Fdist19Masked)){
     execGRASS("r.out.gdal", input = theName,
               output = file, 
               flags = c("overwrite"))
-    # rast <- raster(file)
-    # rastMasked <- mask(rast, Fdist19Masked)
-    # writeRaster(rastMasked, file, overwrite = TRUE)
   }
 }
 
@@ -214,7 +220,7 @@ values(tiles) <- rep(1:nCores, each = nCell/nCores)[1:nCell]
 tilesMasked <- mask(tiles, MZ19)
 writeRaster(tiles, "data/clean/cropped/Tiling_MZ19.tif", overwrite = TRUE)
 
-# Cropping for test -------------------------------------------------------
+# Cropping MZ19 files for the sake of testing -----------------------------
 
 MZ19 <- raster("data/clean/cropped/nw_Mapzones_MZ19.tif")
 EVT19 <- raster("data/clean/cropped/nw_EVT_clean_MZ19.tif")
@@ -247,7 +253,7 @@ for (file in list.files("data/clean/cropped/FDIST/MZ19/", full.names = TRUE)){
   }
 }
 
-# Tiling, less cores
+# Redo the tiling for cropped files with less cores this time
 
 nCell <- ncell(raster("data/clean/cropped/nw_fDIST_clean_MZ19_cropped.tif"))
 nCores <- 3
