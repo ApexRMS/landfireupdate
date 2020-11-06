@@ -8,92 +8,128 @@
 # The package rgdal is also required. Rstudio might detect this requirement. If
 # it doesn't, simply run: install.packages("rgdal")
 
-library(tidyverse)
-library(rsyncrosim)
-library(rgdal)
 library(raster)
+library(rgdal)
 library(RODBC)
 library(readxl)
+library(rsyncrosim)
+library(tidyverse)
 
-# Access database ---------------------------------------------------------
 
-# Database path
+# Set global variables ----------------------------------------------------
 
-landFireDB <- 
+# Please ensure these files are correctly named and in the correct locations
+# They are not tracked in the git repository
+
+## Database paths
+
+landFireDBPath <- 
   "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_10_21.accdb"
 
-# Connect to database 
+distCrosswalkPath <-
+  "data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx"
 
+## Raster paths
+
+# Path to the directory holding rasters
+rasterDirectory <- paste0(getwd(), "/data/clean/cropped/")
+
+fdistRasterPath <- paste0(rasterDirectory, "nw_fDIST_clean_MZ19_cropped.tif")
+  
+evtRasterPath <- paste0(rasterDirectory, "nw_EVT_clean_MZ19_cropped.tif")
+
+stateClassRasterPath <- paste0(rasterDirectory, "nw_EVC_EVH_StateClasses_MZ19_cropped.tif")
+
+stratumRasterPath <- paste0(rasterDirectory, "nw_EVT_clean_MZ19_cropped.tif")
+
+secondaryStratumRasterPath <- paste0(rasterDirectory, "nw_Mapzones_MZ19_cropped.tif")
+
+# Transition multipliers require a raster per FDIST value
+# Instead of a single path, these file names are constructed from a prefix, the
+# the FDIST value of interest (calculated later), and a suffix
+transitionMultipliersPathPrefix <- paste0(rasterDirectory, "FDIST/MZ19/FDIST_value_")
+transitionMultipliersPathSuffix <- "_cropped.tif"
+
+# The tiling raster mask is used to split the inputs for spatial multiprocessing
+tilingMaskRasterPath <- paste0(rasterDirectory, "Tiling_MZ19_cropped.tif")
+
+## Database table names
+#  These are the names of relevant SQL tables withing the database
+
+transitionTableName <- "vegtransf_rv02i_d"
+evcTableName        <- "EVC_LUT"
+evhTableName        <- "EVH_LUT"
+evtColorTableName   <- "nw_evt200"
+vdistTableName      <- "VDIST"
+
+## Run Controls
+
+minimumIteration <- 1
+maximumIteration <- 1
+minimumTimestep <- 2017
+maximumTimestep <- 2018
+
+# Output file names
+libraryName <- "LandFire_Test.ssim"
+
+# Prepare input data ---------------------------------------------------
+
+## Load data 
+
+# Load the main Vegetation Transition database from Land Fire
 db <- 
   odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=", 
-                           landFireDB))
+                           landFireDBPath))
 
-## Load crosswalk 
-
+# Load and clean the lookup table used to convert between VDIST and FDIST codes
 distCrosswalk <- 
-  read_xlsx("data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx") %>% 
+  read_xlsx(distCrosswalkPath) %>% 
   # Remove unimportant categories
-  dplyr::select(-c(d_severity...3, d_severity...10, d_type...9, d_time...11,
+  select(-c(d_severity...3, d_severity...10, d_type...9, d_time...11,
                    `Tree Rules`,  `Shrub Rules`, `Herb Rules`)) %>% 
   # Rename for easier handling
   rename(d_type_f = d_type...2, d_time_f = d_time...4)
 
-# Build the SyncroSim Library ---------------------------------------------
+# Load the input rasters
+fdistRaster <- raster(fdistRasterPath)
+evtRaster <- raster(evtRasterPath)
 
-# Create library with a project ("Definitions") and a scenario ("Test")
+## Generate a table of all unique transitions
 
-# libraryName <- "LandFire_Test_SmallExtent.ssim"
-libraryName <- "LandFire_Test_SmallExtent_2.ssim"
-mylibrary <- ssimLibrary(paste0("library/", libraryName), overwrite = TRUE)
-myproject <- rsyncrosim::project(mylibrary, "Definitions", overwrite = TRUE)
-myscenario <- scenario(myproject, "Test")
-
-## PRE PROCESSING
-
-# Transition table
-# Should be Unique for VDIST, PrimaryStratum, EvT, SourceStateClass
-
-transTbl <- sqlFetch(db, "vegtransf_rv02i_d") %>% 
+# Should be unique for every VDIST, PrimaryStratum, EvT, SourceStateClass
+transitionTable <- sqlFetch(db, transitionTableName) %>% 
+  # Select and rename variables of importance
+  select(MZ, VDIST, EVT7B, StratumIDSource = EVT7B_Name,
+         EVCB, EVHB, EVCR, EVHR) %>%
   # Turn all factors into strings
   mutate_if(is.factor, as.character) %>%
-  # Select variables of importance then rename them
-  dplyr::select(MZ, VDIST, EVT7B, EVT7B_Name,
-                EVCB, EVHB, EVCR, EVHR) %>% 
-  rename(StratumIDSource = EVT7B_Name) %>% 
-  # Change the naming convention of MapZones e.g. from "1" to "MZ01"
-  mutate(SecondaryStratumID = 
-           paste0("MZ", str_pad(MZ, 2, "left", "0"))) %>% 
-  # Take unique values
+      # Change the naming convention of MapZones e.g. from "1" to "MZ01"
+  mutate(SecondaryStratumID = paste0("MZ", str_pad(MZ, 2, "left", "0"))) %>%
+  # Keep only unique rows
   unique()
 
-# EVC and EVH
+## Generate look-up tables for EVC and EVH codes and names
 
-EVClookup <- sqlFetch(db, "EVC_LUT") %>% 
+EVClookup <- sqlFetch(db, evcTableName) %>% 
   # Turn factors into characters
   mutate_if(is.factor, as.character) %>% 
   # Make unique names for when class names are repeated
-  mutate(CLASSNAMES = ifelse(is.na(.$CLASSNAMES), 
-                             paste0(.$EVT_LIFEFORM, "_", .$VALUE), 
-                             .$CLASSNAMES)) %>% 
+  mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(EVT_LIFEFORM, "_", VALUE))) %>%
   # Select relevant columns and rename with stsim relevant column names
-  dplyr::select(VALUE, CLASSNAMES) %>% 
+  select(VALUE, CLASSNAMES) %>% 
   rename(EVC_ID = VALUE, StateLabelXID = CLASSNAMES)
 
-# Similarly, for EVH:
-
-EVHlookup <- sqlFetch(db, "EVH_LUT") %>% 
+EVHlookup <- sqlFetch(db, evhTableName) %>% 
   mutate_if(is.factor, as.character) %>%
-  mutate(CLASSNAMES = ifelse(is.na(.$CLASSNAMES), 
-                             paste0(as.character(.$LIFEFORM), "_", .$VALUE), 
-                             as.character(.$CLASSNAMES))) %>% 
-  dplyr::select(VALUE, CLASSNAMES) %>% 
+  mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(LIFEFORM, "_", VALUE))) %>%
+  select(VALUE, CLASSNAMES) %>% 
   rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES)
 
-# JOIN Transitions to EVC/EVH
+# Add EVC and EVH names to transition table
 
-transTblWithNames <- transTbl %>% 
+transitionTable <- transitionTable %>% 
   
-  # First jin EVC B and R, renaming appropriately
+  # First join EVC B and R, renaming appropriately
   left_join(EVClookup, by = c("EVCB" = "EVC_ID")) %>% 
   rename(EVCB_Name = StateLabelXID) %>% 
   left_join(EVClookup, by = c("EVCR" = "EVC_ID")) %>% 
@@ -112,15 +148,20 @@ transTblWithNames <- transTbl %>%
   # Add the propability column with all set to 1
   mutate(Probability = 1)
 
-# Primary stratums (all unique EVT values)
-allEVT <- unique(transTbl$StratumIDSource)
+## Generate vectors of all FDIST and EVT codes present in data
 
-# Secondary stratum (all unique MZ values)
-allZones <- unique(transTbl$SecondaryStratumID)
+allFDIST <- unique(fdistRaster)
 
-# Compose and load STSIM datasheets ---------------------------------------
+allEVT <- unique(evtRaster)
 
-# Terminology
+# Build the SyncroSim Library ---------------------------------------------
+
+# Create library with a project ("Definitions") and a scenario ("Test")
+mylibrary <- ssimLibrary(paste0("library/", libraryName), overwrite = TRUE)
+myproject <- project(mylibrary, "Definitions", overwrite = TRUE)
+myscenario <- scenario(myproject, "Test")
+
+## +Terminology -----------------------------------------------------------
 
 term <- data.frame(
   AmountLabel = "Area", 
@@ -136,38 +177,47 @@ term <- data.frame(
 saveDatasheet(ssimObject = myproject, data = term, 
               name = "stsim_Terminology")
 
-## Stratums
+
+## +Strata ----------------------------------------------------------------
+
 # EVT is the primary stratum, MZ is the secondary stratum
 # No tertiary stratum
 # Important to take the unique values every time
+# Filter this dataframe by EVT values that are actually present in the input
 
-primary <- data.frame(ID = transTblWithNames$EVT7B, 
-                      Name = transTblWithNames$StratumIDSource) %>% unique()
+
+primary <- data.frame(ID = transitionTable$EVT7B, 
+                      Name = transitionTable$StratumIDSource) %>%
+  unique() %>%
+  filter(ID %in% allEVT)
 
 # Extract colors from the evt200 sheet
 # TODO: An issue here where some IDs do not have colors and some colors do not
 # have matching IDs. 
 
-primaryWithColors <- sqlFetch(db, "nw_evt200") %>% 
+primaryWithColors <- sqlFetch(db, evtColorTableName) %>% 
   # Select relevant columns
-  dplyr::select(VALUE, R, G, B) %>% 
+  select(VALUE, R, G, B) %>% 
   # Take unique and rename for later joining
   unique() %>% rename(ID = VALUE) %>% 
   # Create the color using the SyncroSim pattern of T, R, G, B
   mutate(Color = paste("255", R, G, B, sep = ",")) %>% 
   # Join and select relevant columns
   right_join(primary, by = "ID") %>% 
-  dplyr::select(ID, Color, Name)
+  select(ID, Color, Name)
 
 # Save the datasheet
 saveDatasheet(myproject, primaryWithColors, "Stratum")
 
-# For secondary, no colors
-secondary <- data.frame(ID = transTblWithNames$MZ, 
-                        Name = transTblWithNames$SecondaryStratumID) %>% unique()
+# Repeat for secondary stratum (MapZone), with no colors
+
+secondary <- data.frame(ID = transitionTable$MZ, 
+                        Name = transitionTable$SecondaryStratumID) %>% unique()
 saveDatasheet(myproject, secondary, "SecondaryStratum")
 
-## State Ckasses
+## +State Classes --------------------------------------------------------
+
+# Copy in X and Y state names from the EVC and EVH lookups, respectively
 
 state_x <- data.frame(
   Name = EVClookup$StateLabelXID,
@@ -183,31 +233,32 @@ state_y <- data.frame(
 
 saveDatasheet(myproject, state_y, "stsim_StateLabelY")
 
-# Make unique IDS
-# We do ECV * 1000 + EVH
+# Generate unique State IDS based on the combination of X and Y state
+# To do this, we "paste" the X and Y state IDs together by multiplying
+# EVC by 1000 and adding it to EVH
 
-IDs <- c((transTblWithNames$EVCB*1000 + transTblWithNames$EVHB), 
-         (transTblWithNames$EVCR*1000 + transTblWithNames$EVHR))
+stateIDs <- c((transitionTable$EVCB*1000 + transitionTable$EVHB), 
+              (transitionTable$EVCR*1000 + transitionTable$EVHR))
 
 # Build the datasheet
 stateClasses <- data.frame(
-  ID = IDs,
-  Name = c(transTblWithNames$StateClassIDSource, transTblWithNames$StateClassIDDest), 
-  StateLabelXID = c(transTblWithNames$EVCB_Name, transTblWithNames$EVCR_Name), 
-  StateLabelYID = c(transTblWithNames$EVHB_Name, transTblWithNames$EVHR_Name)) %>% 
+  ID = stateIDs,
+  Name = c(transitionTable$StateClassIDSource, transitionTable$StateClassIDDest), 
+  StateLabelXID = c(transitionTable$EVCB_Name, transitionTable$EVCR_Name), 
+  StateLabelYID = c(transitionTable$EVHB_Name, transitionTable$EVHR_Name)) %>% 
   unique()
 
 saveDatasheet(myproject, stateClasses, "stsim_StateClass")
 
-## Transition Types
-# We gather disturbance types from the VDIST table
+## +Transition Types and Groups ------------------------------------------------
 
-vdistLookup <-  sqlFetch(db, "VDIST") %>%
+# We gather disturbance types from the VDIST table
+vdistLookup <-  sqlFetch(db, vdistTableName) %>%
+  # Select only what we need, then rename
+  select(value, d_type, d_severity, d_time, R, G, B) %>% 
+  rename(ID = value,  TransitionGroupID = d_type) %>%
   # Turn all factors into charactors
   mutate_if(is.factor, as.character) %>%
-  # Select only what we need, then rename
-  dplyr::select(value, d_type, d_severity, d_time, R, G, B) %>% 
-  rename(ID = value,  TransitionGroupID = d_type) %>%
   # Filter out the NO Disturbance category
   filter(ID != 0) %>%
   # Create unique transition/disturbance name, and format color
@@ -215,125 +266,102 @@ vdistLookup <-  sqlFetch(db, "VDIST") %>%
   mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = ", ")) %>% 
   mutate(Color = paste("255", R, G, B, sep = ","))
 
-# Select what we want for the datasheet and save it
+# Select the relevant columns, and filter by disturbances that are actually
+# present in the input raster
 transitionTypes <- vdistLookup %>% 
-  dplyr::select(ID, Name, Color) %>% 
-  unique()
+  select(ID, Name, Color) %>% 
+  unique() %>%
+  filter(ID %in% allFDIST)
 
 saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
 
 ## Transition Groups
 # For groups, we append the disturbance class to the existing datasheet
 
-TransitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
+transitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
   mutate_if(is.factor, as.character) %>% 
   bind_rows(vdistLookup %>% 
-              dplyr::select(Name = TransitionGroupID) %>% 
+              select(Name = TransitionGroupID) %>% 
               unique())
 
-saveDatasheet(myproject, TransitionGroups, "stsim_TransitionGroup")
+saveDatasheet(myproject, transitionGroups, "stsim_TransitionGroup")
 
 ## Transition Types by groups
 
-TypesByGroup <- vdistLookup %>% 
-  dplyr::select(Name, TransitionGroupID) %>% 
+typesByGroup <- vdistLookup %>% 
+  select(Name, TransitionGroupID) %>% 
   unique() %>% 
   rename(TransitionTypeID = Name)
 
-saveDatasheet(myproject, TypesByGroup, "stsim_TransitionTypeGroup")
+saveDatasheet(myproject, typesByGroup, "stsim_TransitionTypeGroup")
 
 ## Transition simulation groups
 # The same than groups, used for vizualization
 
-SimulationGroups <- data.frame(
+simulationGroups <- data.frame(
   TransitionGroupID = unique(vdistLookup$TransitionGroupID))
 
-saveDatasheet(myproject, SimulationGroups, "stsim_TransitionSimulationGroup")
+saveDatasheet(myproject, simulationGroups, "stsim_TransitionSimulationGroup")
 
-# Create Test Scenario ----------------------------------------------------
+## +Transitions  ---------------------------------------------------------------
 
-## Transitions
-# Because we are running under a smaller extent we first need to know what
-# disturbance type exist in this small extent
+## Deterministic
 
-# Load raster
-# fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_MZ19.tif")
-fDISTCropped <- raster("data/clean/cropped/nw_fDIST_clean_MZ19_cropped.tif")
-# EVTCropped <- raster("data/clean/cropped/nw_EVT_clean_MZ19.tif")
-EVTCropped <- raster("data/clean/cropped/nw_EVT_clean_MZ19_cropped.tif")
+# Generate locations for unique state classes to be used in the SyncroSim
+# Transition Pathways Diagrams
 
-# Get all avlues
-allValues <- unique(fDISTCropped)
-allPrimaries <- unique(EVTCropped)
-
-# Filter for the types that are there
-transitionTypesCropped <- transitionTypes %>% 
-  filter(ID %in% allValues)
-primaryFiltered <- primary %>% 
-  filter(ID %in% allPrimaries)
-
-# Deterministic
-
-# This wrangles the locations of state classes in the UI and stores thus 
-# information in a dataframe for joining later
-
-LocationDf <- stateClasses %>% 
+locations <- stateClasses %>% 
   # Create unique positions for them
-  mutate(letter = ifelse(str_detect(StateLabelXID, "Tree"), "A", 
-                         ifelse(str_detect(StateLabelXID, "Shrub"), "B",
-                                ifelse(str_detect(StateLabelXID, "Herb"), "C", "D")))) %>% 
+  mutate(
+    letter = case_when(
+      str_detect(StateLabelXID, "Tree")  ~ "A",
+      str_detect(StateLabelXID, "Shrub") ~ "B",
+      str_detect(StateLabelXID, "Herb")  ~ "C",
+      TRUE                               ~ "D")) %>%
   # Arrange, split and lapply across all rows
   arrange(letter, StateLabelYID) %>% 
-  split(f = .$letter) %>% 
-  lapply(., function(x){x %>% mutate(row = 1:nrow(x))}) %>% 
-  bind_rows() %>% 
-  mutate(Location = paste0(letter, row)) %>% 
-  dplyr::select(Name, Location)
+  group_by(letter) %>% 
+  mutate(Location = str_c(letter, row_number())) %>% 
+  ungroup() %>%
+  select(Name, Location)
 
-# Join the locations to the state classes df
-stateClassesjoined <- stateClasses %>% 
-  # Make sure to expand the grid to all combinations of MZ present (only 1 here)
-  expand_grid(StratumIDSource = primaryFiltered$Name) %>% 
+# Join the locations back into the state class table and clean up the datasheet
+deterministicTransitions <- stateClasses %>% 
+  # Make sure to expand the grid to all combinations of MZ present
+  expand_grid(StratumIDSource = primary$Name) %>% 
   # Join with the location info
-  left_join(LocationDf, by = "Name")
-
-# Extract/rename the columns to compose the datasheet and save it
-deterministicTransitions <- stateClassesjoined %>% 
-  dplyr::select(Name, Location, StratumIDSource) %>% 
+  left_join(locations, by = "Name") %>%
+  # Cleanup
+  select(Name, Location, StratumIDSource) %>% 
   rename(StateClassIDSource = Name) %>% 
-  unique() %>% 
+  unique() %>%
   as.data.frame()
 
 saveDatasheet(myscenario, deterministicTransitions, 
               "stsim_DeterministicTransition") 
 
-# Probabilistic
-transTblWithNamesDatasheet <- transTblWithNames %>%
+## Probabilistic
+probabilisticTransitions <- transitionTable %>%
   # Join the IDS
   left_join(transitionTypes, by = c("VDIST" = "ID")) %>% 
   # Rename and select what we need 
   rename(TransitionTypeID = Name) %>% 
-  dplyr::select(StratumIDSource, SecondaryStratumID,
+  select(StratumIDSource, SecondaryStratumID,
                 StateClassIDSource, StateClassIDDest, 
-                TransitionTypeID, Probability)
+                TransitionTypeID, Probability) %>%
+# Filter for values present in the input raster
+  filter(TransitionTypeID %in% transitionTypes$Name) %>% 
+  filter(StratumIDSource %in% primary$Name)
 
-# Filter for values present in the smaller extent
-transTblWithNamesDatasheet <- transTblWithNamesDatasheet %>% 
-  filter(TransitionTypeID %in% transitionTypesCropped$Name) %>% 
-  filter(StratumIDSource %in% primaryFiltered$Name)
+saveDatasheet(myscenario, probabilisticTransitions, "stsim_Transition")
 
-saveDatasheet(myscenario, transTblWithNamesDatasheet, "stsim_Transition")
-
-## Transition multipliers
+## +Transition multipliers ---------------------------------------------------
 
 # Collect the names and cretae path files
-multiplierGroupNames <- paste0(transitionTypesCropped$Name, " [Type]")
-# multiplierFileNames <- paste0(getwd(), 
-#                               "/data/clean/cropped/FDIST/MZ19/FDIST_value_", 
-#                               transitionTypesCropped$ID, ".tif")
-multiplierFileNames <- paste0(getwd(), 
-                              "/data/clean/cropped/FDIST/MZ19/FDIST_value_", 
-                              transitionTypesCropped$ID, "_cropped.tif")
+multiplierGroupNames <- paste0(transitionTypes$Name, " [Type]")
+multiplierFileNames <- paste0(transitionMultipliersPathPrefix,
+                              transitionTypes$ID,
+                              transitionMultipliersPathSuffix)
 
 # Compose and save the data frame
 spatialMultiplier <- data.frame(
@@ -343,33 +371,29 @@ spatialMultiplier <- data.frame(
 saveDatasheet(myscenario, spatialMultiplier, 
               "stsim_TransitionSpatialMultiplier")
 
-## Initial conditions
+## +Initial conditions --------------------------------------------------------
 
-# initialConditionsSpatial <- data.frame(
-#   StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19.tif"),
-#   StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_MZ19.tif"), 
-#   SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_MZ19.tif"))
 initialConditionsSpatial <- data.frame(
-  StateClassFileName = paste0(getwd(), "/data/clean/cropped/nw_EVC_EVH_StateClasses_MZ19_cropped.tif"),
-  StratumFileName = paste0(getwd(), "/data/clean/cropped/nw_EVT_clean_MZ19_cropped.tif"), 
-  SecondaryStratumFileName = paste0(getwd(), "/data/clean/cropped/nw_Mapzones_MZ19_cropped.tif"))
+  StateClassFileName = stateClassRasterPath,
+  StratumFileName = stratumRasterPath,
+  SecondaryStratumFileName = secondaryStratumRasterPath)
 
 saveDatasheet(myscenario, initialConditionsSpatial, 
               "stsim_InitialConditionsSpatial")
 
-## Run Control
+## +Run Control --------------------------------------------------------------
 
 runControl <- data.frame(
-  MinimumIteration = 1,
-  MaximumIteration = 1, 
-  MinimumTimestep = 2017,
-  MaximumTimestep = 2018, 
+  MinimumIteration = minimumIteration,
+  MaximumIteration = maximumIteration, 
+  MinimumTimestep =  minimumTimestep,
+  MaximumTimestep =  maximumTimestep, 
   IsSpatial = TRUE
 )
 
 saveDatasheet(myscenario, runControl, "stsim_RunControl")
 
-## Output Options
+## +Output Options -----------------------------------------------------------
 
 outputOptionsSummary <- 
   data.frame(SummaryOutputSC = TRUE, SummaryOutputSCTimesteps = 1, 
@@ -382,26 +406,22 @@ outputOptionsSpatial <-
 saveDatasheet(myscenario, outputOptionsSummary, "stsim_OutputOptions")
 saveDatasheet(myscenario, outputOptionsSpatial, "stsim_OutputOptionsSpatial")
 
-## Spatial multiprocessing 
+## +Spatial multiprocessing ---------------------------------------------------
 
 spatial_multi <- datasheet(myscenario, "corestime_Multiprocessing")
-# spatial_multi <- add_row(spatial_multi, 
-#         MaskFileName = file.path(getwd(), 
-#                                  "data/clean/cropped/nw_Mapzones_MZ19.tif"))
-spatial_multi <- add_row(spatial_multi, 
-        MaskFileName = file.path(getwd(), 
-                                 "data/clean/cropped/Tiling_MZ19_cropped.tif"))
+spatial_multi <- add_row(spatial_multi, MaskFileName = tilingMaskRasterPath)
 
 saveDatasheet(myscenario, spatial_multi, "corestime_Multiprocessing")
 
-## End the db connection
+# Cleanup ---------------------------------------------------------------------
+
+# Close the database connection
 odbcClose(db)
 
-# -------------------------------------------------------------------------
-# QA Code
+# QA Code -----------------------------------------------------------------
 
 ## Old tests for QA
-# the_list <- transTbl %>%
+# the_list <- transitionTable %>%
 #   group_split(VDIST, SecondaryStratumID, StratumIDSource, EVCB, EVHB)
 # the_vec <- sapply(the_list, nrow)
 # larger <- which(the_vec > 1)
@@ -409,7 +429,7 @@ odbcClose(db)
 # the_list_of_larger[1]
 
 # raw <- sqlFetch(db, "vegtransf_rv02i_d")
-# test <- raw[which(duplicated(transTbl)),]
+# test <- raw[which(duplicated(transitionTable)),]
 # View(test)
 
 # raw <- sqlFetch(db, "vegtransf_rv02i_d")
@@ -421,5 +441,3 @@ odbcClose(db)
 #   filter(MZ %in% c(19)) %>%
 #   filter(VDIST %in% allValues) %>%
 #   filter(EVT7B %in% unique(raster("data/clean/cropped/nw_EVT_clean_small.tif")))
-
-# -------------------------------------------------------------------------
