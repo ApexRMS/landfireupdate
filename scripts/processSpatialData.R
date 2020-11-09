@@ -1,13 +1,15 @@
 ### LANDFIRE Project 
-### APEX RMS - Valentin Lucet 
+### APEX RMS - Valentin Lucet and Shreeram Senthivasan 
 ### September 2020
-### Cleaning spatial data obtained from client
+### This script is used to clean and pre-process raw spatial data obtained from 
+### Land Fire for simulation in SyncroSim
 
-# Load packages ------------------------------------------------------------
+955# Load packages ------------------------------------------------------------
 library(raster) # Raster packages deals with tiff files (grid files)
 library(tidyverse)
 library(pryr)   # Testing - check mem usage
-library(furrr) # For parallel iteration
+library(furrr)  # For parallel iteration
+library(readxl) # For reading disturbance crosswalk
 
 # Set global variables ----------------------------------------------------
 
@@ -15,14 +17,17 @@ library(furrr) # For parallel iteration
 
 # Directory holding raw rasters
 rawRasterDirectory <- "data/raw/"
-rawRasterDirectory <- "D:/A236/a236/data/raw/" # testing
 
 # Raw input rasters
 mapzoneRasterPath <- paste0(rawRasterDirectory, "nw_mapzone_tiff/nw_mapzone.tif")
 evtRasterPath     <- paste0(rawRasterDirectory, "nw_evt2.0_tiff/nw_evt20.tif")
 evhRasterPath     <- paste0(rawRasterDirectory, "nw_evh2.0class1.4_tiff/nw_evh_m.tif")
 evcRasterPath     <- paste0(rawRasterDirectory, "nw_evc2.0class1.4_tiff/nw_evc_m.tif")
-fdistRasterPath   <- paste0(rawRasterDirectory, "NW_FDIST2014_TIFF/nw_fdist2014.tif")
+fdistRasterPath   <- paste0(rawRasterDirectory, "nw_fdist2020_tiff/nw_fdist.tif")
+
+# FDIST - VDIST Crosswalk
+distCrosswalk <- read_xlsx("data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx") %>%
+  select(fdist = FDIST, vdist = VDIST)
 
 ## +Outputs ---------------------------------------------------------------
 
@@ -34,21 +39,19 @@ dir.create(cleanRasterDirectory, showWarnings = F)
 cleanRasterSuffix <- ""
 
 # Directory and prefix for FDIST binary rasters (spatial multipliers)
-multiplierRasterFolder <- paste0(cleanRasterDirectory, "fdistRaster/")
-multiplierRasterPrefix <- paste0(multiplierRasterFolder, "FDIST_value_")
+multiplierRasterFolder <- paste0(cleanRasterDirectory, "vdistRaster/")
+multiplierRasterPrefix <- paste0(multiplierRasterFolder, "VDIST_value_")
 dir.create(multiplierRasterFolder, showWarnings = F)
 
-# Tile Resolution
-# A tile mask is produced to allow for Spatial Multiprocessing in SyncroSim
-# Choose the number of rows and columns to split the rasters into for the tiling
-tileRows <- 5
+# A tiling mask is produced to allow for Spatial Multiprocessing in SyncroSim
+# The size of the rows is dictated by the size of the raster and memory constraints,
+# but the number of columns can be set here
 tileCols <- 5
 
 ## +Other options -----------------------------------------------------------
 
-# Option to crop to fixed extent
-cropToExtent <- TRUE # testing
-cropExtent   <- extent(-1449683,-1055783, 2413797, 3024897) # testing - bounding box of MZ19
+# Which mapzone to analyze
+mapzoneToKeep <- 19
 
 # Switches to skip steps to save time while testing
 skipCrop <- TRUE
@@ -57,12 +60,6 @@ skipCrop <- TRUE
 # Using all cores can slow down user interface when run interactively
 # This is not a concern in HPC situations
 nThreads <- availableCores() - 1
-
-# Used in conjunction with the size of the rasters to decide how many blocks to 
-# split the maps into when possible
-# This value does not account for overhead memory usage and is only an
-# approximation, please use a generous safety factor!
-gbMemoryPerThread <- 1
 
 # Load spatial data -------------------------------------------------------
 
@@ -81,11 +78,205 @@ fdistRaster <- raster(fdistRasterPath)
 origin(mapzoneRaster) <- origin(evtRaster)
 
 
+# Setup masking --------------------------------------------------------------
+
+# A memory-safe raster mask function optimized for large rasters
+# Requires an output filename, slower than raster::mask for small rasters
+# input and mask rasters should have the same extent
+maskByMapzone <- function(inputRaster, maskRaster, maskValue, filename){
+  # Integer mask values save memory
+  maskValue <- as.integer(maskValue)
+  
+  # Let raster::blockSize() decide appropriate blocks to break the raster into
+  blockInfo <- blockSize(inputRaster)
+  
+  # Generate empty raster with appropriate dimensions
+  outputRaster <- raster(
+    nrows = nrow(inputRaster),
+    ncols = ncol(inputRaster),
+    ext = extent(inputRaster),
+    crs = crs(inputRaster)
+  )
+  
+  # Calculate mask and write to output block-by-block
+  outputRaster <- writeStart(outputRaster, filename, overwrite=TRUE)
+  
+  for(i in seq(blockInfo$n)) {
+    blockMask <- 
+      getValuesBlock(inputRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i]) %>%
+      `==`(maskValue) %>%
+      if_else(true = maskValue, false = NA_integer_)
+    outputRaster <- writeValues(outputRaster, blockMask, blockInfo$row[i])
+  }
+  
+  outputRaster <- writeStop(outputRaster)
+  
+  return(outputRaster)
+}
+
+# A raster trim function that uses binary search to handle large rasters
+# - Requires an output filename, slower than raster::trim for small rasters
+# - maxBlockSizePower is an integer that will be used to calculate the maximum
+#   of rows / cols to load into memory. Specifically 2^maxBlockSizePower rows and
+#   cols will be loaded at most at a time
+trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
+  # Reading portions of large rasters that can't be held in memory is slow, so
+  # we want to minimize the number of reads as we identify how much we can trim
+  # off each of the four sides of the raster
+  
+  # One simplistic approach is to check large blocks at a time until a block
+  # with non-NA data is found. Next halve the size of the search block and
+  # continue searching. Keep halving the the width of the search block until you
+  # find the single first column with data.
+    
+  # Decide how to split input into manageable blocks
+  maxBlockSize <- 2^(maxBlockSizePower)
+  descendingBlockSizes <- 2^((maxBlockSizePower-1):0)
+  
+  # Initialize counters
+  trimAbove <- 1
+  trimBelow <- nrow(inputRaster) + 1
+  trimLeft  <- 1
+  trimRight <- ncol(inputRaster) + 1
+
+  ## Top
+  # Search for the first block from the top with data
+  while(
+    getValuesBlock(inputRaster,
+                   row = trimAbove,
+                   nrows = maxBlockSize) %>%
+    is.na %>%
+    all
+  )
+    trimAbove <- trimAbove + maxBlockSize
+
+  # Now do a binary search for the first row with data
+  for(i in descendingBlockSizes)
+    if(getValuesBlock(inputRaster, row = trimAbove, nrows = i) %>% is.na %>% all)
+      trimAbove <- trimAbove + i
+  
+  ## Bottom
+  # Repeat from the bottom up, first finding a block that is not all NA
+  while(
+    getValuesBlock(inputRaster,
+                   row = trimBelow - maxBlockSize,
+                   nrows = maxBlockSize) %>%
+    is.na %>%
+    all
+  )
+    trimBelow <- trimBelow - maxBlockSize
+  
+  # Binary search for last row with data
+  for(i in descendingBlockSizes)
+    if(getValuesBlock(inputRaster, row = trimBelow - i,nrows = i) %>% is.na %>% all)
+      trimBelow <- trimBelow - i
+  
+  # Calculate height of the trimmed raster
+  outputRows <- trimBelow - trimAbove - 1
+
+  ## Left
+  # Search for the first block from the left with data
+  while(
+    getValuesBlock(inputRaster,
+                   col   = trimLeft,
+                   ncols = maxBlockSize,
+                   row   = trimAbove,
+                   nrows = outputRows) %>%
+    is.na %>%
+    all
+  )
+    trimLeft <- trimLeft + maxBlockSize
+  
+  # Now do a binary search for the first row with data
+  for(i in descendingBlockSizes)
+    if(getValuesBlock(inputRaster,
+                      col   = trimLeft,
+                      ncols = i,
+                      row   = trimAbove,
+                      nrows = outputRows) %>%
+       is.na %>%
+       all)
+      trimLeft <- trimLeft + i
+  
+  ## Right
+  # Repeat for the first block from the right with data
+  while(
+    getValuesBlock(inputRaster,
+                   col   = trimRight - maxBlockSize,
+                   ncols = maxBlockSize,
+                   row   = trimAbove,
+                   nrows = outputRows) %>%
+    is.na %>%
+    all
+  )
+    trimRight <- trimRight - maxBlockSize
+
+  # Now do a binary search for the first row with data
+  for(i in descendingBlockSizes)
+    if(getValuesBlock(inputRaster,
+                      col   = trimRight - i,
+                      ncols = i,
+                      row   = trimAbove,
+                      nrows = outputRows) %>%
+       is.na %>%
+       all)
+      trimRight <- trimRight - i
+  
+  # Calculate height of the trimmed raster
+  outputCols <- trimRight - trimLeft
+  
+  # COnvert trim variables to x,y min,max
+  outXmin <- xmin(extent(inputRaster)) + trimLeft * res(inputRaster)[1]
+  outXmax <- outXmin + outputCols *  res(inputRaster)[1]
+  outYmax <- ymax(extent(inputRaster)) - trimAbove * res(inputRaster)[2]
+  outYmin <- outYmax - outputRows * res(inputRaster)[2]
+  
+  # Create empty raster to hold trim results
+  outputRaster <-  raster(
+    nrows = nrow(inputRaster),
+    ncols = ncol(inputRaster),
+    ext = extent(inputRaster),
+    crs = crs(inputRaster)
+  ) %>%
+  crop(extent(c(xmin = outXmin,
+                xmax = outXmax,
+                ymin = outYmin,
+                ymax = outYmax)))
+  
+  ## Fill with values from input
+  blockInfo <- blockSize(outputRaster)
+  
+  # Calculate mask and write to output block-by-block
+  outputRaster <- writeStart(outputRaster, filename, overwrite=TRUE)
+  
+  for(i in seq(blockInfo$n))
+    outputRaster <- 
+      writeValues(outputRaster,
+                  getValuesBlock(inputRaster,
+                                 row   = blockInfo$row[i] + trimAbove -1,
+                                 nrows = blockInfo$nrows[i],
+                                 col   = trimLeft,
+                                 ncols = outputCols),
+                  blockInfo$row[i])
+  
+  outputRaster <- writeStop(outputRaster)
+  
+  return(outputRaster)
+}
+
+mapzoneRaster <-
+  maskByMapzone(
+    inputRaster = mapzoneRaster, 
+    maskRaster = mapzoneRaster,
+    maskValue = mapzoneToKeep,
+    filename = "temp.tif") %>%
+  trimRaster(
+    filename = paste0(cleanRasterDirectory, "Mapzones", cleanRasterSuffix, ".tif")
+  )
+
+
 # Crop data --------------------------------------------------------------
 if(!skipCrop){
-  if (cropToExtent)
-    mapzoneRaster <- crop(mapzoneRaster, cropExtent)
-  
   evtRaster <- crop(evtRaster, mapzoneRaster)
   evhRaster <- crop(evhRaster, mapzoneRaster)
   evcRaster <- crop(evcRaster, mapzoneRaster)
@@ -93,83 +284,96 @@ if(!skipCrop){
   
   ## Save clean data
   writeRaster(mapzoneRaster, 
-              paste0(cleanRasterDirectory, "nw_Mapzones", cleanRasterSuffix,".tif"),
+              paste0(cleanRasterDirectory, "Mapzones", cleanRasterSuffix,".tif"),
               overwrite = TRUE)
   writeRaster(evtRaster, 
-              paste0(cleanRasterDirectory, "nw_EVT", cleanRasterSuffix,".tif"),
+              paste0(cleanRasterDirectory, "EVT", cleanRasterSuffix,".tif"),
               overwrite = TRUE)
   writeRaster(evhRaster,
-              paste0(cleanRasterDirectory, "nw_EVH", cleanRasterSuffix,".tif"),
+              paste0(cleanRasterDirectory, "EVH", cleanRasterSuffix,".tif"),
               overwrite = TRUE)
   writeRaster(evcRaster,
-              paste0(cleanRasterDirectory, "nw_EVC", cleanRasterSuffix,".tif"),
+              paste0(cleanRasterDirectory, "EVC", cleanRasterSuffix,".tif"),
               overwrite = TRUE)
   writeRaster(fdistRaster,
-              paste0(cleanRasterDirectory, "nw_fDIST", cleanRasterSuffix,".tif"),
+              paste0(cleanRasterDirectory, "fDIST", cleanRasterSuffix,".tif"),
               overwrite = TRUE)
 } else{
-  mapzoneRaster <- raster(paste0(cleanRasterDirectory, "nw_Mapzones", cleanRasterSuffix,".tif"))
-  evtRaster <- raster(paste0(cleanRasterDirectory, "nw_EVT", cleanRasterSuffix,".tif"))
-  evhRaster <- raster(paste0(cleanRasterDirectory, "nw_EVH", cleanRasterSuffix,".tif"))
-  evcRaster <- raster(paste0(cleanRasterDirectory, "nw_EVC", cleanRasterSuffix,".tif"))
-  fdistRaster <- raster(paste0(cleanRasterDirectory, "nw_fDIST", cleanRasterSuffix,".tif"))
+  mapzoneRaster <- raster(paste0(cleanRasterDirectory, "Mapzones", cleanRasterSuffix,".tif"))
+  evtRaster <- raster(paste0(cleanRasterDirectory, "EVT", cleanRasterSuffix,".tif"))
+  evhRaster <- raster(paste0(cleanRasterDirectory, "EVH", cleanRasterSuffix,".tif"))
+  evcRaster <- raster(paste0(cleanRasterDirectory, "EVC", cleanRasterSuffix,".tif"))
+  fdistRaster <- raster(paste0(cleanRasterDirectory, "fDIST", cleanRasterSuffix,".tif"))
 }
 
-# Layerize disturbance raster --------------------------------------------------
-
-# Memory safe function to return unique values from sections of a raster
-uniqueInBlock <- function(blockID, fullRaster, totalBlocks){
-  blockHeight <- ceiling(nrow(fullRaster) / totalBlocks)
-  blockRow <- 1 + (blockID - 1) * blockHeight
-  return(unique(getValuesBlock(fullRaster, row = blockRow, nrows = blockHeight)))
-}
-
-# Function to create and save a binary raster given a non-binary raster and the
-# value to test for
-saveFdistLayer <- function(fdistValue, fullRaster) {
-  writeRaster(
-    layerize(fullRaster, classes = fdistValue),
-    paste0(multiplierRasterPrefix, fdistValue, ".tif"),
-    overwrite = TRUE
-  )
-}
+# Convert disturbance to VDIST ------------------------------------------------
 
 # Choose number of blocks to split rasters into when processing to limit memory
-# usage per thread (important for HPC)
-nBlocks <- max(
-  nThreads,                         # Use at least as many blocks as threads
-  ceiling(
-    ncell(fdistRaster) * 16 /       # Each cell, uncompressed is 8bytes, most operations require two copies
-    (gbMemoryPerThread * 1e9 - 3e8) # 3e8, or 300MB is an experimental approximate overhead memory use per thread
-  )
-)
+fdistBlockInfo <- blockSize(fdistRaster)
 
 # Begin parallel processing
 plan(multisession, workers = nThreads)
 
-# Split the FDIST raster into blocks to calculate unique vector of FDIST codes
-# without using excessive memory per thread
+# Split the FDIST raster into blocks to calculate the unique set of FDIST codes
+# present in the data without using excessive memory per thread
 fdistLevels <- 
   future_map(
-    seq(nBlocks),
-    uniqueInBlock,
-    fullRaster = fdistRaster,
-    totalBlocks = nBlocks,
+    seq(fdistBlockInfo$n),
+    ~ unique(getValuesBlock(fdistRaster,
+                            row   = fdistBlockInfo$row[.x],
+                            nrows = fdistBlockInfo$nrows[.x])),
     .options = furrr_options(
       seed = TRUE,
-      globals = c("fdistRaster", "uniqueInBlock"),
+      globals = c("fdistRaster", "fdistBlockInfo"),
       packages = "raster"
       )) %>%
-  flatten_dbl %>%
+  flatten_int %>%
   unique() %>%
   na.omit
 
-# Split the FDIST raster into binary layers
+# End parallel processing
+plan(sequential)
+
+# Check which fdist codes need to be reclassified to a different vdist code
+distReclassification <- distCrosswalk %>%
+  filter(
+    fdist %in% fdistLevels,
+    fdist != vdist) %>%
+  as.matrix
+
+# Reclassify as necessary and save
+vdistRaster <- reclassify(fdistRaster, distReclassification)
+writeRaster(vdistRaster,
+            paste0(cleanRasterDirectory, "vDIST", cleanRasterSuffix,".tif"),
+            overwrite = TRUE)
+
+# Generate list of unique VDIST codes
+vdistLevels <- distCrosswalk %>%
+  filter(fdist %in% fdistLevels) %>%
+  pull(vdist) %>%
+  unique
+
+# Layerize disturbace raster -------------------------------------------------
+
+# Function to create and save a binary raster given a non-binary raster and the
+# value to test for
+saveDistLayer <- function(distValue, fullRaster) {
+  writeRaster(
+    layerize(fullRaster, classes = distValue),
+    paste0(multiplierRasterPrefix, distValue, ".tif"),
+    overwrite = TRUE
+  )
+}
+
+# Begin parallel processing
+plan(multisession, workers = nThreads)
+
+# Split the VDIST raster into binary layers
 # One layer is constructed at a time per thread to limit memory use per thread
 future_walk(
-  fdistLevels,
-  saveFdistLayer,
-  fullRaster = fdistRaster,
+  vdistLevels,
+  saveDistLayer,
+  fullRaster = vdistRaster,
   .options = furrr_options(seed = TRUE))
 
 # Return to sequential operation
@@ -181,7 +385,7 @@ plan(sequential)
 # We can "paste" these codes together by multiplying EVC by 1000 and summing
 stateClasses <- evcRaster * 1000 + evhRaster
 writeRaster(stateClasses,
-            paste0(cleanRasterDirectory, "nw_EVC_EVH_StateClasses.tif"),
+            paste0(cleanRasterDirectory, "StateClass.tif"),
             overwrite = TRUE)
 
 # Tiling for spatial multiprocessing -------------------------------------
@@ -239,4 +443,4 @@ tileRaster <-
   tilize(
     mapzoneRaster, 
     paste0(cleanRasterDirectory, "Tiling", cleanRasterSuffix, ".tif"),
-    nx = 3)
+    nx = tileCols)
