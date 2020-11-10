@@ -297,7 +297,7 @@ fdistLevels <-
       globals = c("fdistRaster", "fdistBlockInfo"),
       packages = "raster"
       )) %>%
-  flatten_int %>%
+  flatten_dbl %>%
   unique() %>%
   `[`(!. %in% c(0, NA)) # Remove NA (no data) and 0 (no disturbance)
 
