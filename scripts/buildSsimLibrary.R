@@ -66,6 +66,7 @@ EVClookup <- sqlFetch(db, evcTableName) %>%
   rename(EVC_ID = VALUE, StateLabelXID = CLASSNAMES) %>%
   # Shorten EVC names for cleaner SyncroSim UI
   mutate(
+    StateLabelXDescription = StateLabelXID,
     StateLabelXID = str_replace(StateLabelXID, " and <=? ", "-"),
     StateLabelXID = str_replace(StateLabelXID, "Tree Cover >=",  "Tr"),
     StateLabelXID = str_replace(StateLabelXID, "Tree Cover <",  "Tr <"),
@@ -78,8 +79,9 @@ EVHlookup <- sqlFetch(db, evhTableName) %>%
   mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(LIFEFORM, "_", VALUE))) %>%
   select(VALUE, CLASSNAMES) %>% 
   rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES) %>%
-  # Shorten EVh names for cleaner SyncroSim UI
+  # Shorten EVH names for cleaner SyncroSim UI
   mutate(
+    StateLabelYDescription = StateLabelYID,
     StateLabelYID = str_replace(StateLabelYID, " to ", "-"),
     StateLabelYID = str_replace(StateLabelYID, " meters?", "m"),
     StateLabelYID = str_replace(StateLabelYID, "Forest Height", "Fr"),
@@ -97,12 +99,14 @@ transitionTable <- transitionTable %>%
   rename(EVCB_Name = StateLabelXID) %>% 
   left_join(EVClookup, by = c("EVCR" = "EVC_ID")) %>% 
   rename(EVCR_Name = StateLabelXID) %>%
+  select(-StateLabelXDescription.x, -StateLabelXDescription.y) %>%
   
   # Similarly for EVH
   left_join(EVHlookup, by = c("EVHB" = "EVH_ID")) %>% 
   rename(EVHB_Name = StateLabelYID) %>% 
   left_join(EVHlookup, by = c("EVHR" = "EVH_ID")) %>% 
-  rename(EVHR_Name = StateLabelYID) %>% 
+  rename(EVHR_Name = StateLabelYID) %>%
+  select(-StateLabelYDescription.x, -StateLabelYDescription.y) %>%
   
   # Create the State Class names from EVC : EVH combinations
   mutate(StateClassIDSource = paste0(EVCB_Name, " : ", EVHB_Name), 
@@ -183,14 +187,14 @@ saveDatasheet(myproject, secondary, "SecondaryStratum")
 
 state_x <- data.frame(
   Name = EVClookup$StateLabelXID,
-  Description = EVClookup$StateLabelXID) %>% 
+  Description = EVClookup$StateLabelXDescription) %>% 
   unique()
 
 saveDatasheet(myproject, state_x, "stsim_StateLabelX")
 
 state_y <- data.frame(
   Name = EVHlookup$StateLabelYID,
-  Description = EVHlookup$StateLabelYID) %>% 
+  Description = EVHlookup$StateLabelYDescription) %>% 
   unique()
 
 saveDatasheet(myproject, state_y, "stsim_StateLabelY")
@@ -277,20 +281,48 @@ saveDatasheet(myproject, simulationGroups, "stsim_TransitionSimulationGroup")
 # Generate locations for unique state classes to be used in the SyncroSim
 # Transition Pathways Diagrams
 
-locations <- stateClasses %>% 
-  # Create unique positions for them
-  mutate(
-    letter = case_when(
-      str_detect(StateLabelXID, "Tree")  ~ "A",
-      str_detect(StateLabelXID, "Shrub") ~ "B",
-      str_detect(StateLabelXID, "Herb")  ~ "C",
-      TRUE                               ~ "D")) %>%
-  # Arrange, split and lapply across all rows
-  arrange(letter, StateLabelYID) %>% 
-  group_by(letter) %>% 
-  mutate(Location = str_c(letter, row_number())) %>% 
-  ungroup() %>%
-  select(Name, Location)
+locations <- 
+  stateClasses %>%
+    mutate(
+      letter = case_when(
+        str_detect(StateLabelXID, "10-20")   ~ "A",
+        str_detect(StateLabelXID, "20-30")   ~ "B",
+        str_detect(StateLabelXID, "30-40")   ~ "C",
+        str_detect(StateLabelXID, "40-50")   ~ "D",
+        str_detect(StateLabelXID, "50-60")   ~ "E",
+        str_detect(StateLabelXID, "60-70")   ~ "F",
+        str_detect(StateLabelXID, "70-80")   ~ "G",
+        str_detect(StateLabelXID, "80-90")   ~ "H",
+        str_detect(StateLabelXID, "90-100")  ~ "I",
+        str_detect(StateLabelXID, "< 10")    ~ "J", # J is reserved for uncommon cover labels
+        str_detect(StateLabelXID, "Sparse")  ~ "J", # J is reserved for uncommon cover labels
+        TRUE                                 ~  NA_character_),
+      letter = suppressWarnings(replace(letter, is.na(letter), str_to_upper(letters))),
+      number = case_when(
+        str_detect(StateLabelYID, "Fr > ")   ~  1,
+        str_detect(StateLabelYID, "Fr 25")   ~  2,
+        str_detect(StateLabelYID, "Fr 10")   ~  3,
+        str_detect(StateLabelYID, "Fr 5-")   ~  4,
+        str_detect(StateLabelYID, "Fr < ")   ~  5,
+        str_detect(StateLabelYID, "Sh > ")   ~  6,
+        str_detect(StateLabelYID, "Sh 1.0")  ~  7,
+        str_detect(StateLabelYID, "Sh 0.5")  ~  8,
+        str_detect(StateLabelYID, "Sh < ")   ~  9,
+        str_detect(StateLabelYID, "Hb > ")   ~ 10,
+        str_detect(StateLabelYID, "Hb 0.5")  ~ 11,
+        str_detect(StateLabelYID, "Hb < ")   ~ 12,
+        TRUE                                 ~ 13),
+      # Deal with mixed forms
+        mixedLifeForm = case_when(
+          str_detect(StateLabelXID, "Tr") & !str_detect(StateLabelYID, "Fr") ~ T,
+          str_detect(StateLabelXID, "Sh") & !str_detect(StateLabelYID, "Sh") ~ T,
+          str_detect(StateLabelXID, "Hb") & !str_detect(StateLabelYID, "Hb") ~ T,
+          T                                                                  ~ F),
+        number = if_else(mixedLifeForm, number+14, number),
+      # Done dealing with mixed lifeforms
+      Location = str_c(letter, number)) %>%
+    select(Name, Location)
+
 
 # Join the locations back into the state class table and clean up the datasheet
 deterministicTransitions <- stateClasses %>% 
