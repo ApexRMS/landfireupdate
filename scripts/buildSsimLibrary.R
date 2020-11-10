@@ -29,10 +29,10 @@ db <-
   odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=", 
                            landFireDBPath))
 
-# Load the lookup table that connects EVC (State Label X) to corresponding colors
+# Load the lookup table that will be used to color state classes by their EVC code
 evcColors <- read_csv(evcColorsPath) %>%
   transmute(
-    StateLabelXID = VALUE,
+    evcCode = VALUE,
     Color = paste("255", R, G, B, sep = ",")
   )
 
@@ -49,7 +49,7 @@ transitionTable <- sqlFetch(db, transitionTableName) %>%
          EVCB, EVHB, EVCR, EVHR) %>%
   # Turn all factors into strings
   mutate_if(is.factor, as.character) %>%
-      # Change the naming convention of MapZones e.g. from "1" to "MZ01"
+  # Change the naming convention of MapZones e.g. from "1" to "MZ01"
   mutate(SecondaryStratumID = paste0("MZ", str_pad(MZ, 2, "left", "0"))) %>%
   # Keep only unique rows
   unique()
@@ -63,13 +63,30 @@ EVClookup <- sqlFetch(db, evcTableName) %>%
   mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(EVT_LIFEFORM, "_", VALUE))) %>%
   # Select relevant columns and rename with stsim relevant column names
   select(VALUE, CLASSNAMES) %>% 
-  rename(EVC_ID = VALUE, StateLabelXID = CLASSNAMES)
+  rename(EVC_ID = VALUE, StateLabelXID = CLASSNAMES) %>%
+  # Shorten EVC names for cleaner SyncroSim UI
+  mutate(
+    StateLabelXID = str_replace(StateLabelXID, " and <=? ", "-"),
+    StateLabelXID = str_replace(StateLabelXID, "Tree Cover >=",  "Tr"),
+    StateLabelXID = str_replace(StateLabelXID, "Tree Cover <",  "Tr <"),
+    StateLabelXID = str_replace(StateLabelXID, "Shrub Cover >=", "Sh"),
+    StateLabelXID = str_replace(StateLabelXID, "Herb Cover >=",  "Hb")
+  )
 
 EVHlookup <- sqlFetch(db, evhTableName) %>% 
   mutate_if(is.factor, as.character) %>%
   mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(LIFEFORM, "_", VALUE))) %>%
   select(VALUE, CLASSNAMES) %>% 
-  rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES)
+  rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES) %>%
+  # Shorten EVh names for cleaner SyncroSim UI
+  mutate(
+    StateLabelYID = str_replace(StateLabelYID, " to ", "-"),
+    StateLabelYID = str_replace(StateLabelYID, " meters?", "m"),
+    StateLabelYID = str_replace(StateLabelYID, "Forest Height", "Fr"),
+    StateLabelYID = str_replace(StateLabelYID, "Shrub Height",  "Sh"),
+    StateLabelYID = str_replace(StateLabelYID, "Herb Height",   "Hb"),
+    StateLabelYID = str_replace(StateLabelYID, " 0-",   " < "),
+  )
 
 # Add EVC and EVH names to transition table
 
@@ -189,9 +206,11 @@ stateIDs <- c((transitionTable$EVCB*1000 + transitionTable$EVHB),
 stateClasses <- data.frame(
   ID = stateIDs,
   Name = c(transitionTable$StateClassIDSource, transitionTable$StateClassIDDest), 
-  StateLabelXID = c(transitionTable$EVCB_Name, transitionTable$EVCR_Name), 
+  StateLabelXID = c(transitionTable$EVCB_Name, transitionTable$EVCR_Name),
+  evcCode = c(transitionTable$EVCB, transitionTable$EVCR),
   StateLabelYID = c(transitionTable$EVHB_Name, transitionTable$EVHR_Name)) %>%
-  left_join(evcColors, by = "StateLabelXID") %>% # Use EVC to decide state color
+  left_join(evcColors, by = "evcCode") %>% # Use EVC to decide state color
+  select(-evcCode) %>%                     # Remove code used to add colors
   unique()
 
 saveDatasheet(myproject, stateClasses, "stsim_StateClass")
@@ -235,8 +254,10 @@ saveDatasheet(myproject, transitionGroups, "stsim_TransitionGroup")
 ## Transition Types by groups
 
 typesByGroup <- vdistLookup %>% 
-  select(Name, TransitionGroupID) %>% 
-  unique() %>% 
+  select(ID, Name, TransitionGroupID) %>% 
+  unique() %>%
+  filter(ID %in% allVDIST) %>%
+  select(-ID) %>%
   rename(TransitionTypeID = Name)
 
 saveDatasheet(myproject, typesByGroup, "stsim_TransitionTypeGroup")

@@ -51,7 +51,8 @@ vdistTableName      <- "VDIST"
 # Cleaned Raster Options ---------------------------------------------------
 
 # Directory to store cleaned rasters
-cleanRasterDirectory <- paste0("data/clean/", runTag, "/")
+# Note that the working directory is prepended since SyncroSim needs absolute paths
+cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
 dir.create(cleanRasterDirectory, showWarnings = F)
 
 # Suffix to add to output rasters (use to indicate crop options, etc)
