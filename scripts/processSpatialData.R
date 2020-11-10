@@ -4,7 +4,7 @@
 ### This script is used to clean and pre-process raw spatial data obtained from 
 ### Land Fire for simulation in SyncroSim
 
-955# Load packages ------------------------------------------------------------
+# Load packages ------------------------------------------------------------
 library(raster) # Raster packages deals with tiff files (grid files)
 library(tidyverse)
 library(pryr)   # Testing - check mem usage
@@ -26,22 +26,23 @@ evcRasterPath     <- paste0(rawRasterDirectory, "nw_evc2.0class1.4_tiff/nw_evc_m
 fdistRasterPath   <- paste0(rawRasterDirectory, "nw_fdist2020_tiff/nw_fdist.tif")
 
 # FDIST - VDIST Crosswalk
-distCrosswalk <- read_xlsx("data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx") %>%
-  select(fdist = FDIST, vdist = VDIST)
+distCrosswalk <- 
+  read_xlsx("data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx") %>%
+  mutate(name = paste(d_type...2, d_severity...3, d_time...4, sep = " - ")) %>% 
+  select(fdist = FDIST, vdist = VDIST, name)
 
 ## +Outputs ---------------------------------------------------------------
 
 # Directory to store cleaned rasters
-cleanRasterDirectory <- "data/clean/test/"
+cleanRasterDirectory <- "data/clean/MZ19/"
 dir.create(cleanRasterDirectory, showWarnings = F)
 
 # Suffix to add to output rasters (use to indicate crop options, etc)
 cleanRasterSuffix <- ""
 
 # Directory and prefix for FDIST binary rasters (spatial multipliers)
-multiplierRasterFolder <- paste0(cleanRasterDirectory, "vdistRaster/")
-multiplierRasterPrefix <- paste0(multiplierRasterFolder, "VDIST_value_")
-dir.create(multiplierRasterFolder, showWarnings = F)
+transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
+dir.create(transitionMultiplierDirectory, showWarnings = F)
 
 # A tiling mask is produced to allow for Spatial Multiprocessing in SyncroSim
 # The size of the rows is dictated by the size of the raster and memory constraints,
@@ -50,11 +51,8 @@ tileCols <- 5
 
 ## +Other options -----------------------------------------------------------
 
-# Which mapzone to analyze
+# Which mapzone to process
 mapzoneToKeep <- 19
-
-# Switches to skip steps to save time while testing
-skipCrop <- TRUE
 
 # Parallel options
 # Using all cores can slow down user interface when run interactively
@@ -78,7 +76,7 @@ fdistRaster <- raster(fdistRasterPath)
 origin(mapzoneRaster) <- origin(evtRaster)
 
 
-# Setup masking --------------------------------------------------------------
+# Setup mask --------------------------------------------------------------
 
 # A memory-safe raster mask function optimized for large rasters
 # Requires an output filename, slower than raster::mask for small rasters
@@ -264,6 +262,8 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   return(outputRaster)
 }
 
+# Mask and trim mapzone map by the chosen mapzone
+# - Note that trimRaster also saves the raster to the cleaned raster directory
 mapzoneRaster <-
   maskByMapzone(
     inputRaster = mapzoneRaster, 
@@ -274,37 +274,46 @@ mapzoneRaster <-
     filename = paste0(cleanRasterDirectory, "Mapzones", cleanRasterSuffix, ".tif")
   )
 
+# Remove temp files made during run
+unlink("temp.tif")
 
-# Crop data --------------------------------------------------------------
-if(!skipCrop){
-  evtRaster <- crop(evtRaster, mapzoneRaster)
-  evhRaster <- crop(evhRaster, mapzoneRaster)
-  evcRaster <- crop(evcRaster, mapzoneRaster)
-  fdistRaster <- crop(fdistRaster, mapzoneRaster)
-  
-  ## Save clean data
-  writeRaster(mapzoneRaster, 
-              paste0(cleanRasterDirectory, "Mapzones", cleanRasterSuffix,".tif"),
-              overwrite = TRUE)
-  writeRaster(evtRaster, 
-              paste0(cleanRasterDirectory, "EVT", cleanRasterSuffix,".tif"),
-              overwrite = TRUE)
-  writeRaster(evhRaster,
-              paste0(cleanRasterDirectory, "EVH", cleanRasterSuffix,".tif"),
-              overwrite = TRUE)
-  writeRaster(evcRaster,
-              paste0(cleanRasterDirectory, "EVC", cleanRasterSuffix,".tif"),
-              overwrite = TRUE)
-  writeRaster(fdistRaster,
-              paste0(cleanRasterDirectory, "fDIST", cleanRasterSuffix,".tif"),
-              overwrite = TRUE)
-} else{
-  mapzoneRaster <- raster(paste0(cleanRasterDirectory, "Mapzones", cleanRasterSuffix,".tif"))
-  evtRaster <- raster(paste0(cleanRasterDirectory, "EVT", cleanRasterSuffix,".tif"))
-  evhRaster <- raster(paste0(cleanRasterDirectory, "EVH", cleanRasterSuffix,".tif"))
-  evcRaster <- raster(paste0(cleanRasterDirectory, "EVC", cleanRasterSuffix,".tif"))
-  fdistRaster <- raster(paste0(cleanRasterDirectory, "fDIST", cleanRasterSuffix,".tif"))
-}
+# Crop and mask data ----------------------------------------------------------
+
+# Begin parallel processing
+plan(multisession, workers = nThreads)
+
+# Use a named list to define the rasters and file names to iterate over as we
+# crop, mask, and write the outputs to file
+rasterList <- list(
+  "EVT" = evtRaster,
+  "EVH" = evhRaster,
+  "EVC" = evcRaster,
+  "fDIST" = fdistRaster) %>%
+  future_imap(
+    function(raster, name, maskRaster){
+      crop(raster, maskRaster) %>%
+        mask(maskRaster) %>%
+        writeRaster(
+          filename = paste0(cleanRasterDirectory, name, cleanRasterSuffix, ".tif"),
+          overwrite = TRUE
+        )
+    },
+    maskRaster = mapzoneRaster,
+    .options = furrr_options(
+      seed = TRUE,
+      packages = "raster"
+    )
+  )
+
+# End parallel processing
+plan(sequential)
+
+# Assign the results from the list back to the original variables
+evtRaster <- rasterList$EVT
+evhRaster <- rasterList$EVH
+evcRaster <- rasterList$EVC
+fdistRaster <- rasterList$fDIST
+rm(rasterList)
 
 # Convert disturbance to VDIST ------------------------------------------------
 
@@ -329,7 +338,7 @@ fdistLevels <-
       )) %>%
   flatten_int %>%
   unique() %>%
-  na.omit
+  `[`(!. %in% c(0, NA)) # Remove NA (no data) and 0 (no disturbance)
 
 # End parallel processing
 plan(sequential)
@@ -339,6 +348,7 @@ distReclassification <- distCrosswalk %>%
   filter(
     fdist %in% fdistLevels,
     fdist != vdist) %>%
+  select(-name) %>%
   as.matrix
 
 # Reclassify as necessary and save
@@ -351,16 +361,24 @@ writeRaster(vdistRaster,
 vdistLevels <- distCrosswalk %>%
   filter(fdist %in% fdistLevels) %>%
   pull(vdist) %>%
-  unique
+  unique %>%
+  sort 
+
+vdistNames <- distCrosswalk %>%
+  select(-fdist) %>%
+  filter(vdist %in% vdistLevels) %>%
+  arrange(vdist) %>%
+  unique() %>%
+  pull(name)
 
 # Layerize disturbace raster -------------------------------------------------
 
 # Function to create and save a binary raster given a non-binary raster and the
 # value to test for
-saveDistLayer <- function(distValue, fullRaster) {
+saveDistLayer <- function(distValue, distName, fullRaster) {
   writeRaster(
     layerize(fullRaster, classes = distValue),
-    paste0(multiplierRasterPrefix, distValue, ".tif"),
+    paste0(transitionMultiplierDirectory, distName, ".tif"),
     overwrite = TRUE
   )
 }
@@ -370,8 +388,9 @@ plan(multisession, workers = nThreads)
 
 # Split the VDIST raster into binary layers
 # One layer is constructed at a time per thread to limit memory use per thread
-future_walk(
+future_walk2(
   vdistLevels,
+  vdistNames,
   saveDistLayer,
   fullRaster = vdistRaster,
   .options = furrr_options(seed = TRUE))
@@ -444,3 +463,6 @@ tileRaster <-
     mapzoneRaster, 
     paste0(cleanRasterDirectory, "Tiling", cleanRasterSuffix, ".tif"),
     nx = tileCols)
+
+
+proc.time() - ptm
