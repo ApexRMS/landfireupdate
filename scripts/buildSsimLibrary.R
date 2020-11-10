@@ -29,6 +29,13 @@ db <-
   odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=", 
                            landFireDBPath))
 
+# Load the lookup table that connects EVC (State Label X) to corresponding colors
+evcColors <- read_csv(evcColorsPath) %>%
+  transmute(
+    StateLabelXID = VALUE,
+    Color = paste("255", R, G, B, sep = ",")
+  )
+
 # Load the input rasters
 vdistRaster <- raster(vdistRasterPath)
 evtRaster <- raster(primaryStratumRasterPath) # Since primary stratum is EVT
@@ -183,7 +190,8 @@ stateClasses <- data.frame(
   ID = stateIDs,
   Name = c(transitionTable$StateClassIDSource, transitionTable$StateClassIDDest), 
   StateLabelXID = c(transitionTable$EVCB_Name, transitionTable$EVCR_Name), 
-  StateLabelYID = c(transitionTable$EVHB_Name, transitionTable$EVHR_Name)) %>% 
+  StateLabelYID = c(transitionTable$EVHB_Name, transitionTable$EVHR_Name)) %>%
+  left_join(evcColors, by = "StateLabelXID") %>% # Use EVC to decide state color
   unique()
 
 saveDatasheet(myproject, stateClasses, "stsim_StateClass")

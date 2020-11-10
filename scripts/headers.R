@@ -15,7 +15,7 @@ runTag <- "MZ19"
 mapzoneToKeep <- 19
 
 # Threads to use when parallel processing
-nThreads <- availableCores() - 1
+nThreads <- future::availableCores() - 1
 
 # Raw Inputs --------------------------------------------------------------
 
@@ -29,12 +29,15 @@ evhRawRasterPath     <- paste0(rawRasterDirectory, "nw_evh_m.tif")
 evcRawRasterPath     <- paste0(rawRasterDirectory, "nw_evc_m.tif")
 fdistRawRasterPath   <- paste0(rawRasterDirectory, "nw_fdist.tif")
 
-# FDIST - VDIST Crosswalk
-distCrosswalkPath <- "data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx"
-
 # Database Path
 landFireDBPath <- 
   "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_10_21.accdb"
+
+# FDIST - VDIST Crosswalk
+distCrosswalkPath <- "data/raw/nonspatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx"
+
+# EVC color reference - Used to color stateclass map
+evcColorsPath <- "data/raw/nonspatial/LF_Remap_EVC_03052019.csv"
 
 # Database table names ---------------------------------------------------
 
