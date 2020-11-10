@@ -11,66 +11,14 @@
 library(raster)
 library(rgdal)
 library(RODBC)
-library(readxl)
 library(rsyncrosim)
 library(tidyverse)
 
 
 # Set global variables ----------------------------------------------------
 
-# Please ensure these files are correctly named and in the correct locations
-# They are not tracked in the git repository
-
-## Database paths
-
-landFireDBPath <- 
-  "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_10_21.accdb"
-
-distCrosswalkPath <-
-  "data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx"
-
-## Raster paths
-
-# Path to the directory holding rasters
-rasterDirectory <- paste0(getwd(), "/data/clean/cropped/")
-
-fdistRasterPath <- paste0(rasterDirectory, "nw_fDIST_clean_MZ19_cropped.tif")
-  
-evtRasterPath <- paste0(rasterDirectory, "nw_EVT_clean_MZ19_cropped.tif")
-
-stateClassRasterPath <- paste0(rasterDirectory, "nw_EVC_EVH_StateClasses_MZ19_cropped.tif")
-
-stratumRasterPath <- paste0(rasterDirectory, "nw_EVT_clean_MZ19_cropped.tif")
-
-secondaryStratumRasterPath <- paste0(rasterDirectory, "nw_Mapzones_MZ19_cropped.tif")
-
-# Transition multipliers require a raster per FDIST value
-# Instead of a single path, these file names are constructed from a prefix, the
-# the FDIST value of interest (calculated later), and a suffix
-transitionMultipliersPathPrefix <- paste0(rasterDirectory, "FDIST/MZ19/FDIST_value_")
-transitionMultipliersPathSuffix <- "_cropped.tif"
-
-# The tiling raster mask is used to split the inputs for spatial multiprocessing
-tilingMaskRasterPath <- paste0(rasterDirectory, "Tiling_MZ19_cropped.tif")
-
-## Database table names
-#  These are the names of relevant SQL tables withing the database
-
-transitionTableName <- "vegtransf_rv02i_d"
-evcTableName        <- "EVC_LUT"
-evhTableName        <- "EVH_LUT"
-evtColorTableName   <- "nw_evt200"
-vdistTableName      <- "VDIST"
-
-## Run Controls
-
-minimumIteration <- 1
-maximumIteration <- 1
-minimumTimestep <- 2017
-maximumTimestep <- 2018
-
-# Output file names
-libraryName <- "LandFire_Test.ssim"
+# Global variables and paths are set in the header file
+source("scripts/headers.R")
 
 # Prepare input data ---------------------------------------------------
 
@@ -81,18 +29,9 @@ db <-
   odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=", 
                            landFireDBPath))
 
-# Load and clean the lookup table used to convert between VDIST and FDIST codes
-distCrosswalk <- 
-  read_xlsx(distCrosswalkPath) %>% 
-  # Remove unimportant categories
-  select(-c(d_severity...3, d_severity...10, d_type...9, d_time...11,
-                   `Tree Rules`,  `Shrub Rules`, `Herb Rules`)) %>% 
-  # Rename for easier handling
-  rename(d_type_f = d_type...2, d_time_f = d_time...4)
-
 # Load the input rasters
-fdistRaster <- raster(fdistRasterPath)
-evtRaster <- raster(evtRasterPath)
+vdistRaster <- raster(vdistRasterPath)
+evtRaster <- raster(primaryStratumRasterPath) # Since primary stratum is EVT
 
 ## Generate a table of all unique transitions
 
@@ -148,29 +87,28 @@ transitionTable <- transitionTable %>%
   # Add the propability column with all set to 1
   mutate(Probability = 1)
 
-## Generate vectors of all FDIST and EVT codes present in data
+## Generate vectors of all vDIST and EVT codes present in data
 
-allFDIST <- unique(fdistRaster)
+allVDIST <- unique(vdistRaster)
 
 allEVT <- unique(evtRaster)
 
 # Build the SyncroSim Library ---------------------------------------------
 
 # Create library with a project ("Definitions") and a scenario ("Test")
-mylibrary <- ssimLibrary(paste0("library/", libraryName), overwrite = TRUE)
-myproject <- project(mylibrary, "Definitions", overwrite = TRUE)
-myscenario <- scenario(myproject, "Test")
+mylibrary <- ssimLibrary(libraryName, overwrite = TRUE)
+myproject <- project(mylibrary, projectName, overwrite = TRUE)
+myscenario <- scenario(myproject, scenarioName)
 
 ## +Terminology -----------------------------------------------------------
 
 term <- data.frame(
   AmountLabel = "Area", 
-  AmountUnits = "Hectares", 
+  AmountUnits = "Acres", 
   StateLabelX = "EVC", 
   StateLabelY = "EVH", 
   PrimaryStratumLabel = "EVT",
   SecondaryStratumLabel = "MapZones",
-  # TertiaryStratumLabel = "ESP", 
   TimestepUnits = "Timestep"
 )
 
@@ -263,7 +201,7 @@ vdistLookup <-  sqlFetch(db, vdistTableName) %>%
   filter(ID != 0) %>%
   # Create unique transition/disturbance name, and format color
   # The format of the name is : Group, Severity, Frequency
-  mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = ", ")) %>% 
+  mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = " - ")) %>% 
   mutate(Color = paste("255", R, G, B, sep = ","))
 
 # Select the relevant columns, and filter by disturbances that are actually
@@ -271,7 +209,7 @@ vdistLookup <-  sqlFetch(db, vdistTableName) %>%
 transitionTypes <- vdistLookup %>% 
   select(ID, Name, Color) %>% 
   unique() %>%
-  filter(ID %in% allFDIST)
+  filter(ID %in% allVDIST)
 
 saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
 
@@ -359,9 +297,10 @@ saveDatasheet(myscenario, probabilisticTransitions, "stsim_Transition")
 
 # Collect the names and cretae path files
 multiplierGroupNames <- paste0(transitionTypes$Name, " [Type]")
-multiplierFileNames <- paste0(transitionMultipliersPathPrefix,
-                              transitionTypes$ID,
-                              transitionMultipliersPathSuffix)
+multiplierFileNames <- paste0(transitionMultiplierDirectory,
+                              transitionTypes$Name,
+                              cleanRasterSuffix,
+                              ".tif")
 
 # Compose and save the data frame
 spatialMultiplier <- data.frame(
@@ -375,7 +314,7 @@ saveDatasheet(myscenario, spatialMultiplier,
 
 initialConditionsSpatial <- data.frame(
   StateClassFileName = stateClassRasterPath,
-  StratumFileName = stratumRasterPath,
+  StratumFileName = primaryStratumRasterPath,
   SecondaryStratumFileName = secondaryStratumRasterPath)
 
 saveDatasheet(myscenario, initialConditionsSpatial, 
@@ -409,7 +348,7 @@ saveDatasheet(myscenario, outputOptionsSpatial, "stsim_OutputOptionsSpatial")
 ## +Spatial multiprocessing ---------------------------------------------------
 
 spatial_multi <- datasheet(myscenario, "corestime_Multiprocessing")
-spatial_multi <- add_row(spatial_multi, MaskFileName = tilingMaskRasterPath)
+spatial_multi <- add_row(spatial_multi, MaskFileName = tilingRasterPath)
 
 saveDatasheet(myscenario, spatial_multi, "corestime_Multiprocessing")
 

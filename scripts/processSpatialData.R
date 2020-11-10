@@ -11,66 +11,27 @@ library(pryr)   # Testing - check mem usage
 library(furrr)  # For parallel iteration
 library(readxl) # For reading disturbance crosswalk
 
-# Set global variables ----------------------------------------------------
+# Load global options ----------------------------------------------------
 
-## +Inputs -----------------------------------------------------------------
+# Global options are set in the header file
+source("scripts/headers.R")
 
-# Directory holding raw rasters
-rawRasterDirectory <- "data/raw/"
-
-# Raw input rasters
-mapzoneRasterPath <- paste0(rawRasterDirectory, "nw_mapzone_tiff/nw_mapzone.tif")
-evtRasterPath     <- paste0(rawRasterDirectory, "nw_evt2.0_tiff/nw_evt20.tif")
-evhRasterPath     <- paste0(rawRasterDirectory, "nw_evh2.0class1.4_tiff/nw_evh_m.tif")
-evcRasterPath     <- paste0(rawRasterDirectory, "nw_evc2.0class1.4_tiff/nw_evc_m.tif")
-fdistRasterPath   <- paste0(rawRasterDirectory, "nw_fdist2020_tiff/nw_fdist.tif")
-
-# FDIST - VDIST Crosswalk
-distCrosswalk <- 
-  read_xlsx("data/raw/non_spatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx") %>%
+# Load non-spatial data --------------------------------------------------
+distCrosswalk <-   read_xlsx(distCrosswalkPath) %>%
   mutate(name = paste(d_type...2, d_severity...3, d_time...4, sep = " - ")) %>% 
   select(fdist = FDIST, vdist = VDIST, name)
-
-## +Outputs ---------------------------------------------------------------
-
-# Directory to store cleaned rasters
-cleanRasterDirectory <- "data/clean/MZ19/"
-dir.create(cleanRasterDirectory, showWarnings = F)
-
-# Suffix to add to output rasters (use to indicate crop options, etc)
-cleanRasterSuffix <- ""
-
-# Directory and prefix for FDIST binary rasters (spatial multipliers)
-transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
-dir.create(transitionMultiplierDirectory, showWarnings = F)
-
-# A tiling mask is produced to allow for Spatial Multiprocessing in SyncroSim
-# The size of the rows is dictated by the size of the raster and memory constraints,
-# but the number of columns can be set here
-tileCols <- 5
-
-## +Other options -----------------------------------------------------------
-
-# Which mapzone to process
-mapzoneToKeep <- 19
-
-# Parallel options
-# Using all cores can slow down user interface when run interactively
-# This is not a concern in HPC situations
-nThreads <- availableCores() - 1
-
 # Load spatial data -------------------------------------------------------
 
 # Mapzones for north west GeoRegion
-mapzoneRaster <- raster(mapzoneRasterPath)
+mapzoneRaster <- raster(mapzoneRawRasterPath)
 
 # EVT, EVH, EVC
-evtRaster <- raster(evtRasterPath)
-evhRaster <- raster(evhRasterPath)
-evcRaster <- raster(evcRasterPath)
+evtRaster <- raster(evtRawRasterPath)
+evhRaster <- raster(evhRawRasterPath)
+evcRaster <- raster(evcRawRasterPath)
 
 # fdistRaster
-fdistRaster <- raster(fdistRasterPath)
+fdistRaster <- raster(fdistRawRasterPath)
 
 # Change the origin of mapzone raster
 origin(mapzoneRaster) <- origin(evtRaster)
@@ -271,10 +232,10 @@ mapzoneRaster <-
     maskValue = mapzoneToKeep,
     filename = "temp.tif") %>%
   trimRaster(
-    filename = paste0(cleanRasterDirectory, "Mapzones", cleanRasterSuffix, ".tif")
+    filename = mapzoneRasterPath
   )
 
-# Remove temp files made during run
+# Remove temp files made during masking
 unlink("temp.tif")
 
 # Crop and mask data ----------------------------------------------------------
@@ -354,7 +315,7 @@ distReclassification <- distCrosswalk %>%
 # Reclassify as necessary and save
 vdistRaster <- reclassify(fdistRaster, distReclassification)
 writeRaster(vdistRaster,
-            paste0(cleanRasterDirectory, "vDIST", cleanRasterSuffix,".tif"),
+            vdistRasterPath,
             overwrite = TRUE)
 
 # Generate list of unique VDIST codes
@@ -404,7 +365,7 @@ plan(sequential)
 # We can "paste" these codes together by multiplying EVC by 1000 and summing
 stateClasses <- evcRaster * 1000 + evhRaster
 writeRaster(stateClasses,
-            paste0(cleanRasterDirectory, "StateClass.tif"),
+            stateClassRasterPath,
             overwrite = TRUE)
 
 # Tiling for spatial multiprocessing -------------------------------------
@@ -461,8 +422,5 @@ tilize <- function(templateRaster, filename, nx = 3) {
 tileRaster <- 
   tilize(
     mapzoneRaster, 
-    paste0(cleanRasterDirectory, "Tiling", cleanRasterSuffix, ".tif"),
+    tilingRasterPath,
     nx = tileCols)
-
-
-proc.time() - ptm
