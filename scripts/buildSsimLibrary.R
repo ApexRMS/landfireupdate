@@ -30,10 +30,23 @@ db <-
                            landFireDBPath))
 
 # Load the lookup table that will be used to color state classes by their EVC code
+# This table defines colors for cover type in 1% bins, but the data is in 10% bins
+# The filter and mutate steps below convert the 1% binned EVC codes to 10% codes
 evcColors <- read_csv(evcColorsPath) %>%
   transmute(
     evcCode = VALUE,
     Color = paste("255", R, G, B, sep = ",")
+  ) %>%
+  # Only the codes above 100 differ between the two EVC code systems
+  # Of these differing codes, we keep every 10th (eg. 10%, 20%, etc )
+  filter(evcCode < 100 | evcCode %% 10 == 0) %>%
+  # The 1% resolution code stores lifeform (tree, shrub, etc) in the 100th's digit,
+  # The 10% stores this in the 10th's digit, so we divide by 10
+  # Finally we add 90 to shift the correct color to the the correct lifeform
+  mutate(
+    evcCode = if_else(evcCode <= 100,
+                      true = evcCode, 
+                      false = evcCode / 10 + 90)
   )
 
 # Load the input rasters
@@ -420,24 +433,33 @@ odbcClose(db)
 
 # QA Code -----------------------------------------------------------------
 
-## Old tests for QA
-# the_list <- transitionTable %>%
-#   group_split(VDIST, SecondaryStratumID, StratumIDSource, EVCB, EVHB)
-# the_vec <- sapply(the_list, nrow)
-# larger <- which(the_vec > 1)
-# the_list_of_larger <- the_list[larger]
-# the_list_of_larger[1]
+# Are there any states with duplicate rules?
+# - within each EVT, mapzone, and transition type, there should only be one rule
+#   (ie. one row) for each state class
+numDuplicateRules <-
+  probabilisticTransitions %>%
+  group_by(StratumIDSource, SecondaryStratumID, TransitionTypeID, StateClassIDSource) %>%
+  summarise(unique = (n() == 1)) %>%
+  filter(!unique) %>%
+  nrow
 
-# raw <- sqlFetch(db, "vegtransf_rv02i_d")
-# test <- raw[which(duplicated(transitionTable)),]
-# View(test)
+if(numDuplicateRules > 0)
+  stop("Found duplicate rules for one or more states! Please check the `probabilisticTransitions` data.frame!")
 
-# raw <- sqlFetch(db, "vegtransf_rv02i_d")
-# trans_vdist <- raw$VDIST %>% unique()
-# key_Vdist <- distCrosswalk$VDIST %>% unique()
-# trans_vdist[which(!(trans_vdist %in% key_Vdist))]
+# Are there mixed life form states?
+# - Mixed life form states can be identified by vegetation cover (x state) labels
+#   that don't match their vegetation height (y state) labels
+numMixedLifeForm <-
+  stateClasses %>%
+  mutate(
+    mixedLifeForm = case_when(
+      str_detect(StateLabelXID, "Tr") & !str_detect(StateLabelYID, "Fr") ~ T,
+      str_detect(StateLabelXID, "Sh") & !str_detect(StateLabelYID, "Sh") ~ T,
+      str_detect(StateLabelXID, "Hb") & !str_detect(StateLabelYID, "Hb") ~ T,
+      T                                                                  ~ F),
+  ) %>%
+  pull(mixedLifeForm) %>%
+  sum
 
-# raw_filtered <- raw %>%
-#   filter(MZ %in% c(19)) %>%
-#   filter(VDIST %in% allValues) %>%
-#   filter(EVT7B %in% unique(raster("data/clean/cropped/nw_EVT_clean_small.tif")))
+if(numMixedLifeForm != 0)
+  stop("Found mixed life form states! Please check the `stateClasses` data.frame!")
