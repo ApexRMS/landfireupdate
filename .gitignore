@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-*.tif
-*.tif*
-*.csv
-junk
+db/*
+data/*
+library/*
