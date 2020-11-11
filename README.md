@@ -1,22 +1,30 @@
-# LANDFIRE - A236
+# Landfire Update
 
-Code to prepare data for Landfire Update using ST-Sim.
+Code to prepare data for Landfire Update using ST-Sim. This project consists of
+a collection of scripts to (A) process and clean raw spatial data and (B) use
+these data to generate a SyncroSim library to run the Landfire Update itself.
 
-Intructions to run on small extent: 
+## Setup
 
-1. Ensure you have the proper versions of the following software/packages.
-  - R: `3.6.2` or higher, download it [here](https://cran.r-project.org/)
-  - Syncrosim: `2.2.19`, download it [here](https://syncrosim.com/download/) 
-  - StSim: `3.2.21`, download it [here](https://syncrosim.com/packages/)
+### Dependencies
 
-2. Download and install the Access database dependency AccessDatabaseEngine_X64.exe from https://www.microsoft.com/en-us/download/details.aspx?id=13255
+These scripts require working installations of R and SyncroSim, and were
+developed on R version v4.0.3 and SyncroSim v2.0.22. Additionally the following
+R packages must be installed: rsyncrosim, tidyverse, raster,  furrr, readxl,
+RODBC, rgdal. The ST-Sim package must also be installed in SyncroSim.
 
-3. Open the `a236.Rproj` file in Rstudio
+### Data files
 
-4. Open the script in `scripts/buildSsimLibrary.R`, then source or Run the script to build the library
+A number of data files are required that are not included on the GitHub repo due
+to size constraints. They, along with their URL's and suggested local locations
+are listed in the table below:
 
-5. Ensure you have all the package necessary: `tidyverse`, `rsyncrosim`, `raster`, `RODBC`
+**Add Table**
 
-6. Open the new library `LandFire_Test_SmallExtent.ssim` in the `library` folder.
+## Running the Update
 
-7. Click on the Test scenario and run it.
+### Configuration
+
+It is recommended to configure the script to set run options, including which
+map zones to process, how many cores to use, etc., as well as to ensure that
+input file paths are correctly set.
