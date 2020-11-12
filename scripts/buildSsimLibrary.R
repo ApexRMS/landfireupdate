@@ -140,6 +140,7 @@ allEVT <- unique(evtRaster)
 # Build the SyncroSim Library ---------------------------------------------
 
 # Create library with a project ("Definitions") and a scenario ("Test")
+dir.create("library/", showWarnings = FALSE)
 mylibrary <- ssimLibrary(libraryName, overwrite = TRUE)
 myproject <- project(mylibrary, projectName, overwrite = TRUE)
 myscenario <- scenario(myproject, scenarioName)
