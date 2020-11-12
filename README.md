@@ -136,11 +136,11 @@ Finally, open the generated SyncroSim library using the SyncroSim UI.
 This file will be stored in the `library/` subdirectory. Select the 
 `NW GeoArea` project, and the scenario you would like to run and press 
 `run` in the main toolbar. Note that, depending on your computer configuration,
-you may need to change the maximum number of [multiprocessing] (http://docs.syncrosim.com/how_to_guides/modelrun_multiproc.html) jobs.
-As an example of requirements, Map Zone 19 was run with a maximum of 5 
-multiprocessing jobs on a Windows 2019 Server with 16 virtual cores and 
-128GB of RAM.  The run took approximately 3 hours and used up to 80% of
-available memory.
+you may need to change the maximum number of [multiprocessing](http://docs.syncrosim.com/how_to_guides/modelrun_multiproc.html) jobs.
+As an example of requirements, Map Zone 19 (120 million cells) was run 
+with a maximum of 5 multiprocessing jobs on a Windows 2019 Server with 
+16 virtual cores and 128GB of RAM.  The run took approximately 3 hours 
+and used up to 80% of available memory.
 
 Results can be viewed directly in the graphical user interface (GUI) by 
 creating [Charts](http://docs.syncrosim.com/how_to_guides/results_chart_window.html) and [Maps](http://docs.syncrosim.com/how_to_guides/results_map_window.html). 
