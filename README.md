@@ -29,6 +29,9 @@ be downloaded from the ApexRMS S3 using the following link:
 
 The zip folder also contains the expected paths of the files, and so it is
 recommended to extract the zip file directly into the root of this git repository.
+In other words, the `data/` and `db/` subdirectories should be present in the same
+directory as this README after extraction, not inside another folder (such as 
+`LANDFIRE Update Data Files/`). 
 
 ## Configuration
 
