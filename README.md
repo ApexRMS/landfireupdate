@@ -23,9 +23,7 @@ cross-platform alternatives available if needed.
 
 A number of data files are required that are not included on the GitHub repo due
 to size constraints. These files have been compressed into a zip folder that can
-be downloaded from the ApexRMS S3 using the following link:
-
-> **Add Link**
+be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Data%20Files.zip).
 
 The zip folder also contains the expected paths of the files, and so it is
 recommended to extract the zip file directly into the root of this git repository.
