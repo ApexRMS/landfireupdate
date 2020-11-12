@@ -9,15 +9,17 @@ these data to generate a SyncroSim library to run the Landfire Update itself.
 ### Dependencies
 
 These scripts require working installations of R and SyncroSim, and were
-developed on R version v4.0.3 and SyncroSim v2.0.22. Additionally the following
+developed on R version v4.0.3 and SyncroSim v2.0.23. Additionally the following
 R packages must be installed: `rsyncrosim`, `tidyverse`, `raster`,  `furrr`,
-`readxl`, `RODBC`, `rgdal`. The ST-Sim package must also be installed in
-SyncroSim.
+`readxl`, `RODBC`, `rgdal`. The ST-Sim package (v3.2.25) must also be installed in
+SyncroSim. The instructions to run the script assume you will be using [RStudio](https://rstudio.com/),
+however, this is not a strict requirement.
 
 Additionally, you may have to install an [ODBC driver](https://en.wikipedia.org/wiki/Open_Database_Connectivity)
 to connect to the database file using `RODBC`. A working installation of
 Microsoft Access should provide this driver, but there are a number of free,
-cross-platform alternatives available if needed.
+cross-platform alternatives available if needed. If you are running on Windows 
+you can download the AccessDatabaseEngine_X64.exe from [here](https://www.microsoft.com/en-us/download/details.aspx?id=13255). 
 
 ### Data files
 
@@ -120,7 +122,7 @@ number of threads R will spawn while processing the raw rasters for SyncroSim.
 Begin by opening the `LANDFIRE Update.Rproj` R project file to ensure the
 correct working directory is set in RStudio. Next, open the
 `scripts/processSpatialData.R` script and either run line-by-line or press the
-`source` button in the top right corner of the file editor pane.
+`source` button in the top right corner of the file editor pane of RStudio.
 
 This script is responsible for processing the raw input rasters, including
 cropping and masking down to the chosen Map Zone, converting fDIST maps to
@@ -130,6 +132,10 @@ Once this is done, open the `scripts/buildSsimLibrary.R` script and run as
 before. This script uses the cleaned rasters and rules from the database to
 generate a SyncroSim library file to run the update.
 
-Finally, open the generated SyncroSim library, which will be stored in the
-`library/` subdirectory. Select the `NW GeoArea` project, and the scenario you
-would like to run and press `run` in the main toolbar.
+Finally, open the generated SyncroSim library using the SyncroSim UI. 
+This file will be stored in the `library/` subdirectory. Select the 
+`NW GeoArea` project, and the scenario you would like to run and press 
+`run` in the main toolbar. Results can be viewed directly in the graphical 
+user interface (GUI) by creating [Charts](http://docs.syncrosim.com/how_to_guides/results_chart_window.html) and [Maps](http://docs.syncrosim.com/how_to_guides/results_map_window.html). 
+NOTE that using the GUI is optional and the scenario can also be run directly 
+through the SyncroSim commandline or by using the rsyncrosim package for R.
