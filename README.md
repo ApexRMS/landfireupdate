@@ -24,12 +24,19 @@ cross-platform alternatives available if needed.
 A number of data files are required that are not included on the GitHub repo due
 to size constraints. These files have been compressed into a zip folder that can
 be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Data%20Files.zip).
+Please note that this file is quite large (~1.3GB).
 
 The zip folder also contains the expected paths of the files, and so it is
-recommended to extract the zip file directly into the root of this git repository.
-In other words, the `data/` and `db/` subdirectories should be present in the same
-directory as this README after extraction, not inside another folder (such as 
-`LANDFIRE Update Data Files/`). 
+recommended to extract the zip file directly into the root of this git
+repository. In other words, the `data/`, `db/`, and `library/` subdirectories
+should be present in the same directory as this README after extraction, not
+inside another folder (such as `LANDFIRE Update Data Files/`).
+
+This archive also includes an example SyncroSim library (`library/LANDFIRE Update.ssim`)
+generated using this repository for Map Zone 19. This example library can be
+run directly in SyncroSim without running any of the R scripts. The default
+configuration for the R scripts (described below) should reproduce this library
+exactly.
 
 ## Configuration
 
