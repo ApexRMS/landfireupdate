@@ -2,7 +2,7 @@
 ### APEX RMS - Valentin Lucet and Shreeram Senthivasan 
 ### September 2020
 ### This script is used to clean and pre-process raw spatial data obtained from 
-### Land Fire for simulation in SyncroSim
+### LANDFIRE for simulation in SyncroSim
 
 # Load packages ------------------------------------------------------------
 library(raster) # Raster packages deals with tiff files (grid files)
@@ -39,10 +39,11 @@ origin(mapzoneRaster) <- origin(evtRaster)
 
 # Setup mask --------------------------------------------------------------
 
-# A memory-safe raster mask function optimized for large rasters
+# A memory-safe function to convert a raster with multiple values (map zones)
+# into a mask for a single value (map zone). Optimized for large rasters
 # Requires an output filename, slower than raster::mask for small rasters
 # input and mask rasters should have the same extent
-maskByMapzone <- function(inputRaster, maskRaster, maskValue, filename){
+maskByMapzone <- function(inputRaster, maskValue, filename){
   # Integer mask values save memory
   maskValue <- as.integer(maskValue)
   
@@ -228,7 +229,6 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
 mapzoneRaster <-
   maskByMapzone(
     inputRaster = mapzoneRaster, 
-    maskRaster = mapzoneRaster,
     maskValue = mapzoneToKeep,
     filename = "temp.tif") %>%
   trimRaster(
@@ -414,7 +414,10 @@ tilize <- function(templateRaster, filename, nx = 3) {
   }
   tileRaster <- writeStop(tileRaster)
   
-  # Return
+  # Mask raster by template
+  tileRaster <-
+    writeRaster(mask(tileRaster, templateRaster), filename, overwrite = TRUE)
+
   return(tileRaster)
 }
 
