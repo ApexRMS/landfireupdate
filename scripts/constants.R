@@ -27,20 +27,20 @@ rawRasterDirectory <- "data/raw/"
 
 # Raw input rasters
 mapzoneRawRasterPath <- paste0(rawRasterDirectory, "nw_mapzone.tif")
-evtRawRasterPath     <- paste0(rawRasterDirectory, "nw_evt20.tif")
-evhRawRasterPath     <- paste0(rawRasterDirectory, "nw_evh_m.tif")
-evcRawRasterPath     <- paste0(rawRasterDirectory, "nw_evc_m.tif")
+evtRawRasterPath     <- paste0(rawRasterDirectory, "nw_evt.tif")
+evhRawRasterPath     <- paste0(rawRasterDirectory, "nw_evh.tif")
+evcRawRasterPath     <- paste0(rawRasterDirectory, "nw_evc.tif")
 fdistRawRasterPath   <- paste0(rawRasterDirectory, "nw_fdist.tif")
 
 # Database Path
 landFireDBPath <- 
-  "db/NW_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_2020_10_21.accdb"
+  "db/NW GeoArea VegTransitions 2020-10-21.accdb"
 
 # FDIST - VDIST Crosswalk
-distCrosswalkPath <- "data/raw/nonspatial/LimUpdate2021_VDISTxFDIST_v03_20201009.xlsx"
+distCrosswalkPath <- "data/raw/nonspatial/Disturbance Crosswalk 2020-10-09.xlsx"
 
 # EVC color reference - Used to color stateclass map
-evcColorsPath <- "data/raw/nonspatial/LF_Remap_EVC_03052019.csv"
+evcColorsPath <- "data/raw/nonspatial/EVC Colors 2019-05-03.csv"
 
 # Database Table Names ---------------------------------------------------
 
