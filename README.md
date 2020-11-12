@@ -66,7 +66,9 @@ collections of Map Zones together in future updates.
 
 A number of the raster pre-processing operations have been parallelized to speed
 up run time. The number of threads to be used for these steps can be set using
-the `nThreads` variable.
+the `nThreads` variable. This is not to be confused with the `ssimJobs` in the
+**SyncroSim Options** section below that is used to set the default maximum
+number of jobs in the generated SyncroSim library. 
 
 ### Raw Inputs
 
@@ -102,6 +104,11 @@ and end timesteps and the number of iterations.
 
 More detailed information about the SyncroSim library, project, and scenarios
 can be set here, including the file owner and descriptions.
+
+`ssimJobs` can also be set here specify the default maximum number of jobs in
+the generated SyncroSim library. This is not to be confused with the `nThreads`
+variable in the **Overall Run Options** section above that determines the
+number of threads R will spawn while processing the raw rasters for SyncroSim.
 
 ## Running the Update
 

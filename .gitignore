@@ -2,7 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
-db/*
-data/*
-library/*
+db
+data
+library
 *.zip
+

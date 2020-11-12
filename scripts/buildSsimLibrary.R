@@ -432,12 +432,22 @@ outputOptionsSpatial <-
 saveDatasheet(myscenario, outputOptionsSummary, "stsim_OutputOptions")
 saveDatasheet(myscenario, outputOptionsSpatial, "stsim_OutputOptionsSpatial")
 
+## +Multiprocessing -----------------------------------------------------------
+
+multiprocessing <-
+  data.frame(EnableMultiprocessing = TRUE,
+             MaximumJobs = ssimJobs,
+             EnableMultiScenario = TRUE)
+
+saveDatasheet(myscenario, multiprocessing, "core_Multiprocessing")
+
+
 ## +Spatial multiprocessing ---------------------------------------------------
 
-spatial_multi <- datasheet(myscenario, "corestime_Multiprocessing")
-spatial_multi <- add_row(spatial_multi, MaskFileName = tilingRasterPath)
+spatialMultiprocessing <- datasheet(myscenario, "corestime_Multiprocessing")
+spatialMultiprocessing <- add_row(spatial_multi, MaskFileName = tilingRasterPath)
 
-saveDatasheet(myscenario, spatial_multi, "corestime_Multiprocessing")
+saveDatasheet(myscenario, spatialMultiprocessing, "corestime_Multiprocessing")
 
 # Cleanup ---------------------------------------------------------------------
 

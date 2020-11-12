@@ -17,7 +17,7 @@ runLibrary <- "LANDFIRE Update"
 # Which mapzone to process
 mapzoneToKeep <- 19
 
-# Threads to use when parallel processing
+# Threads to use when pre-processing rasters
 nThreads <- future::availableCores() - 1
 
 # Raw Inputs --------------------------------------------------------------
@@ -99,3 +99,6 @@ libraryDescription <-  paste0("ST-Sim library for updating LANDFIRE EVC and ",
 projectDescription <-  paste0("Models for updating the NW GeoArea.")
 scenarioDescription <- paste0("Test updated on Map Zone 19. Note that rules ",
                               "used here will be updated.")
+
+# Set the number of concurrent jobs to in SyncroSim
+ssimJobs <- 5
