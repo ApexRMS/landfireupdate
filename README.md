@@ -137,5 +137,7 @@ This file will be stored in the `library/` subdirectory. Select the
 `NW GeoArea` project, and the scenario you would like to run and press 
 `run` in the main toolbar. Results can be viewed directly in the graphical 
 user interface (GUI) by creating [Charts](http://docs.syncrosim.com/how_to_guides/results_chart_window.html) and [Maps](http://docs.syncrosim.com/how_to_guides/results_map_window.html). 
+You can also export tabular and map data to be viewed externally.
+
 NOTE that using the GUI is optional and the scenario can also be run directly 
 through the SyncroSim commandline or by using the rsyncrosim package for R.
