@@ -1,15 +1,18 @@
 ### LANDFIRE Project 
 ### APEX RMS - Shreeram Senthivasan 
-### September 2020
+### November 2020
 ### This a header file with global variables used by other scripts in this directory.
 ### Please check the paths and options set here prior to running the other scripts.
 
 
 # Overall Run Options -----------------------------------------------------
 
-# A tag used to identify the run, eg the mapzone, parameters that are being varied 
-# used to generate names for output folders, SyncroSim scenarios, etc
-runTag <- "MZ19"
+# A tag used to identify the run, eg the mapzone, parameters that are being varied.
+# Used to generate names for output folders, SyncroSim scenarios, etc
+runTag <- "Map Zone 19"
+
+# The name of the SyncroSim library to store the scenario, etc. in
+runLibrary <- "LANDFIRE Update"
 
 # Which mapzone to process
 mapzoneToKeep <- 19
@@ -39,7 +42,7 @@ distCrosswalkPath <- "data/raw/nonspatial/LimUpdate2021_VDISTxFDIST_v03_20201009
 # EVC color reference - Used to color stateclass map
 evcColorsPath <- "data/raw/nonspatial/LF_Remap_EVC_03052019.csv"
 
-# Database table names ---------------------------------------------------
+# Database Table Names ---------------------------------------------------
 
 #  These are the names of relevant SQL tables withing the database
 transitionTableName <- "vegtransf_rv02i_d"
@@ -55,20 +58,17 @@ vdistTableName      <- "VDIST"
 cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
 dir.create(cleanRasterDirectory, showWarnings = F)
 
-# Suffix to add to output rasters (use to indicate crop options, etc)
-cleanRasterSuffix <- ""
-
 # Directory and prefix for FDIST binary rasters (spatial multipliers)
 transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
 dir.create(transitionMultiplierDirectory, showWarnings = F)
 
 # Clean Raster Paths
-mapzoneRasterPath <- paste0(cleanRasterDirectory, "Mapzones", cleanRasterSuffix, ".tif")
-vdistRasterPath <- paste0(cleanRasterDirectory, "vDIST", cleanRasterSuffix, ".tif")
-stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass", cleanRasterSuffix, ".tif")
-tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling", cleanRasterSuffix, ".tif")
+mapzoneRasterPath <- paste0(cleanRasterDirectory, "Mapzones.tif")
+vdistRasterPath <- paste0(cleanRasterDirectory, "vDIST.tif")
+stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
+tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
 
-primaryStratumRasterPath <- paste0(cleanRasterDirectory, "EVT", cleanRasterSuffix, ".tif")
+primaryStratumRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
 secondaryStratumRasterPath <- mapzoneRasterPath
 
 
@@ -85,6 +85,6 @@ minimumTimestep <- 2017
 maximumTimestep <- 2018
 
 # SyncroSim Options -----------------------------------------------------
-libraryName <- paste0("library/LandFire", cleanRasterSuffix, ".ssim")
-projectName <- "Landfire"
+libraryName <- paste0("library/", runLibrary)
+projectName <- "NW GeoArea"
 scenarioName <- runTag

@@ -14,7 +14,7 @@ library(readxl) # For reading disturbance crosswalk
 # Load global options ----------------------------------------------------
 
 # Global options are set in the header file
-source("scripts/headers.R")
+source("scripts/constants.R")
 
 # Load non-spatial data --------------------------------------------------
 distCrosswalk <-   read_xlsx(distCrosswalkPath) %>%
@@ -255,7 +255,7 @@ rasterList <- list(
       crop(raster, maskRaster) %>%
         mask(maskRaster) %>%
         writeRaster(
-          filename = paste0(cleanRasterDirectory, name, cleanRasterSuffix, ".tif"),
+          filename = paste0(cleanRasterDirectory, name, ".tif"),
           overwrite = TRUE
         )
     },

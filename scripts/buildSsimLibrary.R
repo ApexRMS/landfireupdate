@@ -18,7 +18,7 @@ library(tidyverse)
 # Set global variables ----------------------------------------------------
 
 # Global variables and paths are set in the header file
-source("scripts/headers.R")
+source("scripts/constants.R")
 
 # Prepare input data ---------------------------------------------------
 
@@ -373,7 +373,6 @@ saveDatasheet(myscenario, probabilisticTransitions, "stsim_Transition")
 multiplierGroupNames <- paste0(transitionTypes$Name, " [Type]")
 multiplierFileNames <- paste0(transitionMultiplierDirectory,
                               transitionTypes$Name,
-                              cleanRasterSuffix,
                               ".tif")
 
 # Compose and save the data frame
