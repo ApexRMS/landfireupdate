@@ -144,6 +144,16 @@ mylibrary <- ssimLibrary(libraryName, overwrite = TRUE)
 myproject <- project(mylibrary, projectName, overwrite = TRUE)
 myscenario <- scenario(myproject, scenarioName)
 
+# Set owner
+owner(mylibrary) <- ssimOwner
+owner(myproject) <- ssimOwner
+owner(myscenario) <- ssimOwner
+
+# Set descriptions
+description(mylibrary)  <- libraryDescription
+description(myproject)  <- projectDescription
+description(myscenario) <- scenarioDescription
+
 ## +Terminology -----------------------------------------------------------
 
 term <- data.frame(

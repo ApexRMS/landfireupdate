@@ -88,3 +88,14 @@ maximumTimestep <- 2018
 libraryName <- paste0("library/", runLibrary)
 projectName <- "NW GeoArea"
 scenarioName <- runTag
+
+# Set the owner for all SyncroSim objects
+ssimOwner <- "LANDFIRE"
+
+# Set descriptions for SyncroSim objects
+libraryDescription <-  paste0("ST-Sim library for updating LANDFIRE EVC and ",
+                              "EVH based on starting MZ, EVT, EVC, EVH and ",
+                              "disturbances during the update period.")
+projectDescription <-  paste0("Models for updating the NW GeoArea.")
+scenarioDescription <- paste0("Test updated on Map Zone 19. Note that rules ",
+                              "used here will be updated.")
