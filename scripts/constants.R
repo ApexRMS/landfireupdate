@@ -63,7 +63,7 @@ transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipl
 dir.create(transitionMultiplierDirectory, showWarnings = F)
 
 # Clean Raster Paths
-mapzoneRasterPath <- paste0(cleanRasterDirectory, "Mapzones.tif")
+mapzoneRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
 vdistRasterPath <- paste0(cleanRasterDirectory, "vDIST.tif")
 stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
 tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")

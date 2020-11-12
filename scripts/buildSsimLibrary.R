@@ -25,6 +25,9 @@ source("scripts/constants.R")
 ## Load data 
 
 # Load the main Vegetation Transition database from Land Fire
+# Note that this step requires an ODBC driver, such as the one provided by
+# Microsoft Access. If you get an error here, please check your ODBC driver
+# installation and name
 db <- 
   odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=", 
                            landFireDBPath))
@@ -149,7 +152,7 @@ term <- data.frame(
   StateLabelX = "EVC", 
   StateLabelY = "EVH", 
   PrimaryStratumLabel = "EVT",
-  SecondaryStratumLabel = "MapZones",
+  SecondaryStratumLabel = "Map Zone",
   TimestepUnits = "Timestep"
 )
 
