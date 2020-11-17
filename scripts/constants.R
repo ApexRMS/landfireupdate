@@ -1,21 +1,21 @@
-### LANDFIRE Project 
-### APEX RMS - Shreeram Senthivasan 
+### LANDFIRE Project
+### APEX RMS - Shreeram Senthivasan
 ### November 2020
 ### This a header file with global variables used by other scripts in this directory.
 ### Please check the paths and options set here prior to running the other scripts.
 
 
-# Overall Run Options -----------------------------------------------------
+# Overall Options --------------------------------------------------------
 
-# A tag used to identify the run, eg the mapzone, parameters that are being varied.
-# Used to generate names for output folders, SyncroSim scenarios, etc
-runTag <- "Map Zone 19"
+# Which mapzones to process
+mapzonesToKeep <- 19:20
+
+# Tags used to identify the independent runs (one per Map Zone)
+# They are used to generate names for output folders, etc
+runTags <- str_c("Map Zone ", mapzonesToKeep)
 
 # The name of the SyncroSim library to store the scenario, etc. in
 runLibrary <- "LANDFIRE Update"
-
-# Which mapzone to process
-mapzoneToKeep <- 19
 
 # Threads to use when pre-processing rasters
 nThreads <- future::availableCores() - 1
@@ -33,7 +33,7 @@ evcRawRasterPath     <- paste0(rawRasterDirectory, "nw_evc.tif")
 fdistRawRasterPath   <- paste0(rawRasterDirectory, "nw_fdist.tif")
 
 # Database Path
-landFireDBPath <- 
+landFireDBPath <-
   "db/NW GeoArea VegTransitions 2020-10-21.accdb"
 
 # FDIST - VDIST Crosswalk
@@ -53,25 +53,6 @@ vdistTableName      <- "VDIST"
 
 # Cleaned Raster Options ---------------------------------------------------
 
-# Directory to store cleaned rasters
-# Note that the working directory is prepended since SyncroSim needs absolute paths
-cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
-dir.create(cleanRasterDirectory, showWarnings = F)
-
-# Directory and prefix for FDIST binary rasters (spatial multipliers)
-transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
-dir.create(transitionMultiplierDirectory, showWarnings = F)
-
-# Clean Raster Paths
-mapzoneRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
-vdistRasterPath <- paste0(cleanRasterDirectory, "vDIST.tif")
-stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
-tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
-
-primaryStratumRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
-secondaryStratumRasterPath <- mapzoneRasterPath
-
-
 # A tiling mask is produced to allow for Spatial Multiprocessing in SyncroSim
 # The size of the rows is dictated by the size of the raster and memory constraints,
 # but the number of columns can be set here
@@ -87,7 +68,7 @@ maximumTimestep <- 2018
 # SyncroSim Options -----------------------------------------------------
 libraryName <- paste0("library/", runLibrary)
 projectName <- "NW GeoArea"
-scenarioName <- runTag
+scenarioNames <- runTags
 
 # Set the owner for all SyncroSim objects
 ssimOwner <- "LANDFIRE"
@@ -97,8 +78,8 @@ libraryDescription <-  paste0("ST-Sim library for updating LANDFIRE EVC and ",
                               "EVH based on starting MZ, EVT, EVC, EVH and ",
                               "disturbances during the update period.")
 projectDescription <-  paste0("Models for updating the NW GeoArea.")
-scenarioDescription <- paste0("Test updated on Map Zone 19. Note that rules ",
-                              "used here will be updated.")
+scenarioDescriptions <- paste0("Test updated on Map Zone ", mapzonesToKeep,
+                               ". Note that rules used here will be updated.")
 
 # Set the number of concurrent jobs to in SyncroSim
 ssimJobs <- 5

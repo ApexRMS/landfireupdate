@@ -49,27 +49,22 @@ input file paths are correctly set.
 The `scripts/constants.R` script is the only file that needs to be reviewed and
 edited to configure a run. Below is a breakdown of the organization of this file.
 
-### Overall Run Options
+### Overall Options
 
 These options set overarching options specific to the run.
 
-The `runTag` variable is used to identify the run in some way and can be used to
-indicate, for example, which subset of Map Zones are being analyzed in the
-current run. In addition to being used to organize output files, the run tag is
-also used to name the SyncroSim scenario. Accordingly, using unique run tags for
-a sequence of runs can be used to generate a collection of scenarios within a
-single SyncroSim library.  
+The `mapzonesToKeep` variable is used to select the Map Zones that should be
+extracted and processed in the current run.
+
+The `runTags` variable is used to identify the individual runs, and should be
+the same length as `mapzonesToKeep`. In addition to being used to organize
+output files, the run tag is also used to name the SyncroSim scenario.
 
 To store the SyncroSim scenarios in a different SyncroSim library, for example
 when testing, you can change the `runLibrary` variable.
 
 > :warning: Output files from past runs with the same run tag and library name
 > will be overwritten!
-
-The `mapzoneToKeep` variable is used to select the Map Zone that should be
-extracted and processed in the current run. Currently, this variable must
-identify a single Map Zone, but we plan to add support for processing
-collections of Map Zones together in future updates.
 
 A number of the raster pre-processing operations have been parallelized to speed
 up run time. The number of threads to be used for these steps can be set using
@@ -110,7 +105,9 @@ and end timesteps and the number of iterations.
 ### SyncroSim Options
 
 More detailed information about the SyncroSim library, project, and scenarios
-can be set here, including the file owner and descriptions.
+can be set here, including the file owner and descriptions. Note that
+`scenarioNames` and `scenarioDescriptions` both must have the same length as
+`mapzonesToKeep`.
 
 `ssimJobs` can also be set here specify the default maximum number of jobs in
 the generated SyncroSim library. This is not to be confused with the `nThreads`
@@ -143,7 +140,8 @@ with a maximum of 5 multiprocessing jobs on a Windows 2019 Server with
 and used up to 80% of available memory.
 
 Results can be viewed directly in the graphical user interface (GUI) by 
-creating [Charts](http://docs.syncrosim.com/how_to_guides/results_chart_window.html) and [Maps](http://docs.syncrosim.com/how_to_guides/results_map_window.html). 
+creating [Charts](http://docs.syncrosim.com/how_to_guides/results_chart_window.html)
+and [Maps](http://docs.syncrosim.com/how_to_guides/results_map_window.html). 
 You can also export tabular and map data to be viewed externally.
 
 NOTE that using the GUI is optional and the scenario can also be run directly 

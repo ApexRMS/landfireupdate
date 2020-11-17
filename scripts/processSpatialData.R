@@ -1,189 +1,144 @@
-### LANDFIRE Project 
-### APEX RMS - Valentin Lucet and Shreeram Senthivasan 
+### LANDFIRE Project
+### APEX RMS - Valentin Lucet and Shreeram Senthivasan
 ### September 2020
-### This script is used to clean and pre-process raw spatial data obtained from 
-### LANDFIRE for simulation in SyncroSim
+### The function defined in this script is used to clean and pre-process raw
+### spatial data obtained from LANDFIRE for simulation in SyncroSim
 
-# Load packages ------------------------------------------------------------
-library(raster) # Raster packages deals with tiff files (grid files)
-library(tidyverse)
-library(furrr)  # For parallel iteration
-library(readxl) # For reading disturbance crosswalk
+processSpatialData <- function(mapzoneToKeep, runTag) {
+  # Generate run-specific file paths ---------------------------------------
 
-# Load global options ----------------------------------------------------
+  # Directory to store cleaned rasters
+  # Note that the working directory is prepended since SyncroSim needs absolute paths
+  cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
+  dir.create(cleanRasterDirectory, showWarnings = F)
 
-# Global options are set in the header file
-source("scripts/constants.R")
+  # Directory and prefix for FDIST binary rasters (spatial multipliers)
+  transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
+  dir.create(transitionMultiplierDirectory, showWarnings = F)
 
-# Load custom raster functions -------------------------------------------
+  # Clean Raster Paths
+  mapzoneRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
+  evtRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
+  evhRasterPath <- paste0(cleanRasterDirectory, "EVH.tif")
+  evcRasterPath <- paste0(cleanRasterDirectory, "EVC.tif")
+  fdistRasterPath <- paste0(cleanRasterDirectory, "FDIST.tif")
+  vdistRasterPath <- paste0(cleanRasterDirectory, "VDIST.tif")
+  stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
+  tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
 
-# A number of custom raster functions are defined in the rasterFunctions script
-# that are optimized for large rasters
-source("scripts/rasterFunctions.R")
+  # VDIST info for layerizing
+  vdistInfoPath <- paste0(cleanRasterDirectory, "VDIST.csv")
 
-# Load non-spatial data --------------------------------------------------
-distCrosswalk <-   read_xlsx(distCrosswalkPath) %>%
-  mutate(name = paste(d_type...2, d_severity...3, d_time...4, sep = " - ")) %>% 
-  select(fdist = FDIST, vdist = VDIST, name)
-# Load spatial data -------------------------------------------------------
+  # Load non-spatial data --------------------------------------------------
+  distCrosswalk <-   read_xlsx(distCrosswalkPath) %>%
+    mutate(name = paste(d_type...2, d_severity...3, d_time...4, sep = " - ")) %>%
+    select(fdist = FDIST, vdist = VDIST, name)
 
-# Mapzones for north west GeoRegion
-mapzoneRaster <- raster(mapzoneRawRasterPath)
+  # Load spatial data -------------------------------------------------------
 
-# EVT, EVH, EVC
-evtRaster <- raster(evtRawRasterPath)
-evhRaster <- raster(evhRawRasterPath)
-evcRaster <- raster(evcRawRasterPath)
+  # Mapzones for north west GeoRegion
+  mapzoneRaster <- raster(mapzoneRawRasterPath)
 
-# fdistRaster
-fdistRaster <- raster(fdistRawRasterPath)
+  # EVT, EVH, EVC
+  evtRaster <- raster(evtRawRasterPath)
+  evhRaster <- raster(evhRawRasterPath)
+  evcRaster <- raster(evcRawRasterPath)
 
-# Change the origin of mapzone raster
-origin(mapzoneRaster) <- origin(evtRaster)
+  # fdistRaster
+  fdistRaster <- raster(fdistRawRasterPath)
 
+  # Change the origin of mapzone raster
+  origin(mapzoneRaster) <- origin(evtRaster)
 
-# Setup mask --------------------------------------------------------------
+  # Setup mask --------------------------------------------------------------
 
-# Mask and trim mapzone map by the chosen mapzone
-# - Note that trimRaster also saves the raster to the cleaned raster directory
-mapzoneRaster <-
-  maskByMapzone(
-    inputRaster = mapzoneRaster, 
-    maskValue = mapzoneToKeep,
-    filename = "temp.tif") %>%
-  trimRaster(
-    filename = mapzoneRasterPath
-  )
-
-# Remove temp files made during masking
-unlink("temp.tif")
-
-# Crop and mask data ----------------------------------------------------------
-
-# Begin parallel processing
-plan(multisession, workers = nThreads)
-
-# Use a named list to define the rasters and file names to iterate over as we
-# crop, mask, and write the outputs to file
-rasterList <- list(
-  "EVT" = evtRaster,
-  "EVH" = evhRaster,
-  "EVC" = evcRaster,
-  "fDIST" = fdistRaster) %>%
-  future_imap(
-    function(raster, name, maskRaster){
-      crop(raster, maskRaster) %>%
-        mask(maskRaster) %>%
-        writeRaster(
-          filename = paste0(cleanRasterDirectory, name, ".tif"),
-          overwrite = TRUE
-        )
-    },
-    maskRaster = mapzoneRaster,
-    .options = furrr_options(
-      seed = TRUE,
-      packages = "raster"
+  # Mask and trim mapzone map by the chosen mapzone
+  # - Note that trimRaster also saves the raster to the cleaned raster directory
+  mapzoneRaster <-
+    maskByMapzone(
+      inputRaster = mapzoneRaster,
+      maskValue = mapzoneToKeep,
+      filename = mapzoneRasterPath) %>%
+    trimRaster(
+      filename = mapzoneRasterPath
     )
-  )
 
-# End parallel processing
-plan(sequential)
+  # Crop and mask data ----------------------------------------------------------
 
-# Assign the results from the list back to the original variables
-evtRaster <- rasterList$EVT
-evhRaster <- rasterList$EVH
-evcRaster <- rasterList$EVC
-fdistRaster <- rasterList$fDIST
-rm(rasterList)
+  # EVT
+  evtRaster <-
+    cropRaster(evtRaster, evtRasterPath, extent(mapzoneRaster)) %>%
+    maskRaster(evtRasterPath, maskingRaster = mapzoneRaster)
 
-# Convert disturbance to VDIST ------------------------------------------------
+  # EVC
+  evcRaster <-
+    cropRaster(evcRaster, evcRasterPath, extent(mapzoneRaster)) %>%
+    maskRaster(evcRasterPath, maskingRaster = mapzoneRaster)
 
-# Choose number of blocks to split rasters into when processing to limit memory
-fdistBlockInfo <- blockSize(fdistRaster)
+  # EVH
+  evhRaster <-
+    cropRaster(evhRaster, evhRasterPath, extent(mapzoneRaster)) %>%
+    maskRaster(evhRasterPath, maskingRaster = mapzoneRaster)
 
-# Begin parallel processing
-plan(multisession, workers = nThreads)
+  # FDIST
+  fdistRaster <-
+    cropRaster(fdistRaster, fdistRasterPath, extent(mapzoneRaster)) %>%
+    maskRaster(fdistRasterPath, maskingRaster = mapzoneRaster)
 
-# Split the FDIST raster into blocks to calculate the unique set of FDIST codes
-# present in the data without using excessive memory per thread
-fdistLevels <- 
-  future_map(
-    seq(fdistBlockInfo$n),
-    ~ unique(getValuesBlock(fdistRaster,
-                            row   = fdistBlockInfo$row[.x],
-                            nrows = fdistBlockInfo$nrows[.x])),
-    .options = furrr_options(
-      seed = TRUE,
-      globals = c("fdistRaster", "fdistBlockInfo"),
-      packages = "raster"
-      )) %>%
-  flatten_dbl %>%
-  unique() %>%
-  `[`(!. %in% c(0, NA)) # Remove NA (no data) and 0 (no disturbance)
+  # Convert disturbance to VDIST ------------------------------------------------
 
-# End parallel processing
-plan(sequential)
+  # Split the FDIST raster into blocks to calculate the unique set of FDIST codes
+  # present in the data without using excessive memory per thread
+  # - We ignore NA (no data) as well as 0 (no disturbance)
+  fdistLevels <- uniqueInRaster(fdistRaster, ignore = c(0, NA))
 
-# Check which fdist codes need to be reclassified to a different vdist code
-distReclassification <- distCrosswalk %>%
-  filter(
-    fdist %in% fdistLevels,
-    fdist != vdist) %>%
-  select(-name) %>%
-  as.matrix
+  # Check which fdist codes need to be reclassified to a different vdist code
+  distReclassification <- distCrosswalk %>%
+    filter(
+      fdist %in% fdistLevels,
+      fdist != vdist) %>%
+    select(-name) %>%
+    as.matrix
 
-# Reclassify as necessary and save
-vdistRaster <- reclassify(fdistRaster, distReclassification)
-writeRaster(vdistRaster,
-            vdistRasterPath,
-            overwrite = TRUE)
+  # Reclassify as necessary and save
+  vdistRaster <- reclassify(fdistRaster, distReclassification)
+  writeRaster(vdistRaster,
+              vdistRasterPath,
+              overwrite = TRUE)
 
-# Generate list of unique VDIST codes
-vdistLevels <- distCrosswalk %>%
-  filter(fdist %in% fdistLevels) %>%
-  pull(vdist) %>%
-  unique %>%
-  sort 
+  # Generate list of unique VDIST codes
+  vdistLevels <- distCrosswalk %>%
+    filter(fdist %in% fdistLevels) %>%
+    pull(vdist) %>%
+    unique %>%
+    sort
 
-vdistNames <- distCrosswalk %>%
-  select(-fdist) %>%
-  filter(vdist %in% vdistLevels) %>%
-  arrange(vdist) %>%
-  unique() %>%
-  pull(name)
+  vdistNames <- distCrosswalk %>%
+    select(-fdist) %>%
+    filter(vdist %in% vdistLevels) %>%
+    arrange(vdist) %>%
+    unique() %>%
+    pull(name)
 
-# Layerize disturbace raster -------------------------------------------------
+  write_csv(
+    tibble(vdist = vdistLevels, name = vdistNames),
+    vdistInfoPath)
 
+  # Create composite state class map ----------------------------------------
 
-# Begin parallel processing
-plan(multisession, workers = nThreads)
+  # EVC and EVH codes are both three digits
+  # We can "paste" these codes together by multiplying EVC by 1000 and summing
+  stateClasses <- evcRaster * 1000 + evhRaster
+  writeRaster(stateClasses,
+              stateClassRasterPath,
+              overwrite = TRUE)
 
-# Split the VDIST raster into binary layers
-# One layer is constructed at a time per thread to limit memory use per thread
-future_walk2(
-  vdistLevels,
-  vdistNames,
-  saveDistLayer,
-  fullRaster = vdistRaster,
-  .options = furrr_options(seed = TRUE))
+  # Tiling for spatial multiprocessing -------------------------------------
 
-# Return to sequential operation
-plan(sequential)
-
-# Create composite state class map ----------------------------------------
-
-# EVC and EVH codes are both three digits
-# We can "paste" these codes together by multiplying EVC by 1000 and summing
-stateClasses <- evcRaster * 1000 + evhRaster
-writeRaster(stateClasses,
-            stateClassRasterPath,
-            overwrite = TRUE)
-
-# Tiling for spatial multiprocessing -------------------------------------
-
-# Generate and write the tiling raster to file
-tileRaster <- 
-  tilize(
-    mapzoneRaster, 
-    tilingRasterPath,
-    nx = tileCols)
+  # Generate and write the tiling raster to file
+  tileRaster <-
+    tilize(
+      mapzoneRaster,
+      tilingRasterPath,
+      nx = tileCols)
+}
