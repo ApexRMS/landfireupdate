@@ -73,8 +73,8 @@ cropRaster <- function(inputRaster, filename, outputExtent) {
     crop(outputExtent)
 
   # Calculate offset from original
-  offsetAbove <- as.integer((ymax(extent(inputRaster)) - ymax(outputExtent)) / res(inputRaster[2]))
-  offsetLeft <-  as.integer((xmin(extent(inputRaster)) - xmin(outputExtent)) / res(inputRaster[1]))
+  offsetAbove <- round((ymax(extent(inputRaster)) - ymax(outputExtent)) / res(inputRaster)[2])
+  offsetLeft <-  round((xmin(outputExtent) - xmin(extent(inputRaster))) / res(inputRaster)[1])
 
   ## Split output into manageable chunks and fill with data from input
   blockInfo <- blockSize(outputRaster)
@@ -85,9 +85,9 @@ cropRaster <- function(inputRaster, filename, outputExtent) {
     outputRaster <-
     writeValues(outputRaster,
                 getValuesBlock(inputRaster,
-                               row   = blockInfo$row[i] + offsetAbove - 1,
+                               row   = blockInfo$row[i] + offsetAbove,
                                nrows = blockInfo$nrows[i],
-                               col   = offsetLeft,
+                               col   = offsetLeft + 1,
                                ncols = ncol(outputRaster)),
                 blockInfo$row[i])
 
@@ -330,3 +330,4 @@ tilize <- function(templateRaster, filename, nx) {
     maskRaster(tileRaster, filename, maskingRaster = templateRaster)
 
   return(tileRaster)
+}
