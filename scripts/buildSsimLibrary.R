@@ -448,7 +448,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
   ## +Spatial multiprocessing ---------------------------------------------------
 
   spatialMultiprocessing <- datasheet(myscenario, "corestime_Multiprocessing")
-  spatialMultiprocessing <- add_row(spatial_multi, MaskFileName = tilingRasterPath)
+  spatialMultiprocessing <- add_row(spatialMultiprocessing, MaskFileName = tilingRasterPath)
 
   saveDatasheet(myscenario, spatialMultiprocessing, "corestime_Multiprocessing")
 
