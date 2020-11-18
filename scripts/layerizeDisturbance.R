@@ -38,6 +38,7 @@ layerizeDisturbance <- function(runTag) {
     vdistInfo$name,
     saveDistLayer,
     fullRaster = vdistRaster,
+    transitionMultiplierDirectory = transitionMultiplierDirectory,
     .options = furrr_options(seed = TRUE))
 
   # Return to sequential operation

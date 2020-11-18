@@ -15,12 +15,7 @@ maskByMapzone <- function(inputRaster, maskValue, filename){
   blockInfo <- blockSize(inputRaster)
 
   # Generate empty raster with appropriate dimensions
-  outputRaster <- raster(
-    nrows = nrow(inputRaster),
-    ncols = ncol(inputRaster),
-    ext = extent(inputRaster),
-    crs = crs(inputRaster)
-  )
+  outputRaster <- raster(inputRaster)
 
   # Calculate mask and write to output block-by-block
   outputRaster <- writeStart(outputRaster, filename, overwrite=TRUE)
@@ -64,12 +59,7 @@ uniqueInRaster <- function(inputRaster, ignore = NA) {
 # - Requires an output filename, slower than raster::crop for small rasters
 cropRaster <- function(inputRaster, filename, outputExtent) {
   # Create empty raster to hold output
-  outputRaster <-  raster(
-    nrows = nrow(inputRaster),
-    ncols = ncol(inputRaster),
-    ext = extent(inputRaster),
-    crs = crs(inputRaster)
-  ) %>%
+  outputRaster <-  raster(inputRaster) %>%
     crop(outputExtent)
 
   # Calculate offset from original
@@ -109,12 +99,7 @@ maskify <- function(x) {
 # - Input and mask rasters must have same extent (try cropRaster() if not)
 maskRaster <- function(inputRaster, filename, maskingRaster){
   # Create an empty raster to hold the output
-  outputRaster <-  raster(
-    nrows = nrow(inputRaster),
-    ncols = ncol(inputRaster),
-    ext = extent(inputRaster),
-    crs = crs(inputRaster)
-  )
+  outputRaster <-  raster(inputRaster)
 
   ## Split output into manageable chunks and fill with data from input
   blockInfo <- blockSize(outputRaster)
@@ -155,7 +140,6 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   # once the first (largest) block with non-NA data is found.
 
   # Setup --------------------------------------------------------------------
-
   # Decide how to split input into manageable blocks
   maxBlockSize <- 2^(maxBlockSizePower)
   descendingBlockSizes <- 2^((maxBlockSizePower-1):0)
@@ -275,7 +259,7 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
 # Function to create and save a binary raster given a non-binary raster and the
 # value to keep
 # - Used to binarize disturbance maps for use as spatial multipliers in SyncroSim
-saveDistLayer <- function(distValue, distName, fullRaster) {
+saveDistLayer <- function(distValue, distName, fullRaster, transitionMultiplierDirectory) {
   writeRaster(
     layerize(fullRaster, classes = distValue),
     paste0(transitionMultiplierDirectory, distName, ".tif"),
@@ -288,7 +272,7 @@ saveDistLayer <- function(distValue, distName, fullRaster) {
 #   to file row-by-row. This way only one row of the tiling needs to be held in
 #   memory at a time. This is also why the number of rows (and implicitly the size
 #   of a given row) cannot be chosen manually
-tilize <- function(templateRaster, filename, nx) {
+tilize <- function(templateRaster, filename, tempfilename, nx) {
   # Calculate recommended block size of template
   blockInfo <- blockSize(templateRaster)
   ny <- blockInfo$n
@@ -307,15 +291,10 @@ tilize <- function(templateRaster, filename, nx) {
     rep(tileHeight)
 
   # Write an empty raster with the correct metadata to file
-  tileRaster <- raster(
-    nrows = nrow(templateRaster),
-    ncols = ncol(templateRaster),
-    ext = extent(templateRaster),
-    crs = crs(templateRaster)
-  )
+  tileRaster <- raster(templateRaster)
 
   # Write tiling to file row-by-row
-  tileRaster <- writeStart(tileRaster, filename,  overwrite=TRUE)
+  tileRaster <- writeStart(tileRaster, tempfilename,  overwrite=TRUE)
   for(i in seq(blockInfo$n)) {
     if(blockInfo$nrows[i] < tileHeight)
       oneRow <- oneRow[1:(ncol(tileRaster) * blockInfo$nrows[i])]
