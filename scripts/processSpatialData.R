@@ -100,10 +100,13 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     filter(
       fdist %in% fdistLevels,
       fdist != vdist) %>%
-    dplyr::select(-name)
+    dplyr::select(-name) %>%
+    as.matrix
 
   # Reclassify as necessary and save
-  vdistRaster <- reclassifyRaster(fdistRaster, vdistRasterPath, distReclassification)
+  vdistRaster <- reclassify(fdistRaster,
+                            distReclassification,
+                            filename = vdistRasterPath)
 
   # Generate list of unique VDIST codes
   vdistLevels <- distCrosswalk %>%
