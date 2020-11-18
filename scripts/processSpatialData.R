@@ -6,7 +6,7 @@
 
 processSpatialData <- function(mapzoneToKeep, runTag) {
   # Generate run-specific file paths ---------------------------------------
-
+  
   # Directory to store cleaned rasters
   # Note that the working directory is prepended since SyncroSim needs absolute paths
   cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
@@ -25,6 +25,9 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   vdistRasterPath <- paste0(cleanRasterDirectory, "VDIST.tif")
   stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
   tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
+  
+  # Path for temporary files
+  tempRasterPath <- paste0(cleanRasterDirectory, "temp.tif")
 
   # VDIST info for layerizing
   vdistInfoPath <- paste0(cleanRasterDirectory, "VDIST.csv")
@@ -32,7 +35,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   # Load non-spatial data --------------------------------------------------
   distCrosswalk <-   read_xlsx(distCrosswalkPath) %>%
     mutate(name = paste(d_type...2, d_severity...3, d_time...4, sep = " - ")) %>%
-    select(fdist = FDIST, vdist = VDIST, name)
+    dplyr::select(fdist = FDIST, vdist = VDIST, name)
 
   # Load spatial data -------------------------------------------------------
 
@@ -58,7 +61,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     maskByMapzone(
       inputRaster = mapzoneRaster,
       maskValue = mapzoneToKeep,
-      filename = mapzoneRasterPath) %>%
+      filename = tempRasterPath) %>%
     trimRaster(
       filename = mapzoneRasterPath
     )
@@ -67,22 +70,22 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
 
   # EVT
   evtRaster <-
-    cropRaster(evtRaster, evtRasterPath, extent(mapzoneRaster)) %>%
+    cropRaster(evtRaster, tempRasterPath, extent(mapzoneRaster)) %>%
     maskRaster(evtRasterPath, maskingRaster = mapzoneRaster)
 
   # EVC
   evcRaster <-
-    cropRaster(evcRaster, evcRasterPath, extent(mapzoneRaster)) %>%
+    cropRaster(evcRaster, tempRasterPath, extent(mapzoneRaster)) %>%
     maskRaster(evcRasterPath, maskingRaster = mapzoneRaster)
 
   # EVH
   evhRaster <-
-    cropRaster(evhRaster, evhRasterPath, extent(mapzoneRaster)) %>%
+    cropRaster(evhRaster, tempRasterPath, extent(mapzoneRaster)) %>%
     maskRaster(evhRasterPath, maskingRaster = mapzoneRaster)
 
   # FDIST
   fdistRaster <-
-    cropRaster(fdistRaster, fdistRasterPath, extent(mapzoneRaster)) %>%
+    cropRaster(fdistRaster, tempRasterPath, extent(mapzoneRaster)) %>%
     maskRaster(fdistRasterPath, maskingRaster = mapzoneRaster)
 
   # Convert disturbance to VDIST ------------------------------------------------
@@ -97,14 +100,10 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     filter(
       fdist %in% fdistLevels,
       fdist != vdist) %>%
-    select(-name) %>%
-    as.matrix
+    dplyr::select(-name)
 
   # Reclassify as necessary and save
-  vdistRaster <- reclassify(fdistRaster, distReclassification)
-  writeRaster(vdistRaster,
-              vdistRasterPath,
-              overwrite = TRUE)
+  vdistRaster <- reclassifyRaster(fdistRaster, vdistRasterPath, distReclassification)
 
   # Generate list of unique VDIST codes
   vdistLevels <- distCrosswalk %>%
@@ -114,7 +113,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     sort
 
   vdistNames <- distCrosswalk %>%
-    select(-fdist) %>%
+    dplyr::select(-fdist) %>%
     filter(vdist %in% vdistLevels) %>%
     arrange(vdist) %>%
     unique() %>%
@@ -140,5 +139,10 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     tilize(
       mapzoneRaster,
       tilingRasterPath,
+      tempRasterPath,
       nx = tileCols)
+  
+  # Remove temp file
+  unlink(tempRasterPath)
 }
+
