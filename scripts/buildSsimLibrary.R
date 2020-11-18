@@ -5,7 +5,7 @@
 ### Zone using the cleaned rasters genereated by `scripts/processSpatialData.R`
 ### and `scripts/layerizeDisturbance.R`
 
-buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
+buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryName) {
   # Generate run-specific file paths ---------------------------------------
 
   # Directory to store cleaned rasters
@@ -62,7 +62,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
   # Should be unique for every VDIST, PrimaryStratum, EvT, SourceStateClass
   transitionTable <- sqlFetch(db, transitionTableName) %>%
     # Select and rename variables of importance
-    select(MZ, VDIST, EVT7B, StratumIDSource = EVT7B_Name,
+    dplyr::select(MZ, VDIST, EVT7B, StratumIDSource = EVT7B_Name,
            EVCB, EVHB, EVCR, EVHR) %>%
     # Turn all factors into strings
     mutate_if(is.factor, as.character) %>%
@@ -79,7 +79,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
     # Make unique names for when class names are repeated
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(EVT_LIFEFORM, "_", VALUE))) %>%
     # Select relevant columns and rename with stsim relevant column names
-    select(VALUE, CLASSNAMES) %>%
+    dplyr::select(VALUE, CLASSNAMES) %>%
     rename(EVC_ID = VALUE, StateLabelXID = CLASSNAMES) %>%
     # Shorten EVC names for cleaner SyncroSim UI
     mutate(
@@ -94,7 +94,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
   EVHlookup <- sqlFetch(db, evhTableName) %>%
     mutate_if(is.factor, as.character) %>%
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(LIFEFORM, "_", VALUE))) %>%
-    select(VALUE, CLASSNAMES) %>%
+    dplyr::select(VALUE, CLASSNAMES) %>%
     rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES) %>%
     # Shorten EVH names for cleaner SyncroSim UI
     mutate(
@@ -116,14 +116,14 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
     rename(EVCB_Name = StateLabelXID) %>%
     left_join(EVClookup, by = c("EVCR" = "EVC_ID")) %>%
     rename(EVCR_Name = StateLabelXID) %>%
-    select(-StateLabelXDescription.x, -StateLabelXDescription.y) %>%
+    dplyr::select(-StateLabelXDescription.x, -StateLabelXDescription.y) %>%
 
     # Similarly for EVH
     left_join(EVHlookup, by = c("EVHB" = "EVH_ID")) %>%
     rename(EVHB_Name = StateLabelYID) %>%
     left_join(EVHlookup, by = c("EVHR" = "EVH_ID")) %>%
     rename(EVHR_Name = StateLabelYID) %>%
-    select(-StateLabelYDescription.x, -StateLabelYDescription.y) %>%
+    dplyr::select(-StateLabelYDescription.x, -StateLabelYDescription.y) %>%
 
     # Create the State Class names from EVC : EVH combinations
     mutate(StateClassIDSource = paste0(EVCB_Name, " : ", EVHB_Name),
@@ -193,14 +193,14 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
 
   primaryWithColors <- sqlFetch(db, evtColorTableName) %>%
     # Select relevant columns
-    select(VALUE, R, G, B) %>%
+    dplyr::select(VALUE, R, G, B) %>%
     # Take unique and rename for later joining
     unique() %>% rename(ID = VALUE) %>%
     # Create the color using the SyncroSim pattern of T, R, G, B
     mutate(Color = paste("255", R, G, B, sep = ",")) %>%
     # Join and select relevant columns
     right_join(primary, by = "ID") %>%
-    select(ID, Color, Name)
+    dplyr::select(ID, Color, Name)
 
   # Save the datasheet
   saveDatasheet(myproject, primaryWithColors, "Stratum")
@@ -244,7 +244,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
     evcCode = c(transitionTable$EVCB, transitionTable$EVCR),
     StateLabelYID = c(transitionTable$EVHB_Name, transitionTable$EVHR_Name)) %>%
     left_join(evcColors, by = "evcCode") %>% # Use EVC to decide state color
-    select(-evcCode) %>%                     # Remove code used to add colors
+    dplyr::select(-evcCode) %>%                     # Remove code used to add colors
     unique()
 
   saveDatasheet(myproject, stateClasses, "stsim_StateClass")
@@ -254,7 +254,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
   # We gather disturbance types from the VDIST table
   vdistLookup <-  sqlFetch(db, vdistTableName) %>%
     # Select only what we need, then rename
-    select(value, d_type, d_severity, d_time, R, G, B) %>%
+    dplyr::select(value, d_type, d_severity, d_time, R, G, B) %>%
     rename(ID = value,  TransitionGroupID = d_type) %>%
     # Turn all factors into charactors
     mutate_if(is.factor, as.character) %>%
@@ -268,7 +268,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
   # Select the relevant columns, and filter by disturbances that are actually
   # present in the input raster
   transitionTypes <- vdistLookup %>%
-    select(ID, Name, Color) %>%
+    dplyr::select(ID, Name, Color) %>%
     unique() %>%
     filter(ID %in% allVDIST)
 
@@ -280,7 +280,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
   transitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
     mutate_if(is.factor, as.character) %>%
     bind_rows(vdistLookup %>%
-                select(Name = TransitionGroupID) %>%
+                dplyr::select(Name = TransitionGroupID) %>%
                 unique())
 
   saveDatasheet(myproject, transitionGroups, "stsim_TransitionGroup")
@@ -288,10 +288,10 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
   ## Transition Types by groups
 
   typesByGroup <- vdistLookup %>%
-    select(ID, Name, TransitionGroupID) %>%
+    dplyr::select(ID, Name, TransitionGroupID) %>%
     unique() %>%
     filter(ID %in% allVDIST) %>%
-    select(-ID) %>%
+    dplyr::select(-ID) %>%
     rename(TransitionTypeID = Name)
 
   saveDatasheet(myproject, typesByGroup, "stsim_TransitionTypeGroup")
@@ -351,7 +351,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
           number = if_else(mixedLifeForm, number+14, number),
         # Done dealing with mixed lifeforms
         Location = str_c(letter, number)) %>%
-      select(Name, Location)
+      dplyr::select(Name, Location)
 
 
   # Join the locations back into the state class table and clean up the datasheet
@@ -361,7 +361,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
     # Join with the location info
     left_join(locations, by = "Name") %>%
     # Cleanup
-    select(Name, Location, StratumIDSource) %>%
+    dplyr::select(Name, Location, StratumIDSource) %>%
     rename(StateClassIDSource = Name) %>%
     unique() %>%
     as.data.frame()
@@ -375,7 +375,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription) {
     left_join(transitionTypes, by = c("VDIST" = "ID")) %>%
     # Rename and select what we need
     rename(TransitionTypeID = Name) %>%
-    select(StratumIDSource, SecondaryStratumID,
+    dplyr::select(StratumIDSource, SecondaryStratumID,
                   StateClassIDSource, StateClassIDDest,
                   TransitionTypeID, Probability) %>%
   # Filter for values present in the input raster

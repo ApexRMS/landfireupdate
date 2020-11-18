@@ -8,7 +8,7 @@
 # Overall Options --------------------------------------------------------
 
 # Which mapzones to process
-mapzonesToKeep <- 19:20
+mapzonesToKeep <- 19:20 # testing
 
 # Tags used to identify the independent runs (one per Map Zone)
 # They are used to generate names for output folders, etc
@@ -18,7 +18,8 @@ runTags <- str_c("Map Zone ", mapzonesToKeep)
 runLibrary <- "LANDFIRE Update"
 
 # Threads to use when pre-processing rasters
-nThreads <- future::availableCores() - 1
+# nThreads <- future::availableCores() - 1
+nThreads <- 2 # testing
 
 # Raw Inputs --------------------------------------------------------------
 
@@ -66,7 +67,7 @@ minimumTimestep <- 2017
 maximumTimestep <- 2018
 
 # SyncroSim Options -----------------------------------------------------
-libraryName <- paste0("library/", runLibrary)
+libraryNames <- paste0("library/", runLibrary, "-", mapzonesToKeep)
 projectName <- "NW GeoArea"
 scenarioNames <- runTags
 

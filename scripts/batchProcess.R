@@ -45,7 +45,11 @@ plan(multisession, workers = nThreads)
 future_walk2(
   mapzonesToKeep,
   runTags,
-  processSpatialData)
+  processSpatialData,
+  .options =
+    furrr_options(
+      seed = TRUE)
+  )
 
 # Return to sequential operation
 plan(sequential)
@@ -66,13 +70,21 @@ walk(runTags, layerizeDisturbance)
 # connect them to the processed rasters. See `scripts/buildSsimLibrary.R` for
 # details.
 
-# This step cannot safely be parallelized, as threads would be editing the same
-# file and could collide
-pwalk(
+# To parallelize this step, we build the scenarios in independent library files
+# and combine them afterwards
+
+# Begin parallel processing
+plan(multisession, workers = nThreads)
+
+future_pwalk(
   list(
     runTag = runTags,
     scenarioName = scenarioNames,
-    scenarioDescription = scenarioDescriptions
+    scenarioDescription = scenarioDescriptions,
+    libraryName = libraryNames
   ),
   buildSsimLibrary
 )
+
+# Return to sequential operation
+plan(sequential)
