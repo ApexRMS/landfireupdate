@@ -84,3 +84,11 @@ pwalk(
   libraryName = libraryName,
   projectName = projectName
 )
+
+# Generate a backup of the library and move it to a standard location
+outputLibrary <- ssimLibrary(libraryName)
+rsyncrosim::backup(outputLibrary)
+
+backupFilePath <- list.files(paste0(libraryName, ".ssim.backup"), full.names = TRUE) %>% tail(1)
+file.move(backupFilePath, "Library Backup.zip")
+
