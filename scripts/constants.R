@@ -33,24 +33,21 @@ evhRawRasterPath     <- paste0(rawRasterDirectory, "nw_evh.tif")
 evcRawRasterPath     <- paste0(rawRasterDirectory, "nw_evc.tif")
 fdistRawRasterPath   <- paste0(rawRasterDirectory, "nw_fdist.tif")
 
-# Database Path
-landFireDBPath <-
-  "db/NW GeoArea VegTransitions 2020-10-21.accdb"
+# Raw non-spatial data directory
+rawNonSpatialDirectory <- "data/raw/nonspatial/"
 
-# FDIST - VDIST Crosswalk
-distCrosswalkPath <- "data/raw/nonspatial/Disturbance Crosswalk 2020-10-09.xlsx"
+# FDIST to VDIST crosswalk
+distCrosswalkPath <- paste0(rawNonSpatialDirectory, "Disturbance Crosswalk 2020-10-09.xlsx")
 
 # EVC color reference - Used to color stateclass map
-evcColorsPath <- "data/raw/nonspatial/EVC Colors 2019-05-03.csv"
+evcColorsPath <-     paste0(rawNonSpatialDirectory, "EVC Colors 2019-05-03.csv")
 
-# Database Table Names ---------------------------------------------------
-
-#  These are the names of relevant SQL tables withing the database
-transitionTableName <- "vegtransf_rv02i_d"
-evcTableName        <- "EVC_LUT"
-evhTableName        <- "EVH_LUT"
-evtColorTableName   <- "nw_evt200"
-vdistTableName      <- "VDIST"
+# The following were exported from "NW GeoArea VegTransitions 2020-10-21.accdb"
+transitionTablePath <- paste0(rawNonSpatialDirectory, "Transition Table.xlsx")
+evcTablePath        <- paste0(rawNonSpatialDirectory, "EVC LUT.xlsx")
+evhTablePath        <- paste0(rawNonSpatialDirectory, "EVH LUT.xlsx")
+evtColorTablePath   <- paste0(rawNonSpatialDirectory, "EVT Colors.xlsx")
+vdistTablePath      <- paste0(rawNonSpatialDirectory, "VDIST Table.xlsx")
 
 # Cleaned Raster Options ---------------------------------------------------
 

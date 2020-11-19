@@ -15,7 +15,6 @@ library(raster)     # provides functions for manipulating rasters
 library(rgdal)      # provides some optional dependencies for raster
 library(readxl)     # for reading disturbance crosswalk
 library(furrr)      # for parallel iteration
-library(RODBC)      # for connection to MS database files
 library(tidyverse)  # provides general data manipulation functions
 
 # Load configuration options and global constants

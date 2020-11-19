@@ -8,16 +8,6 @@
 initializeSsimLibrary <- function(libraryName, projectName) {
   # Prepare input data ---------------------------------------------------
 
-  ## Load data
-
-  # Load the main Vegetation Transition database from Land Fire
-  # Note that this step requires an ODBC driver, such as the one provided by
-  # Microsoft Access. If you get an error here, please check your ODBC driver
-  # installation and name
-  db <-
-    odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=",
-                             landFireDBPath))
-
   # Load the lookup table that will be used to color state classes by their EVC code
   # This table defines colors for cover type in 1% bins, but the data is in 10% bins
   # The filter and mutate steps below convert the 1% binned EVC codes to 10% codes
@@ -35,13 +25,14 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     mutate(
       evcCode = if_else(evcCode <= 100,
                         true = evcCode,
-                        false = evcCode / 10 + 90)
+                        false = evcCode / 10 + 90),
+      evcCode = as.character(evcCode)
     )
 
   ## Generate a table of all unique transitions
 
   # Should be unique for every VDIST, PrimaryStratum, EvT, SourceStateClass
-  transitionTable <- sqlFetch(db, transitionTableName) %>%
+  transitionTable <- read_xlsx(transitionTablePath, col_types = "text") %>%
     # Select and rename variables of importance
     dplyr::select(MZ, VDIST, EVT7B, StratumIDSource = EVT7B_Name,
            EVCB, EVHB, EVCR, EVHR) %>%
@@ -54,7 +45,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   ## Generate look-up tables for EVC and EVH codes and names
 
-  EVClookup <- sqlFetch(db, evcTableName) %>%
+  EVClookup <- read_xlsx(evcTablePath, col_types = "text") %>%
     # Turn factors into characters
     mutate_if(is.factor, as.character) %>%
     # Make unique names for when class names are repeated
@@ -72,7 +63,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
       StateLabelXID = str_replace(StateLabelXID, "Herb Cover >=",  "Hb")
     )
 
-  EVHlookup <- sqlFetch(db, evhTableName) %>%
+  EVHlookup <- read_xlsx(evhTablePath, col_types = "text") %>%
     mutate_if(is.factor, as.character) %>%
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(LIFEFORM, "_", VALUE))) %>%
     dplyr::select(VALUE, CLASSNAMES) %>%
@@ -162,7 +153,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # TODO: An issue here where some IDs do not have colors and some colors do not
   # have matching IDs.
 
-  primaryWithColors <- sqlFetch(db, evtColorTableName) %>%
+  primaryWithColors <- read_xlsx(evtColorTablePath, col_types = "text") %>%
     # Select relevant columns
     dplyr::select(VALUE, R, G, B) %>%
     # Take unique and rename for later joining
@@ -204,8 +195,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # To do this, we "paste" the X and Y state IDs together by multiplying
   # EVC by 1000 and adding it to EVH
 
-  stateIDs <- c((transitionTable$EVCB*1000 + transitionTable$EVHB),
-                (transitionTable$EVCR*1000 + transitionTable$EVHR))
+  stateIDs <- c((as.numeric(transitionTable$EVCB)*1000 + as.numeric(transitionTable$EVHB)),
+                (as.numeric(transitionTable$EVCR)*1000 + as.numeric(transitionTable$EVHR)))
 
   # Build the datasheet
   stateClasses <- data.frame(
@@ -223,7 +214,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   ## +Transition Types and Groups ------------------------------------------------
 
   # We gather disturbance types from the VDIST table
-  vdistLookup <-  sqlFetch(db, vdistTableName) %>%
+  vdistLookup <-  read_xlsx(vdistTablePath, col_types = "text") %>%
     # Select only what we need, then rename
     dplyr::select(value, d_type, d_severity, d_time, R, G, B) %>%
     rename(ID = value,  TransitionGroupID = d_type) %>%
@@ -384,11 +375,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   saveDatasheet(myscenario, multiprocessing, "core_Multiprocessing")
 
-  # Cleanup ---------------------------------------------------------------------
-
-  # Close the database connection
-  odbcClose(db)
-
   # QA Code -----------------------------------------------------------------
 
   # Are there any states with duplicate rules?
@@ -453,7 +439,7 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
     transitionMultiplierDirectory %>%
     list.files %>%
     str_sub(end = -5) %>%
-    paste0(" [Type]")
+    str_c(" [Type]")
   
   multiplierFileNames <- 
     transitionMultiplierDirectory %>%
