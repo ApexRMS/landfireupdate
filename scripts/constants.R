@@ -8,6 +8,7 @@
 # Overall Options --------------------------------------------------------
 
 # Which mapzones to process
+# mapzonesToKeep <- c(1, 2, 3, 7, 8, 9, 10, 12, 16, 17, 18, 19, 20, 21, 22, 23, 28, 29, 30, 31, 33)
 mapzonesToKeep <- 19:20 # testing
 
 # Tags used to identify the independent runs (one per Map Zone)
@@ -18,8 +19,7 @@ runTags <- str_c("Map Zone ", mapzonesToKeep)
 runLibrary <- "LANDFIRE Update"
 
 # Threads to use when pre-processing rasters
-# nThreads <- future::availableCores() - 1
-nThreads <- 2 # testing
+nThreads <- future::availableCores()
 
 # Raw Inputs --------------------------------------------------------------
 
