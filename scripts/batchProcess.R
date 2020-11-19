@@ -81,10 +81,13 @@ future_pwalk(
     runTag = runTags,
     scenarioName = scenarioNames,
     scenarioDescription = scenarioDescriptions,
-    libraryName = libraryNames
+    libraryName = parallelLibraryNames
   ),
   buildSsimLibrary
 )
 
 # Return to sequential operation
 plan(sequential)
+
+# Consolidate SyncroSim libraries, remove distributed files
+consolidateSsimLibraries(runLibrary, parallelLibraryNames, scenarioNames)

@@ -67,9 +67,12 @@ minimumTimestep <- 2017
 maximumTimestep <- 2018
 
 # SyncroSim Options -----------------------------------------------------
-libraryNames <- paste0("library/", runLibrary, "-", mapzonesToKeep)
+libraryName <- paste0("library/", runLibrary)
 projectName <- "NW GeoArea"
 scenarioNames <- runTags
+
+# Multiple libraries are made in parallel to avoid collisions, they require unique names
+parallelLibraryNames <- paste0("library/", runLibrary, "-", mapzonesToKeep)
 
 # Set the owner for all SyncroSim objects
 ssimOwner <- "LANDFIRE"
