@@ -70,24 +70,17 @@ walk(runTags, layerizeDisturbance)
 # connect them to the processed rasters. See `scripts/buildSsimLibrary.R` for
 # details.
 
-# To parallelize this step, we build the scenarios in independent library files
-# and combine them afterwards
+# Start by building a library with a template scenario
+initializeSsimLibrary(libraryName, projectName)
 
-# Begin parallel processing
-plan(multisession, workers = nThreads)
-
-future_pwalk(
+# For each Map Zone, copy the template and connect the relevant rasters
+pwalk(
   list(
     runTag = runTags,
     scenarioName = scenarioNames,
-    scenarioDescription = scenarioDescriptions,
-    libraryName = parallelLibraryNames
+    scenarioDescription = scenarioDescriptions
   ),
-  buildSsimLibrary
+  buildSsimScenarios,
+  libraryName = libraryName,
+  projectName = projectName
 )
-
-# Return to sequential operation
-plan(sequential)
-
-# Consolidate SyncroSim libraries, remove distributed files
-consolidateSsimLibraries(runLibrary, parallelLibraryNames, scenarioNames)

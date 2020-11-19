@@ -5,26 +5,7 @@
 ### Zone using the cleaned rasters genereated by `scripts/processSpatialData.R`
 ### and `scripts/layerizeDisturbance.R`
 
-buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryName) {
-  # Generate run-specific file paths ---------------------------------------
-
-  # Directory to store cleaned rasters
-  # Note that the working directory is prepended since SyncroSim needs absolute paths
-  cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
-
-  # Directory and prefix for FDIST binary rasters (spatial multipliers)
-  transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
-
-  # Clean Raster Paths
-  mapzoneRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
-  evtRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
-  vdistRasterPath <- paste0(cleanRasterDirectory, "VDIST.tif")
-  stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
-  tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
-
-  primaryStratumRasterPath <- evtRasterPath
-  secondaryStratumRasterPath <- mapzoneRasterPath
-
+initializeSsimLibrary <- function(libraryName, projectName) {
   # Prepare input data ---------------------------------------------------
 
   ## Load data
@@ -132,21 +113,13 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
     # Add the propability column with all set to 1
     mutate(Probability = 1)
 
-  # Load input rasters
-  vdistRaster <- raster(vdistRasterPath)
-  evtRaster <- raster(evtRasterPath) # Since primary stratum is EVT
-
-  # Calculate which VDIST and EVT are present in the Map Zone
-  allVDIST <- uniqueInRaster(vdistRaster)
-  allEVT <- uniqueInRaster(evtRaster)
-
   # Build the SyncroSim Library ---------------------------------------------
 
   # Create library with a project ("Definitions") and a scenario ("Test")
   dir.create("library/", showWarnings = FALSE)
   mylibrary <- ssimLibrary(libraryName, overwrite = TRUE)
-  myproject <- project(mylibrary, projectName, overwrite = TRUE)
-  myscenario <- scenario(myproject, scenarioName)
+  myproject <- rsyncrosim::project(mylibrary, projectName, overwrite = TRUE)
+  myscenario <- scenario(myproject, "template")
 
   # Set owner
   owner(mylibrary) <- ssimOwner
@@ -156,7 +129,6 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
   # Set descriptions
   description(mylibrary)  <- libraryDescription
   description(myproject)  <- projectDescription
-  description(myscenario) <- scenarioDescription
 
   ## +Terminology -----------------------------------------------------------
 
@@ -184,8 +156,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
 
   primary <- data.frame(ID = transitionTable$EVT7B,
                         Name = transitionTable$StratumIDSource) %>%
-    unique() %>%
-    filter(ID %in% allEVT)
+    unique()
 
   # Extract colors from the evt200 sheet
   # TODO: An issue here where some IDs do not have colors and some colors do not
@@ -269,8 +240,7 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
   # present in the input raster
   transitionTypes <- vdistLookup %>%
     dplyr::select(ID, Name, Color) %>%
-    unique() %>%
-    filter(ID %in% allVDIST)
+    unique()
 
   saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
 
@@ -290,7 +260,6 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
   typesByGroup <- vdistLookup %>%
     dplyr::select(ID, Name, TransitionGroupID) %>%
     unique() %>%
-    filter(ID %in% allVDIST) %>%
     dplyr::select(-ID) %>%
     rename(TransitionTypeID = Name)
 
@@ -377,38 +346,9 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
     rename(TransitionTypeID = Name) %>%
     dplyr::select(StratumIDSource, SecondaryStratumID,
                   StateClassIDSource, StateClassIDDest,
-                  TransitionTypeID, Probability) %>%
-  # Filter for values present in the input raster
-    filter(TransitionTypeID %in% transitionTypes$Name) %>%
-    filter(StratumIDSource %in% primary$Name)
+                  TransitionTypeID, Probability)
 
   saveDatasheet(myscenario, probabilisticTransitions, "stsim_Transition")
-
-  ## +Transition multipliers ---------------------------------------------------
-
-  # Collect the names and cretae path files
-  multiplierGroupNames <- paste0(transitionTypes$Name, " [Type]")
-  multiplierFileNames <- paste0(transitionMultiplierDirectory,
-                                transitionTypes$Name,
-                                ".tif")
-
-  # Compose and save the data frame
-  spatialMultiplier <- data.frame(
-    TransitionGroupID = multiplierGroupNames,
-    MultiplierFileName = multiplierFileNames)
-
-  saveDatasheet(myscenario, spatialMultiplier,
-                "stsim_TransitionSpatialMultiplier")
-
-  ## +Initial conditions --------------------------------------------------------
-
-  initialConditionsSpatial <- data.frame(
-    StateClassFileName = stateClassRasterPath,
-    StratumFileName = primaryStratumRasterPath,
-    SecondaryStratumFileName = secondaryStratumRasterPath)
-
-  saveDatasheet(myscenario, initialConditionsSpatial,
-                "stsim_InitialConditionsSpatial")
 
   ## +Run Control --------------------------------------------------------------
 
@@ -443,14 +383,6 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
                EnableMultiScenario = TRUE)
 
   saveDatasheet(myscenario, multiprocessing, "core_Multiprocessing")
-
-
-  ## +Spatial multiprocessing ---------------------------------------------------
-
-  spatialMultiprocessing <- datasheet(myscenario, "corestime_Multiprocessing")
-  spatialMultiprocessing <- add_row(spatialMultiprocessing, MaskFileName = tilingRasterPath)
-
-  saveDatasheet(myscenario, spatialMultiprocessing, "corestime_Multiprocessing")
 
   # Cleanup ---------------------------------------------------------------------
 
@@ -489,4 +421,66 @@ buildSsimLibrary <- function(runTag, scenarioName, scenarioDescription, libraryN
 
   if(numMixedLifeForm != 0)
     stop("Found mixed life form states! Please check the `stateClasses` data.frame!")
+}
+
+buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, libraryName, projectName) {
+  # Generate run-specific file paths ---------------------------------------
+  
+  # Directory to store cleaned rasters
+  # Note that the working directory is prepended since SyncroSim needs absolute paths
+  cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
+  
+  # Directory and prefix for FDIST binary rasters (spatial multipliers)
+  transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
+  
+  # Clean Raster Paths
+  stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
+  primaryStratumRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
+  secondaryStratumRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
+
+  tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
+
+  # Build Scenario ------------------------------------------------------------
+  mylibrary <- ssimLibrary(libraryName)
+  myproject <- rsyncrosim::project(mylibrary, projectName)
+  myscenario <- scenario(myproject, scenarioName, sourceScenario = "template", overwrite =T)
+  description(myscenario) <- scenarioDescription
+  
+  ## +Transition multipliers ---------------------------------------------------
+  
+  # Collect the names and cretae path files
+  multiplierGroupNames <- 
+    transitionMultiplierDirectory %>%
+    list.files %>%
+    str_sub(end = -5) %>%
+    paste0(" [Type]")
+  
+  multiplierFileNames <- 
+    transitionMultiplierDirectory %>%
+    list.files(full.names = T)
+  
+  # Compose and save the data frame
+  spatialMultiplier <- data.frame(
+    TransitionGroupID = multiplierGroupNames,
+    MultiplierFileName = multiplierFileNames)
+  
+  saveDatasheet(myscenario, spatialMultiplier,
+                "stsim_TransitionSpatialMultiplier")
+  
+  ## +Initial conditions --------------------------------------------------------
+  
+  initialConditionsSpatial <- data.frame(
+    StateClassFileName = stateClassRasterPath,
+    StratumFileName = primaryStratumRasterPath,
+    SecondaryStratumFileName = secondaryStratumRasterPath)
+  
+  saveDatasheet(myscenario, initialConditionsSpatial,
+                "stsim_InitialConditionsSpatial")
+  
+  ## +Spatial multiprocessing ---------------------------------------------------
+  
+  spatialMultiprocessing <- datasheet(myscenario, "corestime_Multiprocessing")
+  spatialMultiprocessing <- add_row(spatialMultiprocessing, MaskFileName = tilingRasterPath)
+  
+  saveDatasheet(myscenario, spatialMultiprocessing, "corestime_Multiprocessing")
 }
