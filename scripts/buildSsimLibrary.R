@@ -108,7 +108,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   # Create library with a project ("Definitions") and a scenario ("Test")
   dir.create("library/", showWarnings = FALSE)
-  mylibrary <- ssimLibrary(libraryName, overwrite = TRUE)
+  ssimSession <- session(ssimDir)
+  mylibrary <- ssimLibrary(libraryName, session = ssimSession, overwrite = TRUE)
   myproject <- rsyncrosim::project(mylibrary, projectName, overwrite = TRUE)
   myscenario <- scenario(myproject, "template")
 
@@ -427,7 +428,8 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
 
   # Build Scenario ------------------------------------------------------------
-  mylibrary <- ssimLibrary(libraryName)
+  ssimSession <- session(ssimDir)
+  mylibrary <- ssimLibrary(libraryName, session = ssimSession)
   myproject <- rsyncrosim::project(mylibrary, projectName)
   myscenario <- scenario(myproject, scenarioName, sourceScenario = "template", overwrite =T)
   description(myscenario) <- scenarioDescription

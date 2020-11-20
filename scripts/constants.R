@@ -21,6 +21,10 @@ runLibrary <- "LANDFIRE Update"
 # Threads to use when pre-processing rasters
 nThreads <- future::availableCores()
 
+# SyncroSim isntallation directory (leave as NULL to use default)
+#ssimDir <- NULL
+ssimDir <- "/home/ubuntu/.syncrosim" # testing
+
 # Raw Inputs --------------------------------------------------------------
 
 # Directory holding raw rasters
