@@ -15,6 +15,7 @@ library(raster)     # provides functions for manipulating rasters
 library(rgdal)      # provides some optional dependencies for raster
 library(readxl)     # for reading disturbance crosswalk
 library(furrr)      # for parallel iteration
+library(logr)       # for generating logs with RScript
 library(tidyverse)  # provides general data manipulation functions
 
 # Load configuration options and global constants
@@ -30,12 +31,18 @@ source("scripts/processSpatialData.R")
 source("scripts/layerizeDisturbance.R")
 source("scripts/buildSsimLibrary.R")
 
+# Begin logging ------------------------------------------------------------
+
+logFile <- log_open(logFilePath)
+
 # Process rasters ----------------------------------------------------------
 
 # The first step is to split the entire GeoArea rasters down into the Map Zones
 # we wish to process and generate related rasters, including a State Class
 # raster and a Tiling raster. Please see `scripts/processSpatialData.R` for
 # details.
+
+log_print("Starting pre-process!")
 
 # This function is safe to parallelize
 # Begin parallel processing
@@ -59,6 +66,8 @@ plan(sequential)
 # layers for SyncroSim to use as transition multipliers. Please see
 # `scripts/layerizeDisturbance.R` for details.
 
+log_print("Starting layerizing of disturbances!")
+
 # It is more efficient to parallelize this step within each Map Zone, see
 # `scripts/layerizeDisturbance.R` for more info
 walk(runTags, layerizeDisturbance)
@@ -68,6 +77,8 @@ walk(runTags, layerizeDisturbance)
 # Finally we need to build the SyncroSim library, project, and scenarios and
 # connect them to the processed rasters. See `scripts/buildSsimLibrary.R` for
 # details.
+
+log_print("Starting Syncrosim library building!")
 
 # Start by building a library with a template scenario
 initializeSsimLibrary(libraryName, projectName)
@@ -84,11 +95,18 @@ pwalk(
   projectName = projectName
 )
 
-# Generate a backup of the library and move it to a standard location
+# Backup SyncroSim Library --------------------------------------------------
+
+log_print("Generating Syncrosim library backup!")
+
+# Generate a backup of the library
 ssimSession <- session(ssimDir)
 outputLibrary <- ssimLibrary(libraryName, session = ssimSession)
 rsyncrosim::backup(outputLibrary)
 
+# Move backup to standard location
 backupFilePath <- list.files(paste0(libraryName, ".ssim.backup"), full.names = TRUE) %>% tail(1)
 file.rename(backupFilePath, "Library Backup.zip")
 
+# End logging ---------------------------------------------------------------
+log_close()

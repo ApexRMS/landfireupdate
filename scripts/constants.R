@@ -25,6 +25,10 @@ nThreads <- future::availableCores()
 #ssimDir <- NULL
 ssimDir <- "/home/ubuntu/.syncrosim" # testing
 
+# Log file path
+logFilePath <- "run.log"
+dir.create("log", showWarnings = F)
+
 # Raw Inputs --------------------------------------------------------------
 
 # Directory holding raw rasters
