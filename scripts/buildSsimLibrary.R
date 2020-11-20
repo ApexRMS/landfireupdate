@@ -407,7 +407,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     sum
 
   if(numMixedLifeForm != 0)
-    stop("Found mixed life form states! Please check the `stateClasses` data.frame!")
+    warning("Found mixed life form states! Please check the `stateClasses` data.frame!")
 }
 
 buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, libraryName, projectName) {
