@@ -90,5 +90,5 @@ outputLibrary <- ssimLibrary(libraryName)
 rsyncrosim::backup(outputLibrary)
 
 backupFilePath <- list.files(paste0(libraryName, ".ssim.backup"), full.names = TRUE) %>% tail(1)
-file.move(backupFilePath, "Library Backup.zip")
+file.rename(backupFilePath, "Library Backup.zip")
 
