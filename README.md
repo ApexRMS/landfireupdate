@@ -11,28 +11,22 @@ these data to generate a SyncroSim library to run the Landfire Update itself.
 These scripts require working installations of R and SyncroSim, and were
 developed on R version v4.0.3 and SyncroSim v2.0.23. Additionally the following
 R packages must be installed: `rsyncrosim`, `tidyverse`, `raster`,  `furrr`,
-`readxl`, `RODBC`, `rgdal`. The ST-Sim package (v3.2.25) must also be installed in
+`readxl`, `rgdal`, `logr`. The ST-Sim package (v3.2.25) must also be installed in
 SyncroSim. The instructions to run the script assume you will be using [RStudio](https://rstudio.com/),
 however, this is not a strict requirement.
-
-Additionally, you may have to install an [ODBC driver](https://en.wikipedia.org/wiki/Open_Database_Connectivity)
-to connect to the database file using `RODBC`. A working installation of
-Microsoft Access should provide this driver, but there are a number of free,
-cross-platform alternatives available if needed. If you are running on Windows 
-you can download the AccessDatabaseEngine_X64.exe from [here](https://www.microsoft.com/en-us/download/details.aspx?id=13255). 
 
 ### Data files
 
 A number of data files are required that are not included on the GitHub repo due
 to size constraints. These files have been compressed into a zip folder that can
-be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Data%20Files.zip).
-Please note that this file is quite large (~1.3GB).
+be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Data%20Files%20-%202020-11-23.zip).
+Please note that this file is quite large (~1.1GB).
 
 The zip folder also contains the expected paths of the files, and so it is
 recommended to extract the zip file directly into the root of this git
-repository. In other words, the `data/`, `db/`, and `library/` subdirectories
-should be present in the same directory as this README after extraction, not
-inside another folder (such as `LANDFIRE Update Data Files/`).
+repository. In other words, the `data/` and `library/` subdirectories should be
+present in the same directory as this README after extraction, not inside
+another folder (such as `LANDFIRE Update Data Files/`).
 
 This archive also includes an example SyncroSim library (`library/LANDFIRE Update.ssim`)
 generated using this repository for Map Zone 19. This example library can be
@@ -54,7 +48,9 @@ edited to configure a run. Below is a breakdown of the organization of this file
 These options set overarching options specific to the run.
 
 The `mapzonesToKeep` variable is used to select the Map Zones that should be
-extracted and processed in the current run.
+extracted and processed in the current run. This should be a vector of numbers.
+To identify which Map Zones are present in a Geo Area, consider using the
+`uniqueInRaster()` function defined in `scripts/rasterFunctions.R`.
 
 The `runTags` variable is used to identify the individual runs, and should be
 the same length as `mapzonesToKeep`. In addition to being used to organize
@@ -72,6 +68,13 @@ the `nThreads` variable. This is not to be confused with the `ssimJobs` in the
 **SyncroSim Options** section below that is used to set the default maximum
 number of jobs in the generated SyncroSim library. 
 
+The `ssimDir`is used to indicate the installation directory for SyncroSim if it
+is not in the default location. This is primarily included for Linux users.
+Leave this values as `NULL` to use the default isntallation directory.
+
+Finally `logFilePath` is used to name the log file that will be produced during
+the run.
+
 ### Raw Inputs
 
 This section is used to set the paths of input files. If the data files were
@@ -80,16 +83,7 @@ but it is worthwhile to double check that the files are in the correct
 locations. If new inputs files are to be added, these variables should be
 updated to reflect their file names and paths.
 
-### Database Table Names
-
-The names of SQL tables accessed from the database are listed here. As new
-versions of these tables become available, both the database filename (listed in
-the `Raw Inputs` section) and the table names must be updated as necessary.
-
-### Cleaned Raster Options
-
-These variables are used to define the naming scheme of the cleaned rasters
-using the run tag. Most of these variables can safely be left alone.
+### Output Raster Options
 
 One of the cleaned rasters is a mask that is used to split the remaining rasters
 down into manageable rectangular chunks (or tiles) for spatial multiprocessing
@@ -118,7 +112,7 @@ number of threads R will spawn while processing the raw rasters for SyncroSim.
 
 Begin by opening the `LANDFIRE Update.Rproj` R project file to ensure the
 correct working directory is set in RStudio. Next, open the
-`scripts/processSpatialData.R` script and either run line-by-line or press the
+`batchProcess.R` script and either run line-by-line or press the
 `source` button in the top right corner of the file editor pane of RStudio.
 
 This script is responsible for processing the raw input rasters, including
