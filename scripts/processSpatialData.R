@@ -10,6 +10,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   # Directory to store cleaned rasters
   # Note that the working directory is prepended since SyncroSim needs absolute paths
   cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
+  dir.create(paste0(getwd(), "/data/clean"), showWarnings = F)
   dir.create(cleanRasterDirectory, showWarnings = F)
 
   # Directory and prefix for FDIST binary rasters (spatial multipliers)
