@@ -8,8 +8,8 @@
 # Overall Options --------------------------------------------------------
 
 # Which mapzones to process
-# mapzonesToKeep <- c(1, 2, 3, 7, 8, 9, 10, 12, 16, 17, 18, 19, 20, 21, 22, 23, 28, 29, 30, 31, 33)
-mapzonesToKeep <- 19:20 # testing
+# mapzonesToKeep <- c(1, 2, 3, 7, 8, 9, 10, 12, 16, 17, 18, 19, 20, 21, 22, 23, 28, 29, 30, 31, 33) # Full set for NW GeoArea
+mapzonesToKeep <- 19:20 # for testing
 
 # Tags used to identify the independent runs (one per Map Zone)
 # They are used to generate names for output folders, etc
@@ -22,8 +22,7 @@ runLibrary <- "LANDFIRE Update"
 nThreads <- future::availableCores()
 
 # SyncroSim isntallation directory (leave as NULL to use default)
-#ssimDir <- NULL
-ssimDir <- "/home/ubuntu/.syncrosim" # testing
+ssimDir <- NULL
 
 # Log file path
 logFilePath <- "run.log"
@@ -62,7 +61,7 @@ vdistTablePath      <- paste0(rawNonSpatialDirectory, "VDIST Table.xlsx")
 # A tiling mask is produced to allow for Spatial Multiprocessing in SyncroSim
 # The size of the rows is dictated by the size of the raster and memory constraints,
 # but the number of columns can be set here
-tileCols <- 3
+tileCols <- 10
 
 # Run Controls  -------------------------------------------------------
 
@@ -76,9 +75,6 @@ libraryName <- paste0("library/", runLibrary)
 projectName <- "NW GeoArea"
 scenarioNames <- runTags
 
-# Multiple libraries are made in parallel to avoid collisions, they require unique names
-parallelLibraryNames <- paste0("library/", runLibrary, "-", mapzonesToKeep)
-
 # Set the owner for all SyncroSim objects
 ssimOwner <- "LANDFIRE"
 
@@ -91,4 +87,4 @@ scenarioDescriptions <- paste0("Test updated on Map Zone ", mapzonesToKeep,
                                ". Note that rules used here will be updated.")
 
 # Set the number of concurrent jobs to in SyncroSim
-ssimJobs <- 5
+ssimJobs <- 8
