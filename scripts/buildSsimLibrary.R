@@ -163,7 +163,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     mutate(Color = paste("255", R, G, B, sep = ",")) %>%
     # Join and select relevant columns
     right_join(primary, by = "ID") %>%
-    dplyr::select(ID, Color, Name)
+    dplyr::select(ID, Color, Name) %>%
+    as.data.frame()
 
   # Save the datasheet
   saveDatasheet(myproject, primaryWithColors, "Stratum")
@@ -232,7 +233,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # present in the input raster
   transitionTypes <- vdistLookup %>%
     dplyr::select(ID, Name, Color) %>%
-    unique()
+    unique() %>%
+    as.data.frame()
 
   saveDatasheet(myproject, transitionTypes, "stsim_TransitionType")
 
@@ -243,7 +245,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     mutate_if(is.factor, as.character) %>%
     bind_rows(vdistLookup %>%
                 dplyr::select(Name = TransitionGroupID) %>%
-                unique())
+                unique()) %>%
+    as.data.frame()
 
   saveDatasheet(myproject, transitionGroups, "stsim_TransitionGroup")
 
@@ -253,7 +256,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     dplyr::select(ID, Name, TransitionGroupID) %>%
     unique() %>%
     dplyr::select(-ID) %>%
-    rename(TransitionTypeID = Name)
+    rename(TransitionTypeID = Name) %>%
+    as.data.frame()
 
   saveDatasheet(myproject, typesByGroup, "stsim_TransitionTypeGroup")
 
