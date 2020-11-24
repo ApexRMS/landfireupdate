@@ -55,6 +55,7 @@ evcTablePath        <- paste0(rawNonSpatialDirectory, "EVC LUT.xlsx")
 evhTablePath        <- paste0(rawNonSpatialDirectory, "EVH LUT.xlsx")
 evtColorTablePath   <- paste0(rawNonSpatialDirectory, "EVT Colors.xlsx")
 vdistTablePath      <- paste0(rawNonSpatialDirectory, "VDIST Table.xlsx")
+allowedStatesPath   <- paste0(rawNonSpatialDirectory, "Allowed EVC-EVH.csv")
 
 # Output Raster Options ---------------------------------------------------
 

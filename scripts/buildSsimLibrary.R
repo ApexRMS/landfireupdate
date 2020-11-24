@@ -342,7 +342,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     rename(TransitionTypeID = Name) %>%
     dplyr::select(StratumIDSource, SecondaryStratumID,
                   StateClassIDSource, StateClassIDDest,
-                  TransitionTypeID, Probability)
+                  TransitionTypeID, Probability) %>%
+    as.data.frame()
 
   saveDatasheet(myscenario, probabilisticTransitions, "stsim_Transition")
 
@@ -398,20 +399,20 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # Are there mixed life form states?
   # - Mixed life form states can be identified by vegetation cover (x state) labels
   #   that don't match their vegetation height (y state) labels
-  numMixedLifeForm <-
+  allowedStates <- read_csv(allowedStatesPath) %>%
+    mutate(ID = EVC * 1000 + EVH) %>%
+    pull(ID)
+  
+  numInvalidStates <-
     stateClasses %>%
     mutate(
-      mixedLifeForm = case_when(
-        str_detect(StateLabelXID, "Tr") & !str_detect(StateLabelYID, "Fr") ~ T,
-        str_detect(StateLabelXID, "Sh") & !str_detect(StateLabelYID, "Sh") ~ T,
-        str_detect(StateLabelXID, "Hb") & !str_detect(StateLabelYID, "Hb") ~ T,
-        T                                                                  ~ F),
+      invalid = !(ID %in% allowedStates)
     ) %>%
-    pull(mixedLifeForm) %>%
+    pull(invalid) %>%
     sum
 
-  if(numMixedLifeForm != 0)
-    warning("Found mixed life form states! Please check the `stateClasses` data.frame!")
+  if(numInvalidStates != 0)
+    stop("Found invalid state classes! Please check the transition table non-spatial input!")
 }
 
 buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, libraryName, projectName) {
