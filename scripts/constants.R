@@ -8,7 +8,7 @@
 # Overall Options --------------------------------------------------------
 
 # Which mapzones to process
-# mapzonesToKeep <- c(1, 2, 3, 7, 8, 9, 10, 12, 16, 17, 18, 19, 20, 21, 22, 23, 28, 29, 30, 31, 33) # Full set for NW GeoArea
+#mapzonesToKeep <- c(1, 2, 7, 8, 9, 10, 18, 19, 20, 21, 22, 29) # Full set for NW GeoArea
 mapzonesToKeep <- 19 # for testing
 
 # Tags used to identify the independent runs (one per Map Zone)
