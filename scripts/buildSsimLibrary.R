@@ -420,12 +420,16 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
     list.files(full.names = T)
   
   # Compose and save the data frame
+  if(length(multiplierFileNames) > 0) {
   spatialMultiplier <- data.frame(
     TransitionGroupID = multiplierGroupNames,
     MultiplierFileName = multiplierFileNames)
   
   saveDatasheet(myscenario, spatialMultiplier,
                 "stsim_TransitionSpatialMultiplier")
+  } else
+    warning(paste0("There were no disturbances found in ", runTag,
+                   ". This is not necessarily an error, please check the raw data."))
   
   ## +Initial conditions --------------------------------------------------------
   
