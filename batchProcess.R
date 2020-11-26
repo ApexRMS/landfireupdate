@@ -30,6 +30,7 @@ source("scripts/rasterFunctions.R")
 source("scripts/processSpatialData.R")
 source("scripts/layerizeDisturbance.R")
 source("scripts/buildSsimLibrary.R")
+source("scripts/checkLibrary.R")
 
 # Begin logging ------------------------------------------------------------
 
@@ -82,6 +83,9 @@ log_print("Starting Syncrosim library building!")
 
 # Start by building a library with a template scenario
 initializeSsimLibrary(libraryName, projectName)
+
+# Check the library and cleaned data for errors before continuing
+checkLibrary(libraryName, projectName, runTags)
 
 # For each Map Zone, copy the template and connect the relevant rasters
 pwalk(

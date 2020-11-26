@@ -380,39 +380,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
                EnableMultiScenario = TRUE)
 
   saveDatasheet(myscenario, multiprocessing, "core_Multiprocessing")
-
-  # QA Code -----------------------------------------------------------------
-
-  # Are there any states with duplicate rules?
-  # - within each EVT, mapzone, and transition type, there should only be one rule
-  #   (ie. one row) for each state class
-  numDuplicateRules <-
-    probabilisticTransitions %>%
-    group_by(StratumIDSource, SecondaryStratumID, TransitionTypeID, StateClassIDSource) %>%
-    summarise(unique = (n() == 1)) %>%
-    filter(!unique) %>%
-    nrow
-
-  if(numDuplicateRules > 0)
-    stop("Found duplicate rules for one or more states! Please check the `probabilisticTransitions` data.frame!")
-
-  # Are there mixed life form states?
-  # - Mixed life form states can be identified by vegetation cover (x state) labels
-  #   that don't match their vegetation height (y state) labels
-  allowedStates <- read_csv(allowedStatesPath) %>%
-    mutate(ID = EVC * 1000 + EVH) %>%
-    pull(ID)
-  
-  numInvalidStates <-
-    stateClasses %>%
-    mutate(
-      invalid = !(ID %in% allowedStates)
-    ) %>%
-    pull(invalid) %>%
-    sum
-
-  if(numInvalidStates != 0)
-    stop("Found invalid state classes! Please check the transition table non-spatial input!")
 }
 
 buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, libraryName, projectName) {
