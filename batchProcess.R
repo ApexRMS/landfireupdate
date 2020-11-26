@@ -84,8 +84,13 @@ log_print("Starting Syncrosim library building!")
 # Start by building a library with a template scenario
 initializeSsimLibrary(libraryName, projectName)
 
+
+log_print("Checking states and rules in SyncroSim Library!")
+
 # Check the library and cleaned data for errors before continuing
 checkLibrary(libraryName, projectName, runTags)
+
+log_print("Building scenarios for each Map Zone!")
 
 # For each Map Zone, copy the template and connect the relevant rasters
 pwalk(

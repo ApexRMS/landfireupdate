@@ -14,7 +14,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   
   # Load data sheets needed for checks common to all scenarios
   rules <- datasheet(myscenario, "stsim_Transition") %>%
-    select(-Probability, StateClassIDDest)
+    dplyr::select(-Probability, StateClassIDDest)
   
   stateClasses <- datasheet(myproject, "stsim_StateClass") %>%
     pull(ID)
@@ -62,7 +62,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # Read in the rules as codes and convert each combination of EVC, EVH, EVT,
   # MZ, and VDIST into a unique code
   ruleCodes <- read_xlsx(transitionTablePath, col_types = "text") %>% # Read in the whole set of rules as text
-    select(EVC = EVCB, EVH = EVHB, EVT = EVT7B, MZ, VDIST) %>%
+    dplyr::select(EVC = EVCB, EVH = EVHB, EVT = EVT7B, MZ, VDIST) %>%
     unique %>%
     map2_dfc(           # Recall that the table is read in as text. Here we pad the columns so they are uniform widths
       c(3,3,4,2,3),     # Widths to pad each of the columns to. All are three except EVT (4), and MZ (2)
@@ -79,13 +79,15 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   allMissingRules <- future_map_dfr( # *_dfr indicates the results should be combined using `bind_rows()`
     runTags,
     listMissingRules,
-    ruleCodes = ruleCodes
+    ruleCodes = ruleCodes,
+    .options = furrr_options(seed = TRUE)
   )
 
   # Return to sequential operation
   plan(sequential)
 
-  write_csv(missingRules, paste0("library/", runLibrary, " Missing Rules.csv"))
+  write_csv(allMissingRules, paste0("library/", runLibrary, " Missing Rules.csv"))
+  message(paste0("Table of missing rules written to `library/", runLibrary, " Missing Rules.csv`"))
 }
 
 # Function to find missing rules from a Map Zone using a list of unqiue rule codes
@@ -120,10 +122,10 @@ listMissingRules <- function(runTag, ruleCodes) {
              sep = c(3,6,10,12)) %>%
     mutate_all(as.numeric) %>%
     # Use look up tables to add names from the codes
-    left_join(read_xlsx(evcTablePath) %>% select(EVC = VALUE, EVC_NAME = CLASSNAMES)) %>%
-    left_join(read_xlsx(evhTablePath) %>% select(EVH = VALUE, EVH_NAME = CLASSNAMES)) %>%
-    left_join(read_xlsx(evtColorTablePath) %>% select(EVT = VALUE, EVT_NAME)) %>%
-    left_join(read_xlsx(vdistTablePath) %>% select(VDIST = value, d_type, d_severity, d_time)) %>%
+    left_join(read_xlsx(evcTablePath) %>% dplyr::select(EVC = VALUE, EVC_NAME = CLASSNAMES), by = "EVC") %>%
+    left_join(read_xlsx(evhTablePath) %>% dplyr::select(EVH = VALUE, EVH_NAME = CLASSNAMES), by = "EVH") %>%
+    left_join(read_xlsx(evtColorTablePath) %>% dplyr::select(EVT = VALUE, EVT_NAME), by = "EVT") %>%
+    left_join(read_xlsx(vdistTablePath) %>% dplyr::select(VDIST = value, d_type, d_severity, d_time), by = "VDIST") %>%
     unite(VDIST_NAME, d_type, d_severity, d_time, sep = " - ")
   
   return(missingRules)
