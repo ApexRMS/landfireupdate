@@ -272,7 +272,10 @@ saveDistLayer <- function(distValue, distName, fullRaster, transitionMultiplierD
 #   to file row-by-row. This way only one row of the tiling needs to be held in
 #   memory at a time. This is also why the number of rows (and implicitly the size
 #   of a given row) cannot be chosen manually
-tilize <- function(templateRaster, filename, tempfilename, nx) {
+# - minProportion is used to determine the size threshold for consolidating tiles
+#   that are too small into neighboring tiles. Represented as a porportion of a
+#   full tile
+tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0.2) {
   # Calculate recommended block size of template
   blockInfo <- blockSize(templateRaster)
   ny <- blockInfo$n
@@ -294,7 +297,7 @@ tilize <- function(templateRaster, filename, tempfilename, nx) {
   tileRaster <- raster(templateRaster)
 
   # Write tiling to file row-by-row
-  tileRaster <- writeStart(tileRaster, tempfilename,  overwrite=TRUE)
+  tileRaster <- writeStart(tileRaster, filename,  overwrite=TRUE)
   for(i in seq(blockInfo$n)) {
     if(blockInfo$nrows[i] < tileHeight)
       oneRow <- oneRow[1:(ncol(tileRaster) * blockInfo$nrows[i])]
@@ -306,7 +309,67 @@ tilize <- function(templateRaster, filename, tempfilename, nx) {
 
   # Mask raster by template
   tileRaster <-
-    maskRaster(tileRaster, filename, maskingRaster = templateRaster)
+    maskRaster(tileRaster, tempfilename, maskingRaster = templateRaster)
+  
+  # Determine which tiles are too small after masking 
+  tileSizes <- tabulateRaster(tileRaster) %>%
+    mutate(small = freq < (tileHeight * tileWidth * minProportion))
 
+  smallTiles <- tileSizes %>%
+    filter(small) %>%
+    pull(value)
+  
+  largeTiles <-  tileSizes %>%
+    filter(!small) %>%
+    pull(value)
+
+  # Identify the smallest neighboring tile that is large enough to consolidate into
+  # for each of the tiles that are too small
+  neighboringTiles <- map_dbl(smallTiles, function(centerTile) {
+    allNeighbors <- c(centerTile - 1, centerTile + 1, centerTile - nx, centerTile + nx) %>% # Identify tiles left, right, above, and below
+      intersect(largeTiles) # Only keep tiles that are large
+    
+    bestNeighbor <- tileSizes %>%
+      filter(value %in% allNeighbors) %>%
+      arrange(freq) %>% # arrange with smallest neighbor first
+      pull(value) %>%
+      `[`(1) # Only keep first value
+    
+    if(is.na(bestNeighbor)) { # If none of the neighbours are large enough, return the input
+      bestNeighbor <- centerTile
+      warning(pate0("While generating tiles for ", filename, "; No neighbours found for tile ", centerTile))
+    }
+    
+    return(bestNeighbor)
+  })
+  
+  # Reclassify the tiles that are two small to match their chosen neighboring tile
+  tileRaster <- reclassify(tileRaster, 
+                           rcl = matrix(c(smallTiles, neighboringTiles), ncol = 2),
+                           filename = filename,
+                           overwrite = TRUE)
+                        
   return(tileRaster)
+}
+
+# Generate a table of values present in a raster and their frequency
+# - values are assumed to be integers and the max value is known
+tabulateRaster <- function(inputRaster) {
+  # Calculate recommended block size of template
+  blockInfo <- blockSize(inputRaster)
+  
+  # Calculate frequency table in each block and consolidate
+  tables <- map(
+    seq(blockInfo$n),
+    ~ table(getValuesBlock(inputRaster,
+                            row   = blockInfo$row[.x],
+                            nrows = blockInfo$nrows[.x]))) %>%
+    map(as.data.frame) %>%
+    do.call(rbind, .) %>% # do.call is used to convert the list of tables to a sequence of arguments for `rbind`
+    rename(value = "Var1") %>%
+    group_by(value) %>%
+    summarize(freq = sum(Freq)) %>%
+    ungroup() %>%
+    mutate(value = value %>% as.character %>% as.numeric) %>% # Convert from factor to numeric
+    return
 }
