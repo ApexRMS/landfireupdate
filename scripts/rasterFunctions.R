@@ -323,27 +323,34 @@ tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0
     filter(!small) %>%
     pull(value)
 
-  # Identify the smallest neighboring tile that is large enough to consolidate into
-  # for each of the tiles that are too small
-  neighboringTiles <- map_dbl(smallTiles, function(centerTile) {
-    allNeighbors <- c(centerTile - 1, centerTile + 1, centerTile - nx, centerTile + nx) %>% # Identify tiles left, right, above, and below
-      intersect(largeTiles) # Only keep tiles that are large
+  # For each tile that is below the cut-off, find the nearest full tile to
+  # consolidate into. Given a choice of equally distant large tiles, merge into
+  # the smallest.
+  neighboringTiles <- 
+    map_dbl(
+      smallTiles,
+      function(centerTile, nx, tileSizes, smallTiles, largeTiles) {
+        allNeighbors <- getLargeNeighbors(centerTile, nx, smallTiles, largeTiles)
     
-    bestNeighbor <- tileSizes %>%
-      filter(value %in% allNeighbors) %>%
-      arrange(freq) %>% # arrange with smallest neighbor first
-      pull(value) %>%
-      `[`(1) # Only keep first value
-    
-    if(is.na(bestNeighbor)) { # If none of the neighbours are large enough, return the input
-      bestNeighbor <- centerTile
-      warning(pate0("While generating tiles for ", filename, "; No neighbours found for tile ", centerTile))
-    }
-    
-    return(bestNeighbor)
-  })
+        bestNeighbor <- tileSizes %>%
+          filter(value %in% allNeighbors) %>%
+          arrange(freq) %>% # arrange with smallest neighbor first
+          pull(value) %>%
+          `[`(1) # Only keep first value
+        
+        if(is.na(bestNeighbor)) { # If none of the neighbors are large enough, return the input
+          bestNeighbor <- centerTile
+          warning(paste0("While generating tiles for ", filename, "; No neighbors found for tile ", centerTile))
+        }
+        
+        return(bestNeighbor)
+      },
+      nx = nx,
+      tileSizes = tileSizes,
+      smallTiles = smallTiles,
+      largeTiles = largeTiles)
   
-  # Reclassify the tiles that are two small to match their chosen neighboring tile
+  # Reclassify the tiles that are too small to match their chosen neighboring tile
   tileRaster <- reclassify(tileRaster, 
                            rcl = matrix(c(smallTiles, neighboringTiles), ncol = 2),
                            filename = filename,
@@ -372,4 +379,13 @@ tabulateRaster <- function(inputRaster) {
     ungroup() %>%
     mutate(value = value %>% as.character %>% as.numeric) %>% # Convert from factor to numeric
     return
+}
+
+getLargeNeighbors <- function(centerTile, nx, smallTiles, largeTiles) {
+  neighbors <- c(centerTile - 1, centerTile + 1, centerTile - nx, centerTile + nx)
+  
+  if(length(intersect(neighbors, largeTiles)) == 0) # if none of the neighbors are large tiles
+    neighbors <- getLargeNeighbors(intersect(neighbors, smallTiles), nx, smallTiles, largeTiles) # recursively get neighbors of neighboring small tiles
+  
+  return(intersect(neighbors, largeTiles)) # return all large neighbors
 }
