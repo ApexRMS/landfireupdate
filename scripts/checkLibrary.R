@@ -10,7 +10,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   ssimSession <- session(ssimDir)
   mylibrary <- ssimLibrary(libraryName, session = ssimSession)
   myproject <- rsyncrosim::project(mylibrary, projectName)
-  myscenario <- scenario(myproject, "template")
+  myscenario <- scenario(myproject, subScenarioName)
   
   # Load data sheets needed for checks common to all scenarios
   rules <- datasheet(myscenario, "stsim_Transition") %>%
