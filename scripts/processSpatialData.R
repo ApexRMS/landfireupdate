@@ -107,7 +107,8 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   # Reclassify as necessary and save
   vdistRaster <- reclassify(fdistRaster,
                             distReclassification,
-                            filename = vdistRasterPath)
+                            filename = vdistRasterPath,
+                            overwrite = TRUE)
 
   # Generate list of unique VDIST codes
   vdistLevels <- distCrosswalk %>%
