@@ -111,7 +111,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   ssimSession <- session(ssimDir)
   mylibrary <- ssimLibrary(libraryName, session = ssimSession, overwrite = TRUE)
   myproject <- rsyncrosim::project(mylibrary, projectName, overwrite = TRUE)
-  myscenario <- scenario(myproject, "template")
+  myscenario <- scenario(myproject, subScenarioName, overwrite = TRUE)
 
   # Set owner
   owner(mylibrary) <- ssimOwner
@@ -121,6 +121,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # Set descriptions
   description(mylibrary)  <- libraryDescription
   description(myproject)  <- projectDescription
+  description(myscenario)  <- subScenarioDescription
 
   ## +Terminology -----------------------------------------------------------
 
@@ -403,8 +404,13 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   ssimSession <- session(ssimDir)
   mylibrary <- ssimLibrary(libraryName, session = ssimSession)
   myproject <- rsyncrosim::project(mylibrary, projectName)
-  myscenario <- scenario(myproject, scenarioName, sourceScenario = "template", overwrite =T)
+  myscenario <- scenario(myproject, scenarioName, overwrite =T)
   description(myscenario) <- scenarioDescription
+  
+  ## +Common Dependency --------------------------------------------------------
+  
+  # Add the Sub Scenario as a dependency to import common model info
+  dependency(myscenario, dependency = subScenarioName)
   
   ## +Transition multipliers ---------------------------------------------------
   

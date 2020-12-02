@@ -74,17 +74,20 @@ maximumTimestep <- 2018
 # SyncroSim Options -----------------------------------------------------
 libraryName <- paste0("library/", runLibrary)
 projectName <- "NW GeoArea"
+subScenarioName <- "Shared Model Info"
 scenarioNames <- runTags
 
 # Set the owner for all SyncroSim objects
 ssimOwner <- "LANDFIRE"
 
 # Set descriptions for SyncroSim objects
-libraryDescription <-  paste0("ST-Sim library for updating LANDFIRE EVC and ",
-                              "EVH based on starting MZ, EVT, EVC, EVH and ",
-                              "disturbances during the update period.")
-projectDescription <-  paste0("Models for updating the NW GeoArea.")
-scenarioDescriptions <- paste0("Model scenario for Map Zone ", mapzonesToKeep)
+libraryDescription <-     paste0("ST-Sim library for updating LANDFIRE EVC and ",
+                                 "EVH based on starting MZ, EVT, EVC, EVH and ",
+                                 "disturbances during the update period.")
+projectDescription <-     paste0("Models for updating the NW GeoArea.")
+subScenarioDescription <- paste0("Sub Scenario used to define common model info ",
+                                 "used by all other scenarios in the project.")
+scenarioDescriptions <-   paste0("Model scenario for Map Zone ", mapzonesToKeep)
 
 # Set the number of concurrent jobs to in SyncroSim
 ssimJobs <- 8
