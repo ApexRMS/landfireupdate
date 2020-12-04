@@ -64,9 +64,11 @@ when testing, you can change the `runLibrary` variable.
 
 A number of the raster pre-processing operations have been parallelized to speed
 up run time. The number of threads to be used for these steps can be set using
-the `nThreads` variable. This is not to be confused with the `ssimJobs` in the
+the `nThreads` variable. This will set the number of cores used by R to _build_
+the SyncroSim library. This is not to be confused with the `ssimJobs` in the
 **SyncroSim Options** section below that is used to set the default maximum
-number of jobs in the generated SyncroSim library. 
+number of jobs in the generated SyncroSim library. This will determine the
+number of cores used by SyncroSim to _run_ the library.
 
 The `ssimDir`is used to indicate the installation directory for SyncroSim if it
 is not in the default location. This is primarily included for Linux users.
@@ -89,7 +91,11 @@ One of the cleaned rasters is a mask that is used to split the remaining rasters
 down into manageable rectangular chunks (or tiles) for spatial multiprocessing
 in SyncroSim. The `raster::blockSize()` function is used to decide the number
 of rows to split the rasters into, but the number of columns can be manually set
-using the `tileCols` variable. 
+using the `tileCols` variable.
+
+Since SyncroSim splits the Geo Area by Map Zone, it is often useful to stitch the
+final output raster maps back together. `stitchedRasterDirectory` is used to
+decide where these full maps should be saved.
 
 ### Run Controls
 
@@ -117,26 +123,27 @@ correct working directory is set in RStudio. Next, open the
 
 This script is responsible for processing the raw input rasters, including
 cropping and masking down to the chosen Map Zone, converting fDIST maps to
-vDIST, and layerizing the disturbance map for SyncroSim.
+vDIST, and layerizing the disturbance map for SyncroSim. The script then uses
+these cleaned rasters to generate a SyncroSim library file to run the update.
 
-Once this is done, open the `scripts/buildSsimLibrary.R` script and run as
-before. This script uses the cleaned rasters and rules from the database to
-generate a SyncroSim library file to run the update.
-
-Finally, open the generated SyncroSim library using the SyncroSim UI. 
+Next, open the generated SyncroSim library using the SyncroSim UI. 
 This file will be stored in the `library/` subdirectory. Select the 
 `NW GeoArea` project, and the scenario you would like to run and press 
 `run` in the main toolbar. Note that, depending on your computer configuration,
 you may need to change the maximum number of [multiprocessing](http://docs.syncrosim.com/how_to_guides/modelrun_multiproc.html) jobs.
-As an example of requirements, Map Zone 19 (120 million cells) was run 
-with a maximum of 5 multiprocessing jobs on a Windows 2019 Server with 
-16 virtual cores and 128GB of RAM.  The run took approximately 3 hours 
-and used up to 80% of available memory.
+As an example of requirements, the NW Geo Area (consisting of 12 Map Zones) was
+run with a maximum of 32 multiprocessing jobs on a Linux server with 64 virtual
+cores and 512GB of RAM and took just under 21 hours.
 
 Results can be viewed directly in the graphical user interface (GUI) by 
 creating [Charts](http://docs.syncrosim.com/how_to_guides/results_chart_window.html)
 and [Maps](http://docs.syncrosim.com/how_to_guides/results_map_window.html). 
 You can also export tabular and map data to be viewed externally.
+
+Finally, to reconstruct EVC and EVH raster maps for the entire Geo Area from the
+SyncroSim results, run the `reconstructGeoArea.R` script as before. The full maps
+will be stored in the directory chosen in the **Output Raster Options** section
+of `constants.R`.
 
 NOTE that using the GUI is optional and the scenario can also be run directly 
 through the SyncroSim commandline or by using the rsyncrosim package for R.

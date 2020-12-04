@@ -64,6 +64,11 @@ allowedStatesPath   <- paste0(rawNonSpatialDirectory, "Allowed EVC-EVH.csv")
 # but the number of columns can be set here
 tileCols <- 10
 
+# After the running the SyncroSim library, it is often useful to stitch the
+# individual Map Zone raster maps back into the full Geo Area. This is the
+# This is the directory the stitched raster maps will be stored in
+stitchedRasterDirectory <- "data/stitched"
+
 # Run Controls  -------------------------------------------------------
 
 minimumIteration <- 1
