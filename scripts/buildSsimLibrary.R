@@ -378,7 +378,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   multiprocessing <-
     data.frame(EnableMultiprocessing = TRUE,
                MaximumJobs = ssimJobs,
-               EnableMultiScenario = TRUE)
+               EnableMultiScenario = FALSE)
 
   saveDatasheet(myscenario, multiprocessing, "core_Multiprocessing")
 }
