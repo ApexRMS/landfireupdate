@@ -73,8 +73,8 @@ stitchedRasterDirectory <- "data/stitched"
 
 minimumIteration <- 1
 maximumIteration <- 1
-minimumTimestep <- 2017
-maximumTimestep <- 2018
+minimumTimestep <- 0
+maximumTimestep <- 1
 
 # SyncroSim Options -----------------------------------------------------
 libraryName <- paste0("library/", runLibrary)
