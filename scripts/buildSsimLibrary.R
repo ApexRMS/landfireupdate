@@ -25,9 +25,11 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     mutate(
       evcCode = if_else(evcCode <= 100,
                         true = evcCode,
-                        false = evcCode / 10 + 90),
-      evcCode = as.character(evcCode)
+                        false = evcCode / 10 + 90)
     )
+  
+  ## Load table of all valid combinatiosn of Map Zone, EVT, EVH, and EVC
+  allowedStates <- read_csv(allowedStatesPath)
 
   ## Generate a table of all unique transitions
 
@@ -146,9 +148,9 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # Important to take the unique values every time
   # Filter this dataframe by EVT values that are actually present in the input
 
-
   primary <- data.frame(ID = transitionTable$EVT7B,
                         Name = transitionTable$StratumIDSource) %>%
+    mutate(ID = as.numeric(ID)) %>%
     unique()
 
   # Extract colors from the evt200 sheet
@@ -160,6 +162,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     dplyr::select(VALUE, R, G, B) %>%
     # Take unique and rename for later joining
     unique() %>% rename(ID = VALUE) %>%
+    mutate(ID = as.numeric(ID)) %>%
     # Create the color using the SyncroSim pattern of T, R, G, B
     mutate(Color = paste("255", R, G, B, sep = ",")) %>%
     # Join and select relevant columns
@@ -194,23 +197,49 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   saveDatasheet(myproject, state_y, "stsim_StateLabelY")
 
-  # Generate unique State IDS based on the combination of X and Y state
-  # To do this, we "paste" the X and Y state IDs together by multiplying
-  # EVC by 1000 and adding it to EVH
-
-  stateIDs <- c((as.numeric(transitionTable$EVCB)*1000 + as.numeric(transitionTable$EVHB)),
-                (as.numeric(transitionTable$EVCR)*1000 + as.numeric(transitionTable$EVHR)))
-
   # Build the datasheet
-  stateClasses <- data.frame(
-    ID = stateIDs,
-    Name = c(transitionTable$StateClassIDSource, transitionTable$StateClassIDDest),
-    StateLabelXID = c(transitionTable$EVCB_Name, transitionTable$EVCR_Name),
-    evcCode = c(transitionTable$EVCB, transitionTable$EVCR),
-    StateLabelYID = c(transitionTable$EVHB_Name, transitionTable$EVHR_Name)) %>%
-    left_join(evcColors, by = "evcCode") %>% # Use EVC to decide state color
-    dplyr::select(-evcCode) %>%                     # Remove code used to add colors
-    unique()
+
+  stateClasses <- allowedStates %>%
+    # Start with full list of allowed EVC, EVH, etc, and keep only EVC and EVH
+    select(EVCB, EVHB) %>%
+    # Add rows that must exist
+    bind_rows(
+      # Valid forest state classes
+      crossing(
+        EVCB = c(101:109),
+        EVHB = c(108:112)),
+      # Valid herb state classes
+      crossing(
+        EVCB = c(111:119),
+        EVHB = c(104:107)),
+      # Valid herb state classes
+      crossing(
+        EVCB = c(121:129),
+        EVHB = c(101:103)),
+      # Other missing states added manually
+      tibble(
+        EVCB = c(100),
+        EVHB = c(110))) %>%
+    # Generate appropriately named and typed columns for joining in state names and colors
+    mutate(
+      EVC_ID = as.character(EVCB),
+      EVH_ID = as.character(EVHB),
+      evcCode = EVCB) %>%
+    # Join relevant data
+    left_join(EVClookup) %>%
+    left_join(EVHlookup) %>%
+    left_join(evcColors) %>%
+    # Generate unique State IDS based on the combination of X and Y state
+    # To do this, we "paste" the X and Y state IDs together by multiplying
+    # EVC by 1000 and adding it to EVH 
+    mutate(
+      ID = EVCB * 1000 + EVHB,
+      Name = str_c(StateLabelXID, " : ", StateLabelYID)) %>%
+    # Reorder and remove unneeded columns
+    select(ID, Name, StateLabelXID, StateLabelYID, Color) %>%
+    # Keep only unique values
+    unique() %>%
+    as.data.frame()
 
   saveDatasheet(myproject, stateClasses, "stsim_StateClass")
 
@@ -291,9 +320,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
           str_detect(StateLabelXID, "80-90")   ~ "H",
           str_detect(StateLabelXID, "90-100")  ~ "I",
           str_detect(StateLabelXID, "< 10")    ~ "J", # J is reserved for uncommon cover labels
-          str_detect(StateLabelXID, "Sparse")  ~ "J", # J is reserved for uncommon cover labels
-          TRUE                                 ~  NA_character_),
-        letter = suppressWarnings(replace(letter, is.na(letter), str_to_upper(letters))),
+          str_detect(StateLabelXID, "Sparse")  ~ "J", # K is reserved for uncommon cover labels
+          TRUE                                 ~ "K"),
         number = case_when(
           str_detect(StateLabelYID, "Fr > ")   ~  1,
           str_detect(StateLabelYID, "Fr 25")   ~  2,
@@ -307,15 +335,16 @@ initializeSsimLibrary <- function(libraryName, projectName) {
           str_detect(StateLabelYID, "Hb > ")   ~ 10,
           str_detect(StateLabelYID, "Hb 0.5")  ~ 11,
           str_detect(StateLabelYID, "Hb < ")   ~ 12,
-          TRUE                                 ~ 13),
+          TRUE                                 ~ NA_real_),
+        number = suppressWarnings(replace(number, is.na(number), 13:100)),
         # Deal with mixed forms
-          mixedLifeForm = case_when(
-            str_detect(StateLabelXID, "Tr") & !str_detect(StateLabelYID, "Fr") ~ T,
-            str_detect(StateLabelXID, "Sh") & !str_detect(StateLabelYID, "Sh") ~ T,
-            str_detect(StateLabelXID, "Hb") & !str_detect(StateLabelYID, "Hb") ~ T,
-            T                                                                  ~ F),
-          number = if_else(mixedLifeForm, number+14, number),
-        # Done dealing with mixed lifeforms
+        mixedLifeForm = case_when(
+          str_detect(StateLabelXID, "Tr") & !str_detect(StateLabelYID, "Fr") ~ T,
+          str_detect(StateLabelXID, "Sh") & !str_detect(StateLabelYID, "Sh") ~ T,
+          str_detect(StateLabelXID, "Hb") & !str_detect(StateLabelYID, "Hb") ~ T,
+          T                                                                  ~ F),
+        number = if_else(mixedLifeForm, number+14, number),
+        # Clean up
         Location = str_c(letter, number)) %>%
       dplyr::select(Name, Location)
 

@@ -39,8 +39,9 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # Are there mixed life form or other invalid state classes?
   # - Mixed life form states can be identified by vegetation cover (x state) labels
   #   that don't match their vegetation height (y state) labels
+  # - Probably not necessary given how states are now constructed, but is pretty quick
   allowedStates <- read_csv(allowedStatesPath) %>%
-    mutate(ID = EVC * 1000 + EVH) %>%
+    mutate(ID = EVCB * 1000 + EVHB) %>%
     pull(ID)
   
   numInvalidStates <-
