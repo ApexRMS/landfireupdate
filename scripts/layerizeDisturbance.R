@@ -10,17 +10,17 @@ layerizeDisturbance <- function(runTag) {
 
   # Directory to store cleaned rasters
   # Note that the working directory is prepended since SyncroSim needs absolute paths
-  cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
+  cleanRasterDirectory <- str_c(getwd(), "/", cleanRasterDirectoryRelative, "/", runTag, "/")
 
   # Directory and prefix for FDIST binary rasters (spatial multipliers)
-  transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
+  transitionMultiplierDirectory <- str_c(cleanRasterDirectory, "transitionMultipliers/")
   dir.create(transitionMultiplierDirectory, showWarnings = F)
 
   # Clean Raster Paths
-  vdistRasterPath <- paste0(cleanRasterDirectory, "VDIST.tif")
+  vdistRasterPath <- str_c(cleanRasterDirectory, "VDIST.tif")
 
   # VDIST info for layerizing
-  vdistInfoPath <- paste0(cleanRasterDirectory, "VDIST.csv")
+  vdistInfoPath <- str_c(cleanRasterDirectory, "VDIST.csv")
 
   # Load Data -----------------------------------------------------------------
   vdistInfo <- read_csv(vdistInfoPath)

@@ -13,7 +13,6 @@
 library(rsyncrosim) # for building and connecting to SyncroSim files
 library(raster)     # provides functions for manipulating rasters
 library(rgdal)      # provides some optional dependencies for raster
-library(readxl)     # for reading disturbance crosswalk
 library(furrr)      # for parallel iteration
 library(logr)       # for generating logs with RScript
 library(tidyverse)  # provides general data manipulation functions

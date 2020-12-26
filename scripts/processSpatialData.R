@@ -9,33 +9,32 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   
   # Directory to store cleaned rasters
   # Note that the working directory is prepended since SyncroSim needs absolute paths
-  cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
-  dir.create(paste0(getwd(), "/data/clean"), showWarnings = F)
-  dir.create(cleanRasterDirectory, showWarnings = F)
+  cleanRasterDirectory <- str_c(getwd(), "/", cleanRasterDirectoryRelative, "/", runTag, "/")
+  dir.create(cleanRasterDirectory, recursive = T, showWarnings = F)
 
   # Directory and prefix for FDIST binary rasters (spatial multipliers)
-  transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
+  transitionMultiplierDirectory <- str_c(cleanRasterDirectory, "transitionMultipliers/")
   dir.create(transitionMultiplierDirectory, showWarnings = F)
 
   # Clean Raster Paths
-  mapzoneRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
-  evtRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
-  evhRasterPath <- paste0(cleanRasterDirectory, "EVH.tif")
-  evcRasterPath <- paste0(cleanRasterDirectory, "EVC.tif")
-  fdistRasterPath <- paste0(cleanRasterDirectory, "FDIST.tif")
-  vdistRasterPath <- paste0(cleanRasterDirectory, "VDIST.tif")
-  stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
-  tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
+  mapzoneRasterPath <- str_c(cleanRasterDirectory, "MapZone.tif")
+  evtRasterPath <- str_c(cleanRasterDirectory, "EVT.tif")
+  evhRasterPath <- str_c(cleanRasterDirectory, "EVH.tif")
+  evcRasterPath <- str_c(cleanRasterDirectory, "EVC.tif")
+  fdistRasterPath <- str_c(cleanRasterDirectory, "FDIST.tif")
+  vdistRasterPath <- str_c(cleanRasterDirectory, "VDIST.tif")
+  stateClassRasterPath <- str_c(cleanRasterDirectory, "StateClass.tif")
+  tilingRasterPath <- str_c(cleanRasterDirectory, "Tiling.tif")
   
   # Path for temporary files
-  tempRasterPath <- paste0(cleanRasterDirectory, "temp.tif")
+  tempRasterPath <- str_c(cleanRasterDirectory, "temp.tif")
 
   # VDIST info for layerizing
-  vdistInfoPath <- paste0(cleanRasterDirectory, "VDIST.csv")
+  vdistInfoPath <- str_c(cleanRasterDirectory, "VDIST.csv")
 
   # Load non-spatial data --------------------------------------------------
-  distCrosswalk <-   read_xlsx(distCrosswalkPath) %>%
-    mutate(name = paste(d_type...2, d_severity...3, d_time...4, sep = " - ")) %>%
+  distCrosswalk <-   read_csv(distCrosswalkPath) %>%
+    mutate(name = paste(d_type, d_severity, d_time, sep = " - ")) %>%
     dplyr::select(fdist = FDIST, vdist = VDIST, name)
 
   # Load spatial data -------------------------------------------------------

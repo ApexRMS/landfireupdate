@@ -34,12 +34,12 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   ## Generate a table of all unique transitions
 
   # Should be unique for every VDIST, PrimaryStratum, EvT, SourceStateClass
-  transitionTable <- read_xlsx(transitionTablePath, col_types = "text") %>%
+  transitionTable <- read_csv(transitionTablePath) %>%
     # Select and rename variables of importance
     dplyr::select(MZ, VDIST, EVT7B, StratumIDSource = EVT7B_Name,
            EVCB, EVHB, EVCR, EVHR) %>%
-    # Turn all factors into strings
-    mutate_if(is.factor, as.character) %>%
+    # Turn all factors into strings # zzz
+    # mutate_if(is.factor, as.character) %>% # zzz
     # Change the naming convention of MapZones e.g. from "1" to "MZ01"
     mutate(SecondaryStratumID = paste0("MZ", str_pad(MZ, 2, "left", "0"))) %>%
     # Keep only unique rows
@@ -47,9 +47,9 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   ## Generate look-up tables for EVC and EVH codes and names
 
-  EVClookup <- read_xlsx(evcTablePath, col_types = "text") %>%
-    # Turn factors into characters
-    mutate_if(is.factor, as.character) %>%
+  EVClookup <- read_csv(evcTablePath) %>%
+    # Turn factors into characters # zzz
+    # mutate_if(is.factor, as.character) %>% # zzz
     # Make unique names for when class names are repeated
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(EVT_LIFEFORM, "_", VALUE))) %>%
     # Select relevant columns and rename with stsim relevant column names
@@ -65,8 +65,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
       StateLabelXID = str_replace(StateLabelXID, "Herb Cover >=",  "Hb")
     )
 
-  EVHlookup <- read_xlsx(evhTablePath, col_types = "text") %>%
-    mutate_if(is.factor, as.character) %>%
+  EVHlookup <- read_csv(evhTablePath) %>%
+    #mutate_if(is.factor, as.character) %>% # zzz
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(LIFEFORM, "_", VALUE))) %>%
     dplyr::select(VALUE, CLASSNAMES) %>%
     rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES) %>%
@@ -150,19 +150,19 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   primary <- data.frame(ID = transitionTable$EVT7B,
                         Name = transitionTable$StratumIDSource) %>%
-    mutate(ID = as.numeric(ID)) %>%
+    #mutate(ID = as.numeric(ID)) %>% # zzz
     unique()
 
   # Extract colors from the evt200 sheet
   # TODO: An issue here where some IDs do not have colors and some colors do not
   # have matching IDs.
 
-  primaryWithColors <- read_xlsx(evtColorTablePath, col_types = "text") %>%
+  primaryWithColors <- read_csv(evtColorTablePath) %>%
     # Select relevant columns
     dplyr::select(VALUE, R, G, B) %>%
     # Take unique and rename for later joining
     unique() %>% rename(ID = VALUE) %>%
-    mutate(ID = as.numeric(ID)) %>%
+    #mutate(ID = as.numeric(ID)) %>% #zzz
     # Create the color using the SyncroSim pattern of T, R, G, B
     mutate(Color = paste("255", R, G, B, sep = ",")) %>%
     # Join and select relevant columns
@@ -220,15 +220,15 @@ initializeSsimLibrary <- function(libraryName, projectName) {
       tibble(
         EVCB = c(100),
         EVHB = c(110))) %>%
-    # Generate appropriately named and typed columns for joining in state names and colors
-    mutate(
-      EVC_ID = as.character(EVCB),
-      EVH_ID = as.character(EVHB),
-      evcCode = EVCB) %>%
+    # # Generate appropriately named and typed columns for joining in state names and colors # zzz
+    # mutate(
+    #   EVC_ID = EVCB,
+    #   EVH_ID = EVHB,
+    #   evcCode = EVCB) %>%
     # Join relevant data
-    left_join(EVClookup) %>%
-    left_join(EVHlookup) %>%
-    left_join(evcColors) %>%
+    left_join(EVClookup, by = c("EVCB" = "EVC_ID")) %>%
+    left_join(EVHlookup, by = c("EVHB" = "EVH_ID")) %>%
+    left_join(evcColors, by = c("EVCB" = "evcCode")) %>%
     # Generate unique State IDS based on the combination of X and Y state
     # To do this, we "paste" the X and Y state IDs together by multiplying
     # EVC by 1000 and adding it to EVH 
@@ -246,12 +246,10 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   ## +Transition Types and Groups ------------------------------------------------
 
   # We gather disturbance types from the VDIST table
-  vdistLookup <-  read_xlsx(vdistTablePath, col_types = "text") %>%
+  vdistLookup <-  read_csv(vdistTablePath) %>%
     # Select only what we need, then rename
     dplyr::select(value, d_type, d_severity, d_time, R, G, B) %>%
     rename(ID = value,  TransitionGroupID = d_type) %>%
-    # Turn all factors into charactors
-    mutate_if(is.factor, as.character) %>%
     # Filter out the NO Disturbance category
     filter(ID != 0) %>%
     # Create unique transition/disturbance name, and format color
@@ -272,7 +270,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # For groups, we append the disturbance class to the existing datasheet
 
   transitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
-    mutate_if(is.factor, as.character) %>%
+    #mutate_if(is.factor, as.character) %>% # zzz
     bind_rows(vdistLookup %>%
                 dplyr::select(Name = TransitionGroupID) %>%
                 unique()) %>%
@@ -417,17 +415,17 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   
   # Directory to store cleaned rasters
   # Note that the working directory is prepended since SyncroSim needs absolute paths
-  cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
+  cleanRasterDirectory <- str_c(getwd(), "/", cleanRasterDirectoryRelative, "/", runTag, "/")
   
   # Directory and prefix for FDIST binary rasters (spatial multipliers)
-  transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
+  transitionMultiplierDirectory <- str_c(cleanRasterDirectory, "transitionMultipliers/")
   
   # Clean Raster Paths
-  stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
-  primaryStratumRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
-  secondaryStratumRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
+  stateClassRasterPath <- str_c(cleanRasterDirectory, "StateClass.tif")
+  primaryStratumRasterPath <- str_c(cleanRasterDirectory, "EVT.tif")
+  secondaryStratumRasterPath <- str_c(cleanRasterDirectory, "MapZone.tif")
 
-  tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
+  tilingRasterPath <- str_c(cleanRasterDirectory, "Tiling.tif")
 
   # Build Scenario ------------------------------------------------------------
   ssimSession <- session(ssimDir)
