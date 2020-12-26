@@ -57,13 +57,14 @@ directory. See the **Input Data Structure** Section below for more information.
 The other input file, `mapzonesToKeepPath`, should be a CSV file with a single
 column listing each Map Zone to include in the run on a separate line. Note that
 a header line is required. The `config/Map Zone Lists/` folder includes two
-examples, one for running just Map Zone 19, and another for running the entire
+examples, one for running just Map Zone 19 and another for running the entire
 NW Geo Area.
 
 ### SyncroSim Object Names
 
-These are the names of the SyncroSim library and project to be created. It is
-recommended to indicate the Geo Area in both these names.
+These are the names of the SyncroSim library and project that will be built by
+the R scripts. It is recommended to include the name of the Geo Area in both
+of these names.
 
 ### Parallel Processing Options
 
@@ -100,15 +101,15 @@ Below is a table outlining some general recommendations and the corresponding
 expected run times.
 
 
-| Min. Processors | Min. Memory | SyncroSim Jobs | Tiling Columns | Aprox. Run Time<br />for NW Geo Area | Approx. Run Time<br />for Map Zone 19 |
-|----------------:|------------:|---------------:|---------------:|-------------------------------------:|--------------------------------------:|
-|               2 |        32GB |              1 |             20 |                           40 - 48 d  |                             80 - 95 h |
-|               4 |        64GB |              2 |             20 |                           20 - 24 d  |                             40 - 50 h |
-|               4 |       100GB |              4 |             20 |                           10 - 12 d  |                             20 - 25 h |
-|               8 |       160GB |              8 |             20 |                             5 - 6 d  |                             11 - 12 h |
-|              16 |       256GB |             16 |             10 |                             2 - 3 d  |                                 ~ 5 h |
-|              32 |       512GB |             32 |             10 |                               ~24 h  |                                 ~ 2 h |
-|              64 |      1024GB |             64 |             10 |                               ~16 h  |                               ~ 1.5 h |
+| Min. Processors | Min. Memory | SyncroSim Jobs | Tiling Columns | Approx. Run Time for NW Geo Area | Approx. Run Time for Map Zone 19 |
+|----------------:|------------:|---------------:|---------------:|---------------------------------:|---------------------------------:|
+|               2 |        32GB |              1 |             20 |                       40 - 48 d  |                        80 - 95 h |
+|               4 |        64GB |              2 |             20 |                       20 - 24 d  |                        40 - 50 h |
+|               4 |       100GB |              4 |             20 |                       10 - 12 d  |                        20 - 25 h |
+|               8 |       160GB |              8 |             20 |                         5 - 6 d  |                        11 - 12 h |
+|              16 |       256GB |             16 |             10 |                         2 - 3 d  |                            ~ 5 h |
+|              32 |       512GB |             32 |             10 |                           ~24 h  |                            ~ 2 h |
+|              64 |      1024GB |             64 |             10 |                           ~16 h  |                          ~ 1.5 h |
 
 To use this table, find the last row for which you have at least the minimum
 number of available processors *and* minimum amount of memory. Set the number of
@@ -158,8 +159,9 @@ named and organized.
 
 The input files for each Geo Area must be stored in its own folder, preferably
 in the `data/` directory with a name that indicates which Geo Area the folder is
-for. For example, the example data archive mentioned above contains the input
-files for the NW Geo Area and are accordingly are held in `data/NW/`.
+for. For example, the example data archive linked in the **Setup** section 
+contains the input files for the NW Geo Area and are accordingly are held in
+`data/NW/`.
 
 Within this directory, there must be a subdirectory named `raw/`. This is used
 to separate the raw inputs from the final clean and stitched raster maps that
@@ -174,7 +176,7 @@ which includes Geo-Area-specific data files that are not stored as maps. This
 folder requires all of the following: a spreadsheet of all transition rules,
 `Transition Table.csv`; a spreadsheet of all valid combinations of EVC, EVH, etc,
 `All Combinations.csv`; a crosswalk to convert fDIST codes to vDIST,
-`Distrubance Crosswalk.csv`; three look up tables, `EVC LUT.csv`, `EVC LUT.csv`,
+`Distrubance Crosswalk.csv`; three look up tables, `EVC LUT.csv`, `EVH LUT.csv`,
 and `VDIST LUT.csv`; and two color maps, `EVC Colors.csv` and `EVT Colors.csv`.
 
 Altogether, the folder should have the following structure:
@@ -201,5 +203,5 @@ Geo Area Name
 
 ```
 
-Please see the example data files linked in the **Setup** section for an details
-on the exact information expected in each file.
+Please see the example data files linked in the **Setup** section for details on
+the exact information expected in each file.
