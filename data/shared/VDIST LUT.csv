@@ -1,0 +1,83 @@
+value,d_type,d_severity,d_time,R,G,B
+0,No Disturbance,NA,NA,0,0,0
+111,Fire,Low,One Year,255,0,0
+112,Fire,Low,Two to Five Years,255,0,0
+113,Fire,Low,Six to Ten Years,255,0,0
+121,Fire,Moderate,One Year,255,0,0
+122,Fire,Moderate,Two to Five Years,255,0,0
+123,Fire,Moderate,Six to Ten Years,255,0,0
+131,Fire,High,One Year,255,0,0
+132,Fire,High,Two to Five Years,255,0,0
+133,Fire,High,Six to Ten Years,255,0,0
+211,Mechanical Add,Low,One Year,255,102,0
+212,Mechanical Add,Low,Two to Five Years,255,102,0
+213,Mechanical Add,Low,Six to Ten Years,255,102,0
+221,Mechanical Add,Moderate,One Year,255,102,0
+222,Mechanical Add,Moderate,Two to Five Years,255,102,0
+223,Mechanical Add,Moderate,Six to Ten Years,255,102,0
+231,Mechanical Add,High,One Year,255,102,0
+232,Mechanical Add,High,Two to Five Years,255,102,0
+233,Mechanical Add,High,Six to Ten Years,255,102,0
+311,Mechanical Remove,Low,One Year,255,255,119
+312,Mechanical Remove,Low,Two to Five Years,255,255,119
+313,Mechanical Remove,Low,Six to Ten Years,255,255,119
+321,Mechanical Remove,Moderate,One Year,255,255,119
+322,Mechanical Remove,Moderate,Two to Five Years,255,255,119
+323,Mechanical Remove,Moderate,Six to Ten Years,255,255,119
+331,Mechanical Remove,High,One Year,255,255,119
+332,Mechanical Remove,High,Two to Five Years,255,255,119
+333,Mechanical Remove,High,Six to Ten Years,255,255,119
+411,Windthrow,Low,One Year,191,191,191
+412,Windthrow,Low,Two to Five Years,191,191,191
+413,Windthrow,Low,Six to Ten Years,191,191,191
+421,Windthrow,Moderate,One Year,191,191,191
+422,Windthrow,Moderate,Two to Five Years,191,191,191
+423,Windthrow,Moderate,Six to Ten Years,191,191,191
+431,Windthrow,High,One Year,191,191,191
+432,Windthrow,High,Two to Five Years,191,191,191
+433,Windthrow,High,Six to Ten Years,191,191,191
+511,Insects-Disease,Low,One Year,0,0,255
+512,Insects-Disease,Low,Two to Five Years,0,0,255
+513,Insects-Disease,Low,Six to Ten Years,0,0,255
+521,Insects-Disease,Moderate,One Year,0,0,255
+522,Insects-Disease,Moderate,Two to Five Years,0,0,255
+523,Insects-Disease,Moderate,Six to Ten Years,0,0,255
+531,Insects-Disease,High,One Year,0,0,255
+532,Insects-Disease,High,Two to Five Years,0,0,255
+533,Insects-Disease,High,Six to Ten Years,0,0,255
+611,Exotics,Low,One Year,4,45,117
+612,Exotics,Low,Two to Five Years,4,45,117
+613,Exotics,Low,Six to Ten Years,4,45,117
+621,Exotics,Moderate,One Year,4,45,117
+622,Exotics,Moderate,Two to Five Years,4,45,117
+623,Exotics,Moderate,Six to Ten Years,4,45,117
+631,Exotics,High,One Year,4,45,117
+632,Exotics,High,Two to Five Years,4,45,117
+633,Exotics,High,Six to Ten Years,4,45,117
+711,Chemical,Low,One Year,255,255,0
+712,Chemical,Low,Two to Five Years,255,255,0
+713,Chemical,Low,Six to Ten Years,255,255,0
+721,Chemical,Moderate,One Year,255,255,0
+722,Chemical,Moderate,Two to Five Years,255,255,0
+723,Chemical,Moderate,Six to Ten Years,255,255,0
+731,Chemical,High,One Year,255,255,0
+732,Chemical,High,Two to Five Years,255,255,0
+733,Chemical,High,Six to Ten Years,255,255,0
+811,Biological,Low,One Year,0,51,0
+812,Biological,Low,Two to Five Years,0,51,0
+813,Biological,Low,Six to Ten Years,0,51,0
+821,Biological,Moderate,One Year,0,51,0
+822,Biological,Moderate,Two to Five Years,0,51,0
+823,Biological,Moderate,Six to Ten Years,0,51,0
+831,Biological,High,One Year,0,51,0
+832,Biological,High,Two to Five Years,0,51,0
+833,Biological,High,Six to Ten Years,0,51,0
+911,Development,Low,One Year,191,191,191
+912,Development,Low,Two to Five Years,191,191,191
+913,Development,Low,Six to Ten Years,191,191,191
+921,Development,Moderate,One Year,191,191,191
+922,Development,Moderate,Two to Five Years,191,191,191
+923,Development,Moderate,Six to Ten Years,191,191,191
+931,Development,High,One Year,191,191,191
+932,Development,High,Two to Five Years,191,191,191
+933,Development,High,Six to Ten Years,191,191,191

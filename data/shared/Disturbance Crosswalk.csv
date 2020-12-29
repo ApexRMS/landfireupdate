@@ -1,0 +1,56 @@
+VDIST,FDIST,d_type,d_severity,d_time
+0,0,No Disturbance,NA,NA
+111,111,Fire,Low,One Year
+112,112,Fire,Low,Two to Five Years
+113,113,Fire,Low,Six to Ten Years
+121,121,Fire,Moderate,One Year
+122,122,Fire,Moderate,Two to Five Years
+123,123,Fire,Moderate,Six to Ten Years
+131,131,Fire,High,One Year
+132,132,Fire,High,Two to Five Years
+133,133,Fire,High,Six to Ten Years
+211,211,Mechanical Add,Low,One Year
+212,212,Mechanical Add,Low,Two to Five Years
+213,213,Mechanical Add,Low,Six to Ten Years
+221,221,Mechanical Add,Moderate,One Year
+222,222,Mechanical Add,Moderate,Two to Five Years
+223,223,Mechanical Add,Moderate,Six to Ten Years
+231,231,Mechanical Add,High,One Year
+232,232,Mechanical Add,High,Two to Five Years
+233,233,Mechanical Add,High,Six to Ten Years
+311,311,Mechanical Remove,Low,One Year
+312,312,Mechanical Remove,Low,Two to Five Years
+313,313,Mechanical Remove,Low,Six to Ten Years
+321,321,Mechanical Remove,Moderate,One Year
+322,322,Mechanical Remove,Moderate,Two to Five Years
+323,323,Mechanical Remove,Moderate,Six to Ten Years
+331,331,Mechanical Remove,High,One Year
+332,332,Mechanical Remove,High,Two to Five Years
+333,333,Mechanical Remove,High,Six to Ten Years
+411,411,Windthrow,Low,One Year
+412,412,Windthrow,Low,Two to Five Years
+413,413,Windthrow,Low,Six to Ten Years
+421,421,Windthrow,Moderate,One Year
+422,422,Windthrow,Moderate,Two to Five Years
+423,423,Windthrow,Moderate,Six to Ten Years
+431,431,Windthrow,High,One Year
+432,432,Windthrow,High,Two to Five Years
+433,433,Windthrow,High,Six to Ten Years
+511,511,Insects-Disease,Low,One Year
+512,512,Insects-Disease,Low,Two to Five Years
+513,513,Insects-Disease,Low,Six to Ten Years
+521,521,Insects-Disease,Moderate,One Year
+522,522,Insects-Disease,Moderate,Two to Five Years
+523,523,Insects-Disease,Moderate,Six to Ten Years
+531,531,Insects-Disease,High,One Year
+532,532,Insects-Disease,High,Two to Five Years
+533,533,Insects-Disease,High,Six to Ten Years
+311,611,Mechanical Remove,Low,One Year
+312,612,Mechanical Remove,Low,Two to Five Years
+313,613,Mechanical Remove,Low,Six to Ten Years
+321,621,Mechanical Remove,Moderate,One Year
+322,622,Mechanical Remove,Moderate,Two to Five Years
+323,623,Mechanical Remove,Moderate,Six to Ten Years
+331,631,Mechanical Remove,High,One Year
+332,632,Mechanical Remove,High,Two to Five Years
+333,633,Mechanical Remove,High,Six to Ten Years
