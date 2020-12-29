@@ -20,6 +20,8 @@ source("scripts/rasterFunctions.R")
 
 # Generate Directories and Paths -----------------------------------------------
 
+message("Preparing stitched raster map output folder.")
+
 # Create directory to store stitched raster maps
 dir.create(stitchedRasterDirectory, showWarnings = F)
 stateClassSitchedRasterPath <- paste0(stitchedRasterDirectory, "/StateClass.tif")
@@ -30,6 +32,8 @@ EVHSitchedRasterPath <- paste0(stitchedRasterDirectory, "/EVH.tif")
 fullExtent <- extent(raster(mapzoneRawRasterPath))
 
 # Extract Data from SyncroSim Library ------------------------------------------
+
+message("Loading data from SyncroSim.")
 
 # Connect to the SyncroSim Library
 ssimSession <- session(ssimDir)
@@ -59,6 +63,8 @@ stateClassRasters <-
 
 # Stitch together State Class raster -------------------------------------------
 
+message("Stitching raster maps.")
+
 # Append arguments for `raster::merge()` to the previously generated list of rasters
 # This will allow us to pass a variable number of arguments to `raster::merge()`
 # using `do.call()`
@@ -77,6 +83,8 @@ if(length(stateClassRasters) == 1) {
 }
 
 # Generate EVC and EVH from State Class ----------------------------------------
+
+message("Separating out EVC and EVH.")
 
 # Create empty rasters to hold EVC and EVH data
 EVCSitchedRaster <-  raster(stateClassSitchedRaster)
