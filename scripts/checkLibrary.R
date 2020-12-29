@@ -41,7 +41,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   #   that don't match their vegetation height (y state) labels
   # - Probably not necessary given how states are now constructed, but is pretty quick
   allowedStates <- read_csv(allowedStatesPath) %>%
-    mutate(ID = EVCB * 1000 + EVHB) %>%
+    mutate(ID = EVC * 1000 + EVH) %>%
     pull(ID)
   
   numInvalidStates <-

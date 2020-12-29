@@ -98,30 +98,35 @@ if(!rawNonSpatialDirectory %>% dir.exists)
 
 # Load all non-spatial data
 transitionTablePath <- str_c(rawNonSpatialDirectory, "Transition Table.csv")
-allowedStatesPath   <- str_c(rawNonSpatialDirectory, "All Combinations.csv")
-evcTablePath        <- str_c(rawNonSpatialDirectory, "EVC LUT.csv")
-evhTablePath        <- str_c(rawNonSpatialDirectory, "EVH LUT.csv")
-vdistTablePath      <- str_c(rawNonSpatialDirectory, "VDIST LUT.csv")
-distCrosswalkPath   <- str_c(rawNonSpatialDirectory, "Disturbance Crosswalk.csv")
-evcColorsPath       <- str_c(rawNonSpatialDirectory, "EVC Colors.csv")
 evtColorTablePath   <- str_c(rawNonSpatialDirectory, "EVT Colors.csv")
 
 if(!transitionTablePath %>% file.exists)
   stop("Could not find the file `Transition Table.csv`. This file outlines all transition rules. Please see the README for how input data should be organized.")
-if(!allowedStatesPath %>% file.exists)
-  stop("Could not find the file `All Combinations.csv`. This file provides every valid combination of EVT, EVC, EVH, and Map Zone. Please see the README for how input data should be organized.")
-if(!distCrosswalkPath %>% file.exists)
-  stop("Could not find the file `Disturbance Crosswalk.csv`. This file is used to convert FDIST codes to VDIST. Please see the README for how input data should be organized.")
-if(!vdistTablePath %>% file.exists)
-  stop("Could not find the file `VDIST LUT.csv`. This file is used to connect disturbance codes to names and disturbance types. Please see the README for how input data should be organized.")
-if(!evcTablePath %>% file.exists)
-  stop("Could not find the file `EVC LUT.csv`. This file is used to connect EVC codes to names. Please see the README for how input data should be organized.")
-if(!evhTablePath %>% file.exists)
-  stop("Could not find the file `EVH LUT.csv`. This file is used to connect EVH codes to names. Please see the README for how input data should be organized.")
-if(!evcColorsPath %>% file.exists)
-  stop("Could not find the file `EVC Colors.csv`. This file is used to connect EVC codes to colors for mapping. Please see the README for how input data should be organized.")
 if(!evtColorTablePath %>% file.exists)
   stop("Could not find the file `EVT Colors.csv`. This file is used to connect EVT codes to colors for mapping. Please see the README for how input data should be organized.")
+
+# Load shared non-spatial data
+sharedNonSpatialDirectory <- "data/shared/"
+
+allowedStatesPath   <- str_c(sharedNonSpatialDirectory, "All Combinations.csv")
+distCrosswalkPath   <- str_c(sharedNonSpatialDirectory, "Disturbance Crosswalk.csv")
+evcTablePath        <- str_c(sharedNonSpatialDirectory, "EVC LUT.csv")
+evhTablePath        <- str_c(sharedNonSpatialDirectory, "EVH LUT.csv")
+vdistTablePath      <- str_c(sharedNonSpatialDirectory, "VDIST LUT.csv")
+evcColorsPath       <- str_c(sharedNonSpatialDirectory, "EVC Colors.csv")
+
+if(!allowedStatesPath %>% file.exists)
+  stop("Could not find the file `All Combinations.csv`. This file provides every valid combination of EVT, EVC, EVH, and Map Zone. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+if(!distCrosswalkPath %>% file.exists)
+  stop("Could not find the file `Disturbance Crosswalk.csv`. This file is used to convert FDIST codes to VDIST. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+if(!evcTablePath %>% file.exists)
+  stop("Could not find the file `EVC LUT.csv`. This file is used to connect EVC codes to names. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+if(!evhTablePath %>% file.exists)
+  stop("Could not find the file `EVH LUT.csv`. This file is used to connect EVH codes to names. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+if(!vdistTablePath %>% file.exists)
+  stop("Could not find the file `VDIST LUT.csv`. This file is used to connect disturbance codes to names and disturbance types. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+if(!evcColorsPath %>% file.exists)
+  stop("Could not find the file `EVC Colors.csv`. This file is used to connect EVC codes to colors for mapping. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
 
 # Output Raster Options ---------------------------------------------------
 

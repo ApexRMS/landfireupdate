@@ -13,19 +13,19 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # The filter and mutate steps below convert the 1% binned EVC codes to 10% codes
   evcColors <- read_csv(evcColorsPath) %>%
     transmute(
-      evcCode = VALUE,
+      EVC = VALUE,
       Color = paste("255", R, G, B, sep = ",")
     ) %>%
     # Only the codes above 100 differ between the two EVC code systems
     # Of these differing codes, we keep every 10th (eg. 10%, 20%, etc )
-    filter(evcCode < 100 | evcCode %% 10 == 0) %>%
+    filter(EVC < 100 | EVC %% 10 == 0) %>%
     # The 1% resolution code stores lifeform (tree, shrub, etc) in the 100th's digit,
     # The 10% stores this in the 10th's digit, so we divide by 10
     # Finally we add 90 to shift the correct color to the the correct lifeform
     mutate(
-      evcCode = if_else(evcCode <= 100,
-                        true = evcCode,
-                        false = evcCode / 10 + 90)
+      EVC = if_else(EVC <= 100,
+                        true = EVC,
+                        false = EVC / 10 + 90)
     )
   
   ## Load table of all valid combinatiosn of Map Zone, EVT, EVH, and EVC
@@ -38,8 +38,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     # Select and rename variables of importance
     dplyr::select(MZ, VDIST, EVT7B, StratumIDSource = EVT7B_Name,
            EVCB, EVHB, EVCR, EVHR) %>%
-    # Turn all factors into strings # zzz
-    # mutate_if(is.factor, as.character) %>% # zzz
     # Change the naming convention of MapZones e.g. from "1" to "MZ01"
     mutate(SecondaryStratumID = paste0("MZ", str_pad(MZ, 2, "left", "0"))) %>%
     # Keep only unique rows
@@ -48,13 +46,11 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   ## Generate look-up tables for EVC and EVH codes and names
 
   EVClookup <- read_csv(evcTablePath) %>%
-    # Turn factors into characters # zzz
-    # mutate_if(is.factor, as.character) %>% # zzz
     # Make unique names for when class names are repeated
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(EVT_LIFEFORM, "_", VALUE))) %>%
     # Select relevant columns and rename with stsim relevant column names
     dplyr::select(VALUE, CLASSNAMES) %>%
-    rename(EVC_ID = VALUE, StateLabelXID = CLASSNAMES) %>%
+    rename(EVC = VALUE, StateLabelXID = CLASSNAMES) %>%
     # Shorten EVC names for cleaner SyncroSim UI
     mutate(
       StateLabelXDescription = StateLabelXID,
@@ -66,10 +62,9 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     )
 
   EVHlookup <- read_csv(evhTablePath) %>%
-    #mutate_if(is.factor, as.character) %>% # zzz
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(LIFEFORM, "_", VALUE))) %>%
     dplyr::select(VALUE, CLASSNAMES) %>%
-    rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES) %>%
+    rename(EVH = VALUE, StateLabelYID = CLASSNAMES) %>%
     # Shorten EVH names for cleaner SyncroSim UI
     mutate(
       StateLabelYDescription = StateLabelYID,
@@ -86,16 +81,16 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   transitionTable <- transitionTable %>%
 
     # First join EVC B and R, renaming appropriately
-    left_join(EVClookup, by = c("EVCB" = "EVC_ID")) %>%
+    left_join(EVClookup, by = c("EVCB" = "EVC")) %>%
     rename(EVCB_Name = StateLabelXID) %>%
-    left_join(EVClookup, by = c("EVCR" = "EVC_ID")) %>%
+    left_join(EVClookup, by = c("EVCR" = "EVC")) %>%
     rename(EVCR_Name = StateLabelXID) %>%
     dplyr::select(-StateLabelXDescription.x, -StateLabelXDescription.y) %>%
 
     # Similarly for EVH
-    left_join(EVHlookup, by = c("EVHB" = "EVH_ID")) %>%
+    left_join(EVHlookup, by = c("EVHB" = "EVH")) %>%
     rename(EVHB_Name = StateLabelYID) %>%
-    left_join(EVHlookup, by = c("EVHR" = "EVH_ID")) %>%
+    left_join(EVHlookup, by = c("EVHR" = "EVH")) %>%
     rename(EVHR_Name = StateLabelYID) %>%
     dplyr::select(-StateLabelYDescription.x, -StateLabelYDescription.y) %>%
 
@@ -150,7 +145,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   primary <- data.frame(ID = transitionTable$EVT7B,
                         Name = transitionTable$StratumIDSource) %>%
-    #mutate(ID = as.numeric(ID)) %>% # zzz
     unique()
 
   # Extract colors from the evt200 sheet
@@ -162,7 +156,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     dplyr::select(VALUE, R, G, B) %>%
     # Take unique and rename for later joining
     unique() %>% rename(ID = VALUE) %>%
-    #mutate(ID = as.numeric(ID)) %>% #zzz
     # Create the color using the SyncroSim pattern of T, R, G, B
     mutate(Color = paste("255", R, G, B, sep = ",")) %>%
     # Join and select relevant columns
@@ -200,40 +193,20 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # Build the datasheet
 
   stateClasses <- allowedStates %>%
-    # Start with full list of allowed EVC, EVH, etc, and keep only EVC and EVH
-    select(EVCB, EVHB) %>%
-    # Add rows that must exist
+    # Add missing states
     bind_rows(
-      # Valid forest state classes
-      crossing(
-        EVCB = c(101:109),
-        EVHB = c(108:112)),
-      # Valid herb state classes
-      crossing(
-        EVCB = c(111:119),
-        EVHB = c(104:107)),
-      # Valid herb state classes
-      crossing(
-        EVCB = c(121:129),
-        EVHB = c(101:103)),
-      # Other missing states added manually
       tibble(
         EVCB = c(100),
         EVHB = c(110))) %>%
-    # # Generate appropriately named and typed columns for joining in state names and colors # zzz
-    # mutate(
-    #   EVC_ID = EVCB,
-    #   EVH_ID = EVHB,
-    #   evcCode = EVCB) %>%
     # Join relevant data
-    left_join(EVClookup, by = c("EVCB" = "EVC_ID")) %>%
-    left_join(EVHlookup, by = c("EVHB" = "EVH_ID")) %>%
-    left_join(evcColors, by = c("EVCB" = "evcCode")) %>%
+    left_join(EVClookup) %>%
+    left_join(EVHlookup) %>%
+    left_join(evcColors) %>%
     # Generate unique State IDS based on the combination of X and Y state
     # To do this, we "paste" the X and Y state IDs together by multiplying
     # EVC by 1000 and adding it to EVH 
     mutate(
-      ID = EVCB * 1000 + EVHB,
+      ID = EVC * 1000 + EVH,
       Name = str_c(StateLabelXID, " : ", StateLabelYID)) %>%
     # Reorder and remove unneeded columns
     select(ID, Name, StateLabelXID, StateLabelYID, Color) %>%
@@ -254,8 +227,10 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     filter(ID != 0) %>%
     # Create unique transition/disturbance name, and format color
     # The format of the name is : Group, Severity, Frequency
-    mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = " - ")) %>%
-    mutate(Color = paste("255", R, G, B, sep = ","))
+    mutate(
+      Name = paste(TransitionGroupID, d_severity, d_time, sep = " - "),
+      Color = paste("255", R, G, B, sep = ",")) %>%
+    select(ID, Name, TransitionGroupID, Color)
 
   # Select the relevant columns, and filter by disturbances that are actually
   # present in the input raster
@@ -270,7 +245,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # For groups, we append the disturbance class to the existing datasheet
 
   transitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
-    #mutate_if(is.factor, as.character) %>% # zzz
     bind_rows(vdistLookup %>%
                 dplyr::select(Name = TransitionGroupID) %>%
                 unique()) %>%
