@@ -224,7 +224,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # We gather disturbance types from the VDIST table
   vdistLookup <-  read_csv(vdistTablePath) %>%
     # Select only what we need, then rename
-    dplyr::select(value, d_type, d_severity, d_time, R, G, B) %>%
     rename(ID = value,  TransitionGroupID = d_type) %>%
     # Filter out the NO Disturbance category
     filter(ID != 0) %>%
@@ -416,7 +415,7 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   # Add the Sub Scenario as a dependency to import common model info
   dependency(myscenario, dependency = subScenarioName)
   
-  ## +Transition multipliers ---------------------------------------------------
+  ## +Transition spatial multipliers -------------------------------------------
   
   # Collect the names and cretae path files
   multiplierGroupNames <- 
@@ -440,6 +439,29 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   } else
     warning(paste0("There were no disturbances found in ", runTag,
                    ". This is not necessarily an error, please check the raw data."))
+  
+  ## +Transition Multipliers ---------------------------------------------------
+  
+  # Get a list of all disturbance types absent in the Map Zone
+  absentDisturbanceTypes <-
+   read_csv(vdistTablePath) %>%
+    # Select only what we need, then rename
+    rename(ID = value,  TransitionGroupID = d_type) %>%
+    # Filter out the NO Disturbance category
+    filter(ID != 0) %>%
+    # Create unique transition/disturbance name, and format color
+    # The format of the name is : Group, Severity, Frequency
+    transmute(Name = paste(TransitionGroupID, d_severity, d_time, sep = " - ")) %>%
+    pull %>%
+    str_c(" [Type]") %>%
+    setdiff(multiplierGroupNames)
+  
+  absentTransitionMultipliers <- data.frame(
+    TransitionGroupID = absentDisturbanceTypes,
+    Amount = 0)
+  
+  saveDatasheet(myscenario, absentTransitionMultipliers,
+                "stsim_TransitionMultiplierValue")
   
   ## +Initial conditions --------------------------------------------------------
   
