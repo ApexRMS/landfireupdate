@@ -45,6 +45,14 @@ if(as.integer(config$tileCols) %>% is.na) {
 if(config$ssimDir %>% is.na)
   config$ssimDir <- NULL
 
+# Check whether or not crop to a smaller extent for testing
+cropToExtent <- FALSE
+if(config$cropToExtent == "1") {
+  cropToExtent <- TRUE
+} else if(config$cropToExtent != "0")
+  warning("Unrecognized value for `cropToExtent` in config file. Not cropping to extent!")
+  
+
 # Overall Options --------------------------------------------------------
 
 # Which mapzones to process
@@ -129,6 +137,24 @@ if(!evcColorsPath %>% file.exists)
   stop("Could not find the file `EVC Colors.csv`. This file is used to connect EVC codes to colors for mapping. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
 
 # Output Raster Options ---------------------------------------------------
+
+# Setup crop extent
+if(cropToExtent) {
+  # Check that file defining crop extent exists
+  if(!config$cropExtentPath %>% file.exists)
+    stop("File defining crop extent not found! Please correct the `cropExtentPath` or disable `cropToExtent`.")
+  
+  # Read in crop data
+  cropData <- read_csv(config$cropExtentPath) %>%
+    pull(2, name = 1) %>%                      # Extract column 2, and use column 1 as names
+    as.list()
+  
+  # Check that format is correct
+  if(any(cropData %>% names %>% sort != c("xmax", "xmin", "ymax", "ymin")))
+    stop("The format of the crop extent definition is not valid! Please correct the format or disable `cropToExtent`. Please see the examples in `config/Crop Extents/ for appropriate formats.")
+  
+  cropExtent <- extent(cropData$xmin, cropData$xmax, cropData$ymin, cropData$ymax)
+}
 
 # A tiling mask is produced to allow for Spatial Multiprocessing in SyncroSim
 # The size of the rows is dictated by the size of the raster and memory constraints,

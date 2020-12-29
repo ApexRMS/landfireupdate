@@ -65,6 +65,20 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     trimRaster(
       filename = mapzoneRasterPath
     )
+  
+  # Crop to extent if that option is enabled
+  if(cropToExtent) {
+    
+    # Check that the extent is completely contained by the chosen Map Zone
+    if(any(mapzoneRaster %>% xmin > cropExtent %>% xmin,
+           mapzoneRaster %>% ymin > cropExtent %>% ymin,
+           mapzoneRaster %>% xmax < cropExtent %>% xmax,
+           mapzoneRaster %>% ymax < cropExtent %>% ymax))
+      stop("The chosen crop extent does not lie entirely with the chosen Map Zone. Please change the Map Zone or crop extent, or disable `cropToExtent`.")
+      
+    mapzoneRaster <- crop(mapzoneRaster, cropExtent) %>%
+      writeRaster(mapzoneRasterPath, overwrite = T)
+  }
 
   # Crop and mask data ----------------------------------------------------------
 
