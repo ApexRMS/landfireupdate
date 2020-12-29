@@ -103,18 +103,7 @@ pwalk(
   projectName = projectName
 )
 
-# Backup SyncroSim Library --------------------------------------------------
-
-log_print("Generating Syncrosim library backup!")
-
-# Generate a backup of the library
-ssimSession <- session(ssimDir)
-outputLibrary <- ssimLibrary(libraryName, session = ssimSession)
-rsyncrosim::backup(outputLibrary)
-
-# Move backup to standard location
-backupFilePath <- list.files(paste0(libraryName, ".ssim.backup"), full.names = TRUE) %>% tail(1)
-file.rename(backupFilePath, "Library Backup.zip")
+log_print("Done building SyncroSim Library!")
 
 # End logging ---------------------------------------------------------------
 log_close()

@@ -9,7 +9,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   
   # Directory to store cleaned rasters
   # Note that the working directory is prepended since SyncroSim needs absolute paths
-  cleanRasterDirectory <- str_c(getwd(), "/", cleanRasterDirectoryRelative, "/", runTag, "/")
+  cleanRasterDirectory <- str_c(getwd(), "/", cleanRasterDirectoryRelative, runTag, "/")
   dir.create(cleanRasterDirectory, recursive = T, showWarnings = F)
 
   # Directory and prefix for FDIST binary rasters (spatial multipliers)
@@ -54,6 +54,23 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   origin(mapzoneRaster) <- origin(evtRaster)
 
   # Setup mask --------------------------------------------------------------
+  
+  # Crop to extent if that option is enabled
+  if(cropToExtent) {
+    
+    # Check that the extent is completely contained by the chosen Map Zone
+    if(any(mapzoneRaster %>% xmin > cropExtent %>% xmin,
+           mapzoneRaster %>% ymin > cropExtent %>% ymin,
+           mapzoneRaster %>% xmax < cropExtent %>% xmax,
+           mapzoneRaster %>% ymax < cropExtent %>% ymax))
+      stop("The chosen crop extent does not lie entirely with the chosen Geo Area. Please change the Geo Area or crop extent, or disable `cropToExtent`.")
+      
+    mapzoneRaster <- crop(mapzoneRaster, cropExtent) %>%
+      writeRaster(mapzoneRasterPath, overwrite = T)
+    
+    if(!mapzoneToKeep %in% uniqueInRaster(mapzoneRaster))
+      stop("The chosen Map Zone does not overlap with the crop extent. Please change the Map Zone or crop extent, or disable `cropToExtent`.")
+  }
 
   # Mask and trim mapzone map by the chosen mapzone
   # - Note that trimRaster also saves the raster to the cleaned raster directory
@@ -65,20 +82,6 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     trimRaster(
       filename = mapzoneRasterPath
     )
-  
-  # Crop to extent if that option is enabled
-  if(cropToExtent) {
-    
-    # Check that the extent is completely contained by the chosen Map Zone
-    if(any(mapzoneRaster %>% xmin > cropExtent %>% xmin,
-           mapzoneRaster %>% ymin > cropExtent %>% ymin,
-           mapzoneRaster %>% xmax < cropExtent %>% xmax,
-           mapzoneRaster %>% ymax < cropExtent %>% ymax))
-      stop("The chosen crop extent does not lie entirely with the chosen Map Zone. Please change the Map Zone or crop extent, or disable `cropToExtent`.")
-      
-    mapzoneRaster <- crop(mapzoneRaster, cropExtent) %>%
-      writeRaster(mapzoneRasterPath, overwrite = T)
-  }
 
   # Crop and mask data ----------------------------------------------------------
 

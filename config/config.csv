@@ -8,9 +8,9 @@ projectName,NW Geo Area,Name to use for the SyncroSim Project
 ** Parallel Processing Options **,** A positive integer **,
 nThreads,,Leave empty to use all cores to *build* the SyncroSim library
 ssimJobs,8,The default number of cores to use to *run* the SyncroSim library
-tileCols,20,The number of columns to split each Map Zone into for spatial multiprocessing in SyncroSim
-** SyncroSim Installation Options **,"** Either a valid path to the SyncroSim install to use, or empty **",
-ssimDir,,Leave empty to use default install location
+tileCols,2,The number of columns to split each Map Zone into for spatial multiprocessing in SyncroSim
 ** Testing Options **,,
 cropToExtent,1,"Toggle to enable cropping for testing. 0 is disabled, 1 is enabled."
 cropExtentPath,config/Crop Extents/MZ 19 Example.csv,"Path to a CSV encoding the extent to crop to, if enabled. See example in `config/Crop Extents/` for proper format"
+** SyncroSim Installation Options **,"** Either a valid path to the SyncroSim install to use, or empty **",
+ssimDir,,Leave empty to use default install location

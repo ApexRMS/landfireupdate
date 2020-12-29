@@ -142,6 +142,11 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   # Setup --------------------------------------------------------------------
   # Decide how to split input into manageable blocks
   maxBlockSize <- 2^(maxBlockSizePower)
+  # Make sure max block size is smaller than the number of columns and rows
+  while(ncol(inputRaster) < maxBlockSize | nrow(inputRaster) < maxBlockSize){
+    maxBlockSize = maxBlockSize / 2
+    maxBlockSizePower = maxBlockSizePower - 1
+  }
   descendingBlockSizes <- 2^((maxBlockSizePower-1):0)
 
   # Initialize counters
@@ -237,6 +242,10 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   outputCols <- trimRight - trimLeft
 
   # Crop  ---------------------------------------------------------------------
+  
+  # Don't crop if there is nothing to crop
+  if(trimAbove == 1 & trimLeft == 1 & trimBelow == nrow(inputRaster) + 1 & trimRight == ncol(inputRaster) + 1)
+    return(writeRaster(inputRaster, filename = filename, overwrite = T))
 
   # Convert trim variables to x,y min,max
   outXmin <- xmin(extent(inputRaster)) + trimLeft * res(inputRaster)[1]
@@ -373,7 +382,7 @@ tabulateRaster <- function(inputRaster) {
                             nrows = blockInfo$nrows[.x]))) %>%
     map(as.data.frame) %>%
     do.call(rbind, .) %>% # do.call is used to convert the list of tables to a sequence of arguments for `rbind`
-    rename(value = "Var1") %>%
+    rename(value = 1) %>%
     group_by(value) %>%
     summarize(freq = sum(Freq)) %>%
     ungroup() %>%

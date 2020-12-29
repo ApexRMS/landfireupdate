@@ -88,6 +88,16 @@ Finally, `tileCols` can be used to decide how finely the raster maps are split
 up for the spatial multiprocessing in SyncroSim. Higher values will decrease
 memory usage in SyncroSim (to a point), but will generally increase run time.
 
+### Testing Options
+
+These options can be used to crop the output raster maps down to a smaller fixed
+extent, primarily to speed up runs for testing. This feature can be enabled by
+setting `cropToExtent` to 1. Set this variable to 0 to disable cropping to
+extent. When this feature is enabled, an extent will be read from the CSV file
+at `cropExtentPath`. See the example crop extent CSV for Map Zone 19, 
+`config/Crop Extents/MZ 19 Example.csv` for the proper format. Note that all
+Map Zones to be kept must at least partially overlap the chosen extent.
+
 ### SyncroSim Installation Options
 
 `ssimDir` can be used to explicitly set the location of the SyncroSim
@@ -173,11 +183,8 @@ EVT, and fDIST must be present and named `Map Zones.tif`, `EVC.tif`, `EVH.tif`,
 
 Also required within the `raw/` subdirectory is the `nonspatial/` subdirectory,
 which includes Geo-Area-specific data files that are not stored as maps. This
-folder requires all of the following: a spreadsheet of all transition rules,
-`Transition Table.csv`; a spreadsheet of all valid combinations of EVC, EVH, etc,
-`All Combinations.csv`; a crosswalk to convert fDIST codes to vDIST,
-`Distrubance Crosswalk.csv`; three look up tables, `EVC LUT.csv`, `EVH LUT.csv`,
-and `VDIST LUT.csv`; and two color maps, `EVC Colors.csv` and `EVT Colors.csv`.
+folder requires a spreadsheet of all transition rules, `Transition Table.csv`,
+and a color mapping for EVT codes present in the Geo Area, `EVT Colors.csv`.
 
 Altogether, the folder should have the following structure:
 
@@ -193,12 +200,6 @@ Geo Area Name
     │
     └───nonspatial
         │   Transition Table.csv
-        │   All Combinations.csv
-        │   Disturbance Crosswalk.csv
-        │   EVC LUT.csv
-        │   EVH LUT.csv
-        │   VDIST LUT.csv
-        │   EVC Colors.csv
         │   EVT Colors.csv
 
 ```

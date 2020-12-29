@@ -196,8 +196,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     # Add missing states
     bind_rows(
       tibble(
-        EVCB = c(100),
-        EVHB = c(110))) %>%
+        EVC = c(100),
+        EVH = c(110))) %>%
     # Join relevant data
     left_join(EVClookup) %>%
     left_join(EVHlookup) %>%
