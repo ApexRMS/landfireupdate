@@ -19,7 +19,7 @@ however, this is not a strict requirement.
 
 A number of data files are required that are not included on the GitHub repo due
 to size constraints. These files have been compressed into a zip folder that can
-be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Data%20Files%20-%202020-12-26.zip).
+be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Data%20Files%20-%202020-12-29.zip).
 Please note that this file is quite large (~1.3GB).
 
 The zip folder also contains the expected paths of the files, and so it is
