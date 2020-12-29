@@ -1,8 +1,14 @@
 # Landfire Update
 
-Code to prepare data for LANDFIRE Update using ST-Sim. This project consists of
-a collection of scripts to process and clean raw spatial data and use these data
-to generate a SyncroSim library to run the LANDFIRE Update itself.
+This project contains code to transition raster maps of vegetation cover (EVC) and
+and heights (EVH) using disturbance data collected by LANDFIRE. This process is
+broken into three principal tasks: generating a SyncroSim library that organizes
+these inputs and transition rules by Map Zone; running the SyncroSim library to
+forecast these new vegetation parameters by Map Zone; and reconstructing
+vegetation cover and height maps for the entire Geo Area from the maps generated
+for each Map Zone.
+
+Below are the instructions to setup, configure, and run the code.
 
 ## Setup
 
