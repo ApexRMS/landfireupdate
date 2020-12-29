@@ -107,6 +107,9 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     mutate(Probability = 1)
 
   # Build the SyncroSim Library ---------------------------------------------
+  
+  # Ensure ST-Sim is installed
+  addPackage("stsim")
 
   # Create library with a project ("Definitions") and a scenario ("Test")
   dir.create("library/", showWarnings = FALSE)
