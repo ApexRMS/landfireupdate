@@ -70,10 +70,11 @@ mergeArgs <- c(stateClassRasters,                      # the rasters to stitch t
 
 # Stitch together and save
 # - if there is only one result scenario, just save the one Map Zone
-stateClassSitchedRaster <- if_else(
-  length(stateClassRasters) == 1,
-  writeRaster(stateClassRasters[[1]], stateClassSitchedRasterPath, overwrite = T),
-  do.call(merge, mergeArgs))
+if(length(stateClassRasters) == 1) {
+  stateClassSitchedRaster <- writeRaster(stateClassRasters[[1]], stateClassSitchedRasterPath, overwrite = T)
+} else {
+  stateClassSitchedRaster <- do.call(merge, mergeArgs)
+}
 
 # Generate EVC and EVH from State Class ----------------------------------------
 
@@ -102,4 +103,4 @@ for(i in seq(blockInfo$n)) {
 EVCSitchedRaster <- writeStop(EVCSitchedRaster)
 EVHSitchedRaster <- writeStop(EVHSitchedRaster)
 
-
+message("Done reconstructing Geo Area!")
