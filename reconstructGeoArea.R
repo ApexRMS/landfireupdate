@@ -41,6 +41,12 @@ resultScenarios <- scenario(mylibrary) %>%
   filter(isResult == "Yes") %>%
   pull(scenarioId)
 
+if(length(resultScenarios) == 0)
+  stop(str_c(
+    "No result scenarios found! Please ensure that you've run the relevant ",
+    "SyncroSim scenarios and that the library and project name set in the ",
+    "config file match those of the maps you are trying to reconstruct."))
+
 # Pull out the relevant raster from each result scenario as a list
 stateClassRasters <- 
   map(resultScenarios,
@@ -63,7 +69,11 @@ mergeArgs <- c(stateClassRasters,                      # the rasters to stitch t
                overwrite = T)
 
 # Stitch together and save
-stateClassSitchedRaster <- do.call(merge, mergeArgs)
+# - if there is only one result scenario, just save the one Map Zone
+stateClassSitchedRaster <- if_else(
+  length(stateClassRasters) == 1,
+  writeRaster(stateClassRasters[[1]], stateClassSitchedRasterPath, overwrite = T),
+  do.call(merge, mergeArgs))
 
 # Generate EVC and EVH from State Class ----------------------------------------
 
