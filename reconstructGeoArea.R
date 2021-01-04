@@ -37,9 +37,35 @@ mylibrary <- ssimLibrary(libraryName, session = ssimSession)
 myproject <- rsyncrosim::project(mylibrary, projectName)
 
 # Find the list of result scenarios
+# - Keep only the last successful run from each scenario
+
+# Create a sink to capture verbose output
+sink("temp.sink")
+
 resultScenarios <- scenario(mylibrary) %>%
+  
+  # Only consider result scenario
   filter(isResult == "Yes") %>%
+  
+  # Examine run logs to see which runs failed
+  mutate(
+    failed = map_lgl(
+      scenarioId,
+      ~ scenario(mylibrary, .x) %>%
+        runLog %>%
+        str_detect("Failure"))) %>%
+  
+  # Remove failed runs
+  filter(failed == FALSE) %>%
+  
+  # Only keep last run from each parent scenario
+  group_by(parentID) %>%
+  filter(scenarioId == max(scenarioId)) %>%
   pull(scenarioId)
+
+# Close and delete sink
+sink()
+unlink("temp.sink")
 
 # Pull out the relevant raster from each result scenario as a list
 stateClassRasters <- 
