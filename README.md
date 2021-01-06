@@ -1,11 +1,11 @@
 # Landfire Update
 
-This project contains code to transition raster maps of vegetation cover (EVC) and
-and heights (EVH) using disturbance data collected by LANDFIRE. This process is
+This project contains code to update raster maps of Existing Vegetation Cover (EVC) and
+and Existing Vegetation Height (EVH) using Disturbance Data collected by LANDFIRE. This process is
 broken into three principal tasks: generating a SyncroSim library that organizes
 these inputs and transition rules by Map Zone; running the SyncroSim library to
 forecast these new vegetation parameters by Map Zone; and reconstructing
-vegetation cover and height maps for the entire Geo Area from the maps generated
+EVC and EVH maps for the entire Geo Area from the maps generated
 for each Map Zone.
 
 Below are the instructions to setup, configure, and run the code.
@@ -23,7 +23,7 @@ however, this is not a strict requirement.
 
 ### Data files
 
-A number of data files are required that are not included on the GitHub repo due
+A number of data files are required that are not included on the GitHub repository due
 to size constraints. These files have been compressed into a zip folder that can
 be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Data%20Files%20-%202020-12-29.zip).
 Please note that this file is quite large (~1.3GB).
@@ -42,7 +42,7 @@ configuration (described below) should reproduce this library exactly.
 ## Configuration
 
 The run can be configured by editing the `config/config.csv` file. This
-spreadsheet consists of three columns: `Variable` which indicates the name of
+CSV file consists of three columns: `Variable` which indicates the name of
 the option being set; `Value` which is used to actually set the option; and
 `Comment` which provides additional information about the option. The `Value`
 column is the only column that needs to be modified during configuration. Editing
@@ -56,7 +56,7 @@ of the configuration variables organized by these sections follows.
 ### Input Data Paths
 
 Two data paths must be provided to the configuration. The first, `dataFolder`,
-should be a valid path point to a folder containing all the necessary input data.
+should be a valid path pointing to a folder containing all the necessary input data.
 There is a strict naming scheme and organization for the files within this
 directory. See the **Input Data Structure** Section below for more information.
 
