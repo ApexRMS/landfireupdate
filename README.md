@@ -13,10 +13,10 @@ Below are the instructions to setup, configure, and run the code.
 ## Table of Contents
 [Setup](#Setup)  
 [Configuration](#Configuration) 
-[Suggeted Configuration](#Suggested Configuration) 
-[Running the Update](#Running the Update) 
-[Input Data Structure](#Input Data Structure)
-[Data Dictionary](#Data Dictionary)
+[Suggeted Configuration](#Suggested) 
+[Running the Update](#Running) 
+[Input Data Structure](#InputStructure)
+[Data Dictionary](#Dictionary)
 
 ## Setup
 
@@ -66,7 +66,8 @@ of the configuration variables organized by these sections follows.
 Two data paths must be provided to the configuration. The first, `dataFolder`,
 should be a valid path pointing to a folder containing all the necessary input data.
 There is a strict naming scheme and organization for the files within this
-directory. See the **Input Data Structure** Section below for more information.
+directory. See the [Input Data Structure](#InputStructure) section below for
+more information.
 
 The other input file, `mapzonesToKeepPath`, should be a CSV file with a single
 column listing each Map Zone to include in the run on a separate line. Note that
@@ -95,8 +96,8 @@ as many cores as there are unique disturbance events in a single Map Zone (about
 20, on average) and makes most efficient use of about 8 cores. In contrast,
 running the library will almost always benefit from more cores, but this task
 is strongly memory limited. Accordingly, setting too many jobs here can lead to
-Out-of-Memory errors. Please refer to the **Suggested Configuration** Section
-below for suggestions on setting `ssimJobs`.
+Out-of-Memory errors. Please refer to the [Suggested Configuration](#Suggested)
+Section below for suggestions on setting `ssimJobs`.
 
 Finally, `tileCols` can be used to decide how finely the raster maps are split
 up for the spatial multiprocessing in SyncroSim. Higher values will decrease
@@ -118,7 +119,7 @@ Map Zones to be kept must at least partially overlap the chosen extent.
 installation. This is primarily of use on Linux machines. Leave this cell empty
 to use the default installation directory.
 
-## Suggested Configuration
+## <a name="Suggested"></a>Suggested Configuration
 
 The suggested run configuration will depend on the available compute resources.
 Below is a table outlining some general recommendations and the corresponding
@@ -140,7 +141,7 @@ number of available processors *and* minimum amount of memory. Set the number of
 SyncroSim jobs (`ssimJobs`) and tiling columns (`tileCols`) accordingly in the
 config file. The remaining two columns provide ranges for the expected run times.
 
-## Running the Update
+## <a name="Running"></a>Running the Update
 
 Begin by opening the `LANDFIRE Update.Rproj` R project file to ensure the
 correct working directory is set in RStudio. Next, open the `batchProcess.R` 
@@ -175,7 +176,7 @@ in the configuration.
 NOTE that using the GUI is optional and the scenario can also be run directly 
 through the SyncroSim commandline or by using the rsyncrosim package for R.
 
-## Input Data Structure
+## <a name="InputStructure"></a>Input Data Structure
 
 To generalize the workflow for running multiple Geo Areas with minimal
 reconfiguration, the scripts have strict requirements for how input files are
@@ -183,7 +184,7 @@ named and organized.
 
 The input files for each Geo Area must be stored in its own folder, preferably
 in the `data/` directory with a name that indicates which Geo Area the folder is
-for. For example, the example data archive linked in the **Setup** section 
+for. For example, the example data archive linked in the [Setup](#Setup) section 
 contains the input files for the NW Geo Area and are accordingly are held in
 `data/NW/`.
 
@@ -218,19 +219,19 @@ Geo Area Name
 
 ```
 
-Please see the **Data Dictionary** section below for a description of these input
-files and the example data files linked in the **Setup** section for the
-expected format of each file.
+Please see the [Data Dictionary](#Dictionary) section below for a description of
+these input files and the example data files linked in the [Setup](#Setup) section for
+the expected format of each file.
 
-## Data Dictionary
+## <a name="Dictionary"></a>Data Dictionary
 
 Below is a description of all data files used in the update. This is includes
 both spatial and non-spatial inputs. A number of data files are common to all
-Geo Areas and are described in the **Shared Data Files** subsection below. The
-remaining input data files are described in the **Geo-Area-Specific Data Files**
+Geo Areas and are described in the [Shared Data Files](#Shared) subsection below.
+The remaining input data files are described in the [Geo-Area-Specific Data Files](#Specific)
 subsection.
 
-### Shared Data Files
+### <a name="Shared"></a>Shared Data Files
 
 These common files are stored in the `data/Shared/` folder and are used for all
 Geo Areas.
@@ -244,13 +245,13 @@ Geo Areas.
 | VDIST LUT.csv             | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
 | EVC Colors.csv            | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps. |
 
-### Geo-Area-Specific Data Files
+### <a name="Specific"></a>Geo-Area-Specific Data Files
 
 These files are specific to the Geo Area being processed. As described in the
-**Input Data Structure** section, these files are suggested to be stored in a
-folder within the `data/` folder that indicates the Geo Area name. This section
-also describes the expected organization of these files within this Geo-Area-specific
-folder.
+[Input Data Structure](#InputStructure) section, these files are suggested to be
+stored in a folder within the `data/` folder that indicates the Geo Area name.
+This section also describes the expected organization of these files within this
+Geo-Area-specific folder.
 
 | File Name                 | Description                                                                                                                                        |
 |:--------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------|
