@@ -1,0 +1,54 @@
+---
+
+# Overall Run Options ----------------------------------------------------------
+
+# Path to the folder containing the raw data for a given Geo Area.
+# See the README for the proper format.
+dataFolder: data/NW
+
+# List of Map Zones to be included in the run
+mapzonesToKeep:
+#  -  1
+#  -  2
+#  -  7
+#  -  8
+#  -  9
+#  - 10
+#  - 18
+  - 19
+#  - 20
+#  - 21
+#  - 22
+#  - 29
+
+# SyncroSim Object Names -------------------------------------------------------
+
+# The names to use for the SyncroSim Library and Project.
+# Preferably unique to the Geo Area being run.
+libraryName: NW Geo Area Update
+projectName: NW Geo Area
+
+# Parallel Processing Options ---------------------------------------------------
+
+# Leave empty to use all cores to *build* the SyncroSim library
+nThreads:
+
+# The default number of cores to use to *run* the SyncroSim library
+ssimJobs: 8
+
+# The number of columns to split each Map Zone into for spatial multiprocessing in SyncroSim
+tileCols: 2
+
+# Testing Options --------------------------------------------------------------
+
+# Toggle to enable cropping for testing. 0 is disabled, 1 is enabled.
+cropToExtent: 1
+
+# Path to a CSV encoding the extent to crop to, if enabled.
+# See example in `config/Crop Extents/` for proper format.
+cropExtentPath: config/Crop Extents/MZ 19 Example.csv
+
+# SyncroSim Installation Options -----------------------------------------------
+
+# Leave empty to use default install location
+ssimDir:

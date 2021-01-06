@@ -16,6 +16,7 @@ library(rgdal)      # provides some optional dependencies for raster
 library(furrr)      # for parallel iteration
 library(logr)       # for generating logs with RScript
 library(tidyverse)  # provides general data manipulation functions
+library(yaml)       # used to parse the config file
 
 # Load configuration options and global constants
 source("scripts/constants.R")

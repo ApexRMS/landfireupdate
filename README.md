@@ -12,17 +12,17 @@ Below are the instructions to setup, configure, and run the code.
 
 ## Table of Contents
 
-### [Setup](#Setup)
+#### [Setup](#Setup)
 
-### [Configuration](#Configuration)
+#### [Configuration](#Configuration)
  
-### [Suggeted Configuration](#Suggested)
+#### [Suggeted Configuration](#Suggested)
  
-### [Running the Update](#Running)
+#### [Running the Update](#Running)
  
-### [Input Data Structure](#InputStructure)
+#### [Input Data Structure](#InputStructure)
  
-### [Data Dictionary](#Dictionary)
+#### [Data Dictionary](#Dictionary)
 
 ## Setup
 
@@ -31,7 +31,7 @@ Below are the instructions to setup, configure, and run the code.
 These scripts require working installations of R and SyncroSim, and were
 developed on R version v4.0.3 and SyncroSim v2.0.23. Additionally the following
 R packages must be installed: `rsyncrosim`, `tidyverse`, `raster`,  `furrr`,
-`rgdal`, `logr`. The ST-Sim package (v3.2.25) must also be installed in
+`rgdal`, `logr`, `yaml`. The ST-Sim package (v3.2.25) must also be installed in
 SyncroSim. The instructions to run the script assume you will be using [RStudio](https://rstudio.com/),
 however, this is not a strict requirement.
 
@@ -55,31 +55,30 @@ configuration (described below) should reproduce this library exactly.
 
 ## Configuration
 
-The run can be configured by editing the `config/config.csv` file. This
-CSV file consists of three columns: `Variable` which indicates the name of
-the option being set; `Value` which is used to actually set the option; and
-`Comment` which provides additional information about the option. The `Value`
-column is the only column that needs to be modified during configuration. Editing
-the `Comment` column is safe, but the `Variable` column should not be edited
-unless all the R scripts are updated accordingly.
+The run can be configured by editing the `config/config.yaml` file. R Studio and
+most modern text editors have syntax highlighting for YAML files that can help
+with editing these files, but may not be associated with `*.yaml` files by
+default. The YAML file syntax is fairly self-evident, but please see this short
+[overview](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html)
+for details.
 
-A few variables are also surrounded by `*`. These are not read by the script and
-are used as section headers to organize the remaining variables. A description
-of the configuration variables organized by these sections follows.
+Descriptions of the configuration variables follow in the sections below.
 
-### Input Data Paths
+### Overall Run Options
 
-Two data paths must be provided to the configuration. The first, `dataFolder`,
-should be a valid path pointing to a folder containing all the necessary input data.
-There is a strict naming scheme and organization for the files within this
-directory. See the [Input Data Structure](#InputStructure) section below for
-more information.
+This section is used to decide which Geo Area and Map Zones should be processed.
+The first variable, `dataFolder`, should point to the location of a folder
+containing all the raw input data for a single Geo Area. The expected contents
+of this folder are described in the [Input Data Structure](#InputStructure)
+section, and descriptions of all input data including these Geo-Area-specific
+files can be found in the [Data Dictionary](#Dictionary) section.
 
-The other input file, `mapzonesToKeepPath`, should be a CSV file with a single
-column listing each Map Zone to include in the run on a separate line. Note that
-a header line is required. The `config/Map Zone Lists/` folder includes two
-examples, one for running just Map Zone 19 and another for running the entire
-NW Geo Area.
+The second variable, `mapzonesToKeep`, is an itemized list of every Map Zone
+in the Geo Area that you would like to retain in the simulation. One SyncroSim
+scenario will be built for each Map Zone in this list. By default, all the Map
+Zones in the NW Geo Area are listed here but are commented out, with the exception
+of Map Zone 19. You can remove these comments to run the entire NW Geo Area. For
+all other Geo Areas you must update the list of Map Zones to keep.
 
 ### SyncroSim Object Names
 

@@ -6,21 +6,18 @@
 
 # Load Config -----------------------------------------------------------
 
-config <- read_csv("config/config.csv") %>%
-  pull(2, name = 1) %>%                      # Extract column 2, and use column 1 as names
-  as.list()
+config <- read_yaml("config/config.yaml")
 
 # Parse Config ----------------------------------------------------------
 
 if(!config$dataFolder %>% dir.exists)
   stop("Could not find input data folder. Please check config file.")
 
-# Check that list of Map Zones to keep exist
-if(!config$mapzonesToKeepPath %>% file.exists)
-  stop("Can't find the list of Map Zones to keep. Please check the configuration file.")
+if(!config$mapzonesToKeep %>% is.integer)
+  stop("Invalid list of Map Zones to keep. Please check config file.")
 
 # Check that the number of requested R threads is valid
-if(config$nThreads %>% is.na) {
+if(config$nThreads %>% is.null) {
   nThreads <- future::availableCores()
   message("Using all available cores to build SyncroSim Library")
 } else if (config$nThreads %>% as.integer %>% is.na | config$nThreads %>% as.integer < 1) {
@@ -40,11 +37,6 @@ if(as.integer(config$tileCols) %>% is.na) {
   config$tileCols <- 20
 }
 
-# Check SyncroSim installation directory
-# - Use NULL in place of NA to use default installation location
-if(config$ssimDir %>% is.na)
-  config$ssimDir <- NULL
-
 # Check whether or not crop to a smaller extent for testing
 cropToExtent <- FALSE
 if(config$cropToExtent == "1") {
@@ -56,7 +48,7 @@ if(config$cropToExtent == "1") {
 # Overall Options --------------------------------------------------------
 
 # Which mapzones to process
-mapzonesToKeep <- read_csv(config$mapzonesToKeepPath) %>% pull
+mapzonesToKeep <- config$mapzonesToKeep
 
 # Tags used to identify the independent runs (one per Map Zone)
 # They are used to generate names for output folders, etc
