@@ -11,12 +11,18 @@ for each Map Zone.
 Below are the instructions to setup, configure, and run the code.
 
 ## Table of Contents
-[Setup](#Setup)  
-[Configuration](#Configuration) 
-[Suggeted Configuration](#Suggested) 
-[Running the Update](#Running) 
-[Input Data Structure](#InputStructure)
-[Data Dictionary](#Dictionary)
+
+### [Setup](#Setup)
+
+### [Configuration](#Configuration)
+ 
+### [Suggeted Configuration](#Suggested)
+ 
+### [Running the Update](#Running)
+ 
+### [Input Data Structure](#InputStructure)
+ 
+### [Data Dictionary](#Dictionary)
 
 ## Setup
 
@@ -158,7 +164,7 @@ will be stored in the `library/` subdirectory. Select the `NW Geo Area` project,
 (or the `projectName` you chose in the configuration) and the scenario you would
 like to run and press `run` in the main toolbar. Note that, depending on your
 computer configuration, you may need to change the maximum number of
-[multiprocessing](http://docs.syncrosim.com/how_to_guides/modelrun_multiproc.html)jobs.
+[multiprocessing](http://docs.syncrosim.com/how_to_guides/modelrun_multiproc.html) jobs.
 As an example of requirements, the NW Geo Area (consisting of 12 Map Zones) was
 run with a maximum of 32 multiprocessing jobs on a Linux server with 64 virtual
 cores and 512GB of RAM and took just under 21 hours.
