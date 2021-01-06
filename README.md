@@ -10,6 +10,14 @@ for each Map Zone.
 
 Below are the instructions to setup, configure, and run the code.
 
+## Table of Contents
+[Setup](#Setup)  
+[Configuration](#Configuration) 
+[Suggeted Configuration](#Suggested Configuration) 
+[Running the Update](#Running the Update) 
+[Input Data Structure](#Input Data Structure)
+[Data Dictionary](#Data Dictionary)
+
 ## Setup
 
 ### Dependencies
@@ -140,8 +148,8 @@ script and either run line-by-line or press the `source` button in the top right
 corner of the file editor pane of RStudio.
 
 This script is responsible for processing the raw input raster maps, including
-cropping and masking down to the chosen Map Zone, converting fDIST maps to
-vDIST, and layerizing the disturbance map for SyncroSim. The script then uses
+cropping and masking down to the chosen Map Zone, converting FDist maps to
+vDist, and layerizing the disturbance map for SyncroSim. The script then uses
 these cleaned rasters to generate a SyncroSim library file to run the update.
 
 Next, open the generated SyncroSim library using the SyncroSim UI. This file
@@ -210,5 +218,46 @@ Geo Area Name
 
 ```
 
-Please see the example data files linked in the **Setup** section for details on
-the exact information expected in each file.
+Please see the **Data Dictionary** section below for a description of these input
+files and the example data files linked in the **Setup** section for the
+expected format of each file.
+
+## Data Dictionary
+
+Below is a description of all data files used in the update. This is includes
+both spatial and non-spatial inputs. A number of data files are common to all
+Geo Areas and are described in the **Shared Data Files** subsection below. The
+remaining input data files are described in the **Geo-Area-Specific Data Files**
+subsection.
+
+### Shared Data Files
+
+These common files are stored in the `data/Shared/` folder and are used for all
+Geo Areas.
+
+| File Name                 | Description                                                                                                              |
+|:--------------------------|:-------------------------------------------------------------------------------------------------------------------------|
+| All Combinations.csv      | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.             |
+| Disturbance Crosswalk.csv | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.             |
+| EVC LUT.csv               | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                     |
+| EVH LUT.csv               | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                    |
+| VDIST LUT.csv             | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
+| EVC Colors.csv            | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps. |
+
+### Geo-Area-Specific Data Files
+
+These files are specific to the Geo Area being processed. As described in the
+**Input Data Structure** section, these files are suggested to be stored in a
+folder within the `data/` folder that indicates the Geo Area name. This section
+also describes the expected organization of these files within this Geo-Area-specific
+folder.
+
+| File Name                 | Description                                                                                                                                        |
+|:--------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------|
+| Transition Table.csv      | This table defines how every combination of Existing Vegetation Cover (EVC), Height (EVH), and Type (EVT) responds to a given disturbance (VDist). |
+| EVT Colors.csv            | This table is used to assign colors to Existing Vegetation Type (EVT) codes. These are used when rendering raster maps.                            |
+| Map Zones.tif             | This is the raster map of Map Zones found within the Geo Area.                                                                                     |
+| EVC.tif                   | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area.                                                                |
+| EVH.tif                   | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area.                                                               |
+| EVT.tif                   | This is the raster map of Existing Vegetation Types (EVT) for the entire Geo Area.                                                                 |
+| FDIST.tif                 | This is the raster map of Fuel Disturbances (FDist) for the entire Geo Area.                                                                       |
