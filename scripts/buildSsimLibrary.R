@@ -106,12 +106,37 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # Ensure ST-Sim is installed
   addPackage("stsim")
 
-  # Create library with a project ("Definitions") and a scenario ("Test")
+  # Create library and project
   dir.create("library/", showWarnings = FALSE)
   ssimSession <- session(ssimDir)
   mylibrary <- ssimLibrary(libraryName, session = ssimSession, overwrite = TRUE)
   myproject <- rsyncrosim::project(mylibrary, projectName, overwrite = TRUE)
   myscenario <- scenario(myproject, subScenarioName, overwrite = TRUE)
+  
+  # Create a folder for the Sub Scenario and save the folder ID number
+  subScenarioFolderID <-rsyncrosim::command(
+    args = list(
+      create = NULL,
+      folder = NULL,
+      lib = filepath(mylibrary),
+      name = "Sub Scenarios",
+      tpid = projectId(myproject)),
+    session = ssimSession) %>%
+    # "\\d+" is a regular expression to match numbers
+    str_extract("\\d+") %>%
+    as.integer
+  
+  # Move the Sub Scenario into the folder
+  rsyncrosim::command(
+    args = list(
+      move = NULL,
+      scenario = NULL,
+      lib = filepath(mylibrary),
+      name = "Sub Scenarios",
+      sid = scenarioId(myscenario),
+      tfid = subScenarioFolderID),
+    session = ssimSession) %>%
+    invisible()
 
   # Set owner
   owner(mylibrary) <- ssimOwner
