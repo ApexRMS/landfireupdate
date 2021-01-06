@@ -409,6 +409,21 @@ initializeSsimLibrary <- function(libraryName, projectName) {
                EnableMultiScenario = FALSE)
 
   saveDatasheet(myscenario, multiprocessing, "core_Multiprocessing")
+  
+  # Charts and Plots -----------------------------------------------------------
+  
+  # Load CSV describing how to build default charts
+  defaultCharts <-
+    read_csv(defaultChartsPath) %>%
+    as.data.frame()
+  
+  defaultMaps <-
+    read_csv(defaultMapsPath) %>%
+    as.data.frame()
+  
+  saveDatasheet(myproject, defaultCharts, "corestime_Charts")
+  saveDatasheet(myproject, defaultMaps, "corestime_Maps")
+  
 }
 
 buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, libraryName, projectName) {

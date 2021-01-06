@@ -241,14 +241,16 @@ subsection.
 These common files are stored in the `data/Shared/` folder and are used for all
 Geo Areas.
 
-| File Name                 | Description                                                                                                              |
-|:--------------------------|:-------------------------------------------------------------------------------------------------------------------------|
-| All Combinations.csv      | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.             |
-| Disturbance Crosswalk.csv | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.             |
-| EVC LUT.csv               | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                     |
-| EVH LUT.csv               | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                    |
-| VDIST LUT.csv             | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
-| EVC Colors.csv            | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps. |
+| File Name                    | Description                                                                                                              |
+|:-----------------------------|:-------------------------------------------------------------------------------------------------------------------------|
+| All Combinations.csv         | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.             |
+| Disturbance Crosswalk.csv    | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.             |
+| EVC LUT.csv                  | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                     |
+| EVH LUT.csv                  | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                    |
+| VDIST LUT.csv                | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
+| EVC Colors.csv               | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps. |
+| Default SyncroSim Charts.csv | This table is used to build the default SyncroSim charts for visualizing the run results.                                |
+| Default SyncroSim Maps.csv   | This table is used to build the default SyncroSim maps for visualizing the run results.                                  |
 
 ### <a name="Specific"></a>Geo-Area-Specific Data Files
 

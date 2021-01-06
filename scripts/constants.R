@@ -128,6 +128,15 @@ if(!vdistTablePath %>% file.exists)
 if(!evcColorsPath %>% file.exists)
   stop("Could not find the file `EVC Colors.csv`. This file is used to connect EVC codes to colors for mapping. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
 
+# Default Maps and Charts -----------------------------------------------
+defaultChartsPath <- str_c(sharedNonSpatialDirectory, "Default SyncroSim Charts.csv")
+defaultMapsPath   <- str_c(sharedNonSpatialDirectory, "Default SyncroSim Maps.csv")
+
+if(!defaultChartsPath %>% file.exists)
+  stop("Could not find the file `Default SyncroSim Charts.csv`. This file describes how the default charts in SyncroSim should be built. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+if(!defaultMapsPath %>% file.exists)
+  stop("Could not find the file `Default SyncroSim Maps.csv`. This file describes how the default maps in SyncroSim should be built. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+
 # Output Raster Options ---------------------------------------------------
 
 # Setup crop extent
