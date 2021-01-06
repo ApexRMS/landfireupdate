@@ -1,7 +1,7 @@
 # Landfire Update
 
-This project contains code to update raster maps of Existing Vegetation Cover (EVC) and
-and Existing Vegetation Height (EVH) using Disturbance Data collected by LANDFIRE. This process is
+This project contains code to update LANDFIRE raster maps of Existing Vegetation Cover (EVC) and
+and Existing Vegetation Height (EVH) using Fuel Disturbance (FDist) data and transition rules. This process is
 broken into three principal tasks: generating a SyncroSim library that organizes
 these inputs and transition rules by Map Zone; running the SyncroSim library to
 forecast these new vegetation parameters by Map Zone; and reconstructing
@@ -184,12 +184,12 @@ to separate the raw inputs from the final clean and stitched raster maps that
 will be generated and stored in their respective subdirectories.
 
 Within the `raw/` subdirectory, the raw raster maps of the Map Zones, EVC, EVH,
-EVT, and fDIST must be present and named `Map Zones.tif`, `EVC.tif`, `EVH.tif`,
+EVT, and FDist must be present and named `Map Zones.tif`, `EVC.tif`, `EVH.tif`,
 `EVT.tif`, and `FDIST.tif` respectively.
 
 Also required within the `raw/` subdirectory is the `nonspatial/` subdirectory,
 which includes Geo-Area-specific data files that are not stored as maps. This
-folder requires a spreadsheet of all transition rules, `Transition Table.csv`,
+folder requires a CSV file of all transition rules, `Transition Table.csv`,
 and a color mapping for EVT codes present in the Geo Area, `EVT Colors.csv`.
 
 Altogether, the folder should have the following structure:
