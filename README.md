@@ -234,7 +234,8 @@ Below is a description of all data files used in the update. This is includes
 both spatial and non-spatial inputs. A number of data files are common to all
 Geo Areas and are described in the [Shared Data Files](#Shared) subsection below.
 The remaining input data files are described in the [Geo-Area-Specific Data Files](#Specific)
-subsection.
+subsection. Descriptions of the columns within each table can also be found
+within these subsections.
 
 ### <a name="Shared"></a>Shared Data Files
 
@@ -243,14 +244,76 @@ Geo Areas.
 
 | File Name                    | Description                                                                                                              |
 |:-----------------------------|:-------------------------------------------------------------------------------------------------------------------------|
-| All Combinations.csv         | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.             |
-| Disturbance Crosswalk.csv    | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.             |
-| EVC LUT.csv                  | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                     |
-| EVH LUT.csv                  | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                    |
-| VDIST LUT.csv                | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
-| EVC Colors.csv               | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps. |
-| Default SyncroSim Charts.csv | This table is used to build the default SyncroSim charts for visualizing the run results.                                |
-| Default SyncroSim Maps.csv   | This table is used to build the default SyncroSim maps for visualizing the run results.                                  |
+| [All Combinations.csv](#Dict_Comb)         | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.             |
+| [Disturbance Crosswalk.csv](#Dict_Cross)    | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.             |
+| [EVC LUT.csv](#Dict_EVC)                  | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                     |
+| [EVH LUT.csv](#Dict_EVH)                  | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                    |
+| [VDIST LUT.csv](#Dict_VDIST)                | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
+| [EVC Colors.csv](#Dict_EVCcol)               | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps. |
+| [Default SyncroSim Charts.csv](#Dict_Charts) | This table is used to build the default SyncroSim charts for visualizing the run results.                                |
+| [Default SyncroSim Maps.csv](#Dict_Charts)   | This table is used to build the default SyncroSim maps for visualizing the run results.                                  |
+
+#### <a name="Dict_Combinations"></a> All Combinations.csv
+
+| Column | Description                                                                   |
+|:-------|:------------------------------------------------------------------------------|
+| EVC    | An Existing Vegetaion Cover (EVC) code.                                       |
+| EVH    | An Existing Vegetaion Cover (EVH) code that can be paired with the given EVC. |
+
+#### <a name="Dict_Cross"></a> Disturbance Crosswalk.csv
+
+| Column     | Description                               |
+|:-----------|:------------------------------------------|
+| VDIST      | A Vegetation Disturbance (VDist) code.    |
+| FDIST      | A matching Fuel Disturbance (FDist) code. |
+| d_type     | The type of disturbance.                  |
+| d_severity | The severity of the disturbance.          |
+| d_time     | The time since the disturbance.           |
+
+#### <a name="Dict_EVC"></a> EVC LUT.csv
+
+| Column       | Description                                       |
+|:-------------|:--------------------------------------------------|
+| VALUE        | An Existing Vegetation Cover (EVC) code.          |
+| CLASSNAMES   | A matching name for the cover code.               |
+| EVT_LIFEFORM | A grouping variable describing the lifeform type. |
+
+#### <a name="Dict_EVH"></a> EVH LUT.csv
+
+| Column       | Description                                       |
+|:-------------|:--------------------------------------------------|
+| VALUE        | An Existing Vegetation Cover (EVH) code.          |
+| CLASSNAMES   | A matching name for the cover code.               |
+| LIFEFORM     | A grouping variable describing the lifeform type. |
+| HC_ID        | Not used.                                         |
+
+
+#### <a name="Dict_VDIST"></a> VDIST LUT.csv
+
+| Column     | Description                                                               |
+|:-----------|:--------------------------------------------------------------------------|
+| value      | A Vegetation Disturbance (VDist) code.                                    |
+| d_type     | The type of disturbance.                                                  |
+| d_severity | The severity of the disturbance.                                          |
+| d_time     | The time since the disturbance.                                           |
+| R          | The Red component of the disturbance color as an integer from 0 to 255.   |
+| G          | The Green component of the disturbance color as an integer from 0 to 255. |
+| B          | The Blue component of the disturbance color as an integer from 0 to 255.  |
+
+#### <a name="Dict_EVCcol"></a> EVC Colors.csv
+
+| Column     | Description                                                               |
+|:-----------|:--------------------------------------------------------------------------|
+| value      | An Existing Vegetation Cover (EVC) code.                                  |
+| R          | The Red component of the state class color as an integer from 0 to 255.   |
+| G          | The Green component of the state class color as an integer from 0 to 255. |
+| B          | The Blue component of the state class color as an integer from 0 to 255.  |
+
+#### <a name="Dict_Charts"></a> Default SyncroSim Charts and Maps
+
+These two CSV files are generated and exported from SyncroSim and are used to
+construct the default charts and maps. It is not recommended to edit these
+tables by hand.
 
 ### <a name="Specific"></a>Geo-Area-Specific Data Files
 
@@ -260,12 +323,54 @@ stored in a folder within the `data/` folder that indicates the Geo Area name.
 This section also describes the expected organization of these files within this
 Geo-Area-specific folder.
 
-| File Name                 | Description                                                                                                                                        |
-|:--------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------|
-| Transition Table.csv      | This table defines how every combination of Existing Vegetation Cover (EVC), Height (EVH), and Type (EVT) responds to a given disturbance (VDist). |
-| EVT Colors.csv            | This table is used to assign colors to Existing Vegetation Type (EVT) codes. These are used when rendering raster maps.                            |
-| Map Zones.tif             | This is the raster map of Map Zones found within the Geo Area.                                                                                     |
-| EVC.tif                   | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area.                                                                |
-| EVH.tif                   | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area.                                                               |
-| EVT.tif                   | This is the raster map of Existing Vegetation Types (EVT) for the entire Geo Area.                                                                 |
-| FDIST.tif                 | This is the raster map of Fuel Disturbances (FDist) for the entire Geo Area.                                                                       |
+| File Name                                | Description                                                                                                                                        |
+|:-----------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Transition Table.csv](#Dict_Transition) | This table defines how every combination of Existing Vegetation Cover (EVC), Height (EVH), and Type (EVT) responds to a given disturbance (VDist). |
+| [EVT Colors.csv](#Dict_EVT)              | This table is used to assign colors to Existing Vegetation Type (EVT) codes. These are used when rendering raster maps.                            |
+| Map Zones.tif                            | This is the raster map of Map Zones found within the Geo Area.                                                                                     |
+| EVC.tif                                  | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area.                                                                |
+| EVH.tif                                  | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area.                                                               |
+| EVT.tif                                  | This is the raster map of Existing Vegetation Types (EVT) for the entire Geo Area.                                                                 |
+| FDIST.tif                                | This is the raster map of Fuel Disturbances (FDist) for the entire Geo Area.                                                                       |
+
+#### <a name="Dict_Transition"></a> Transition Table.csv
+
+| Column     | Description                                                              |
+|:-----------|:-------------------------------------------------------------------------|
+| MZ         | The Map Zone to apply the transition rule.                               |
+| VDIST      | The Vegetation Disturbance (VDist) code that triggers the transition.    |
+| DIST_CATID | Not used.                                                                |
+| EVT7B      | The Existing Vegetation Type (EVT) code prior to the disturbance.        |
+| EVT7B_Name | The name of the Existing Vegetation Type (EVT) prior to the disturbance. |
+| EVHB       | The Existing Vegetation Cover (EVC) code prior to the disturbance.       |
+| EVCB       | The Existing Vegetation Height (EVH) code prior to the disturbance.      |
+| EVT7R      | Not used.                                                                |
+| EVT7R_Name | Not used.                                                                |
+| EVHR       | The Existing Vegetation Cover (EVC) code after the disturbance.          |
+| EVCR       | The Existing Vegetation Height (EVH) code after the disturbance.         |
+
+#### <a name="Dict_EVT"></a> EVT Colors.csv
+
+| Column     | Description                                                                  |
+|:-----------|:-----------------------------------------------------------------------------|
+| VALUE      | An Existing Vegetation Type (EVT) code.                                      |
+| COUNT      | Not used.                                                                    |
+| VALUE_1    | Not used.                                                                    |
+| EVT_NAME   | Not used.                                                                    |
+| LFRDB      | Not used.                                                                    |
+| EVT_FUEL   | Not used.                                                                    |
+| EVT_FUEL_N | Not used.                                                                    |
+| EVT_LF     | Not used.                                                                    |
+| EVT_PHYS   | Not used.                                                                    |
+| EVT_GP     | Not used.                                                                    |
+| EVT_GP_N   | Not used.                                                                    |
+| SAF_SRM    | Not used.                                                                    |
+| EVT_ORDER  | Not used.                                                                    |
+| EVT_CLASS  | Not used.                                                                    |
+| EVT_SBCLS  | Not used.                                                                    |
+| R          | The Red component of the primary stratum color as an integer from 0 to 255.  |
+| G          | The Green component of the primary stratum color as an integer from 0 to 255.|
+| B          | The Blue component of the primary stratum color as an integer from 0 to 255. |
+| RED        | Not used.                                                                    |
+| GREEN      | Not used.                                                                    |
+| BLUE       | Not used.                                                                    |
