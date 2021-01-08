@@ -12,9 +12,9 @@ Below are the instructions to setup, configure, and run the code.
 
 ## Table of Contents
 
-#### [Setup](#Setup)
+#### [Setup](#Setup-1)
 
-#### [Configuration](#Configuration)
+#### [Configuration](#Configuration-1)
  
 #### [Suggeted Configuration](#Suggested)
  
@@ -189,7 +189,7 @@ named and organized.
 
 The input files for each Geo Area must be stored in its own folder, preferably
 in the `data/` directory with a name that indicates which Geo Area the folder is
-for. For example, the example data archive linked in the [Setup](#Setup) section 
+for. For example, the example data archive linked in the [Setup](#Setup-1) section 
 contains the input files for the NW Geo Area and are accordingly are held in
 `data/NW/`.
 
@@ -225,7 +225,7 @@ Geo Area Name
 ```
 
 Please see the [Data Dictionary](#Dictionary) section below for a description of
-these input files and the example data files linked in the [Setup](#Setup) section for
+these input files and the example data files linked in the [Setup](#Setup-1) section for
 the expected format of each file.
 
 ## <a name="Dictionary"></a>Data Dictionary
@@ -242,13 +242,13 @@ within these subsections.
 These common files are stored in the `data/Shared/` folder and are used for all
 Geo Areas.
 
-| File Name                    | Description                                                                                                              |
-|:-----------------------------|:-------------------------------------------------------------------------------------------------------------------------|
-| [All Combinations.csv](#Dict_Comb)         | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.             |
-| [Disturbance Crosswalk.csv](#Dict_Cross)    | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.             |
-| [EVC LUT.csv](#Dict_EVC)                  | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                     |
-| [EVH LUT.csv](#Dict_EVH)                  | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                    |
-| [VDIST LUT.csv](#Dict_VDIST)                | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
+| File Name                                    | Description                                                                                                              |
+|:---------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|
+| [All Combinations.csv](#Dict_Combinations)   | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.             |
+| [Disturbance Crosswalk.csv](#Dict_Cross)     | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.             |
+| [EVC LUT.csv](#Dict_EVC)                     | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                     |
+| [EVH LUT.csv](#Dict_EVH)                     | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                    |
+| [VDIST LUT.csv](#Dict_VDIST)                 | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
 | [EVC Colors.csv](#Dict_EVCcol)               | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps. |
 | [Default SyncroSim Charts.csv](#Dict_Charts) | This table is used to build the default SyncroSim charts for visualizing the run results.                                |
 | [Default SyncroSim Maps.csv](#Dict_Charts)   | This table is used to build the default SyncroSim maps for visualizing the run results.                                  |
