@@ -253,12 +253,12 @@ Geo Areas.
 | [Default SyncroSim Charts.csv](#Dict_Charts) | This table is used to build the default SyncroSim charts for visualizing the run results.                                |
 | [Default SyncroSim Maps.csv](#Dict_Charts)   | This table is used to build the default SyncroSim maps for visualizing the run results.                                  |
 
-#### <a name="Dict_Combinations"></a> All Combinations.csv
+#### <a name="Dict_Comb"></a> All Combinations.csv
 
 | Column | Description                                                                   |
 |:-------|:------------------------------------------------------------------------------|
-| EVC    | An Existing Vegetaion Cover (EVC) code.                                       |
-| EVH    | An Existing Vegetaion Cover (EVH) code that can be paired with the given EVC. |
+| EVC    | An Existing Vegetation Cover (EVC) code.                                       |
+| EVH    | An Existing Vegetation Cover (EVH) code that can be paired with the given EVC. |
 
 #### <a name="Dict_Cross"></a> Disturbance Crosswalk.csv
 
