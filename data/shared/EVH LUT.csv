@@ -1,0 +1,42 @@
+VALUE,CLASSNAMES,LIFEFORM,HC_ID
+11,Open Water,Water,0
+12,Snow/Ice,Snow/Ice,0
+21,Developed - Open Space,Developed,0
+22,Developed - Low Intensity,Developed,0
+23,Developed - Medium Intensity,Developed,0
+24,Developed - High Intensity,Developed,0
+31,Barren,Barren,0
+81,Pasture/Hay,Agricultural,0
+82,Cultivated Crops,Agricultural,0
+83,Small Grains,Agricultural,0
+100,Sparse Vegetation Height,Sparse,0
+101,Herb Height 0 to 0.5 meters,Herb,1
+102,Herb Height 0.5 to 1.0 meters,Herb,1
+103,Herb Height > 1.0 meter,Herb,2
+104,Shrub Height 0 to 0.5 meters,Shrub,3
+105,Shrub Height 0.5 to 1.0 meter,Shrub,3
+106,Shrub Height 1.0 to 3.0 meters,Shrub,4
+107,Shrub Height > 3.0 meters,Shrub,5
+108,Forest Height 0 to 5 meters,Tree,6
+109,Forest Height 5 to 10 meters,Tree,6
+110,Forest Height 10 to 25 meters,Tree,7
+111,Forest Height 25 to 50 meters,Tree,8
+112,Forest Height > 50 meters,Tree,8
+255,Background,Background,0
+85,Urban-Recreational Grasses,Agricultural,0
+32,Quarries-Strip Mines-Gravel Pits,Barren,0
+80,Agriculture - General,Agricultural,0
+20,Developed - General,Developed,0
+84,Fallow,Agricultural,0
+13,NA,Urban Veg,0
+14,NA,Urban Veg,0
+15,NA,Urban Veg,0
+16,NA,Urban Veg,0
+17,NA,Urban Veg,0
+25,Developed - Roads,Developed,0
+61,Vineyards,Agricultural,0
+63,Close Grown - Row Crop,Agricultural,0
+64,Row Crop,Agricultural,0
+69,Aquaculture,Agricultural,0
+65,Close Grown Crop,Agricultural,0
+68,Wheat,Agricultural,0

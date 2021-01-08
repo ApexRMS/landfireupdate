@@ -13,10 +13,10 @@
 library(rsyncrosim) # for building and connecting to SyncroSim files
 library(raster)     # provides functions for manipulating rasters
 library(rgdal)      # provides some optional dependencies for raster
-library(readxl)     # for reading disturbance crosswalk
 library(furrr)      # for parallel iteration
 library(logr)       # for generating logs with RScript
 library(tidyverse)  # provides general data manipulation functions
+library(yaml)       # used to parse the config file
 
 # Load configuration options and global constants
 source("scripts/constants.R")
@@ -104,18 +104,7 @@ pwalk(
   projectName = projectName
 )
 
-# Backup SyncroSim Library --------------------------------------------------
-
-log_print("Generating Syncrosim library backup!")
-
-# Generate a backup of the library
-ssimSession <- session(ssimDir)
-outputLibrary <- ssimLibrary(libraryName, session = ssimSession)
-rsyncrosim::backup(outputLibrary)
-
-# Move backup to standard location
-backupFilePath <- list.files(paste0(libraryName, ".ssim.backup"), full.names = TRUE) %>% tail(1)
-file.rename(backupFilePath, "Library Backup.zip")
+log_print("Done building SyncroSim Library!")
 
 # End logging ---------------------------------------------------------------
 log_close()

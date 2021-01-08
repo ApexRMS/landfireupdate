@@ -20,6 +20,8 @@ source("scripts/rasterFunctions.R")
 
 # Generate Directories and Paths -----------------------------------------------
 
+message("Preparing stitched raster map output folder.")
+
 # Create directory to store stitched raster maps
 dir.create(stitchedRasterDirectory, showWarnings = F)
 stateClassSitchedRasterPath <- paste0(stitchedRasterDirectory, "/StateClass.tif")
@@ -30,6 +32,8 @@ EVHSitchedRasterPath <- paste0(stitchedRasterDirectory, "/EVH.tif")
 fullExtent <- extent(raster(mapzoneRawRasterPath))
 
 # Extract Data from SyncroSim Library ------------------------------------------
+
+message("Loading data from SyncroSim.")
 
 # Connect to the SyncroSim Library
 ssimSession <- session(ssimDir)
@@ -44,7 +48,8 @@ sink("temp.sink")
 
 resultScenarios <- scenario(mylibrary) %>%
   
-  # Only consider result scenario
+
+  # Only consider result scenarios
   filter(isResult == "Yes") %>%
   
   # Examine run logs to see which runs failed
@@ -67,6 +72,12 @@ resultScenarios <- scenario(mylibrary) %>%
 sink()
 unlink("temp.sink")
 
+if(length(resultScenarios) == 0)
+  stop(str_c(
+    "No result scenarios found! Please ensure that you've run the relevant ",
+    "SyncroSim scenarios and that the library and project name set in the ",
+    "config file match those of the maps you are trying to reconstruct."))
+
 # Pull out the relevant raster from each result scenario as a list
 stateClassRasters <- 
   map(resultScenarios,
@@ -79,6 +90,8 @@ stateClassRasters <-
 
 # Stitch together State Class raster -------------------------------------------
 
+message("Stitching raster maps.")
+
 # Append arguments for `raster::merge()` to the previously generated list of rasters
 # This will allow us to pass a variable number of arguments to `raster::merge()`
 # using `do.call()`
@@ -89,9 +102,16 @@ mergeArgs <- c(stateClassRasters,                      # the rasters to stitch t
                overwrite = T)
 
 # Stitch together and save
-stateClassSitchedRaster <- do.call(merge, mergeArgs)
+# - if there is only one result scenario, just save the one Map Zone
+if(length(stateClassRasters) == 1) {
+  stateClassSitchedRaster <- writeRaster(stateClassRasters[[1]], stateClassSitchedRasterPath, overwrite = T)
+} else {
+  stateClassSitchedRaster <- do.call(merge, mergeArgs)
+}
 
 # Generate EVC and EVH from State Class ----------------------------------------
+
+message("Separating out EVC and EVH.")
 
 # Create empty rasters to hold EVC and EVH data
 EVCSitchedRaster <-  raster(stateClassSitchedRaster)
@@ -118,4 +138,4 @@ for(i in seq(blockInfo$n)) {
 EVCSitchedRaster <- writeStop(EVCSitchedRaster)
 EVHSitchedRaster <- writeStop(EVHSitchedRaster)
 
-
+message("Done reconstructing Geo Area!")

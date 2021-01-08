@@ -39,6 +39,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # Are there mixed life form or other invalid state classes?
   # - Mixed life form states can be identified by vegetation cover (x state) labels
   #   that don't match their vegetation height (y state) labels
+  # - Probably not necessary given how states are now constructed, but is pretty quick
   allowedStates <- read_csv(allowedStatesPath) %>%
     mutate(ID = EVC * 1000 + EVH) %>%
     pull(ID)
@@ -61,7 +62,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   
   # Read in the rules as codes and convert each combination of EVC, EVH, EVT,
   # MZ, and VDIST into a unique code
-  ruleCodes <- read_xlsx(transitionTablePath, col_types = "text") %>% # Read in the whole set of rules as text
+  ruleCodes <- read_csv(transitionTablePath) %>% # Read in the whole set of rules as text
     dplyr::select(EVC = EVCB, EVH = EVHB, EVT = EVT7B, MZ, VDIST) %>%
     unique %>%
     map2_dfc(           # Recall that the table is read in as text. Here we pad the columns so they are uniform widths
@@ -86,8 +87,8 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # Return to sequential operation
   plan(sequential)
 
-  write_csv(allMissingRules, paste0("library/", runLibrary, " Missing Rules.csv"))
-  message(paste0("Table of missing rules written to `library/", runLibrary, " Missing Rules.csv`"))
+  write_csv(allMissingRules, str_c("library/", runLibrary, " Missing Rules.csv"))
+  message(str_c("Table of missing rules written to `library/", runLibrary, " Missing Rules.csv`"))
 }
 
 # Function to find missing rules from a Map Zone using a list of unqiue rule codes
@@ -96,13 +97,13 @@ listMissingRules <- function(runTag, ruleCodes) {
   ## +Generate spatial data paths ----------------------------------------------
 
   # Directory to load cleaned rasters from for the given scenario
-  cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
+  cleanRasterDirectory <- str_c(getwd(), "/", cleanRasterDirectoryRelative, "/", runTag, "/")
   
   # Rasters needed to calculate codes
-  stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
-  evtRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
-  mapzoneRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
-  vdistRasterPath <- paste0(cleanRasterDirectory, "VDIST.tif")
+  stateClassRasterPath <- str_c(cleanRasterDirectory, "StateClass.tif")
+  evtRasterPath <- str_c(cleanRasterDirectory, "EVT.tif")
+  mapzoneRasterPath <- str_c(cleanRasterDirectory, "MapZone.tif")
+  vdistRasterPath <- str_c(cleanRasterDirectory, "VDIST.tif")
   
   ## +Find codes presen in Map Zone --------------------------------------------
   
@@ -122,10 +123,10 @@ listMissingRules <- function(runTag, ruleCodes) {
              sep = c(3,6,10,12)) %>%
     mutate_all(as.numeric) %>%
     # Use look up tables to add names from the codes
-    left_join(read_xlsx(evcTablePath) %>% dplyr::select(EVC = VALUE, EVC_NAME = CLASSNAMES), by = "EVC") %>%
-    left_join(read_xlsx(evhTablePath) %>% dplyr::select(EVH = VALUE, EVH_NAME = CLASSNAMES), by = "EVH") %>%
-    left_join(read_xlsx(evtColorTablePath) %>% dplyr::select(EVT = VALUE, EVT_NAME), by = "EVT") %>%
-    left_join(read_xlsx(vdistTablePath) %>% dplyr::select(VDIST = value, d_type, d_severity, d_time), by = "VDIST") %>%
+    left_join(read_csv(evcTablePath) %>% dplyr::select(EVC = VALUE, EVC_NAME = CLASSNAMES), by = "EVC") %>%
+    left_join(read_csv(evhTablePath) %>% dplyr::select(EVH = VALUE, EVH_NAME = CLASSNAMES), by = "EVH") %>%
+    left_join(read_csv(evtColorTablePath) %>% dplyr::select(EVT = VALUE, EVT_NAME), by = "EVT") %>%
+    left_join(read_csv(vdistTablePath) %>% dplyr::select(VDIST = value, d_type, d_severity, d_time), by = "VDIST") %>%
     unite(VDIST_NAME, d_type, d_severity, d_time, sep = " - ")
   
   return(missingRules)

@@ -1,0 +1,70 @@
+VALUE,CLASSNAMES,EVT_LIFEFORM
+11,Water,Water
+12,Snow-Ice,Snow-Ice
+21,Open Space Urban,Open Space Urban
+22,Low Intensity Urban,Low Intensity Urban
+23,Medium Intensity Urban,Medium Intensity Urban
+24,High Intensity Urban,High Intensity Urban
+31,Barren,Barren
+81,Pasture-Hay,Pasture-Hay
+82,Cultivated Crops,Cultivated Crops
+83,Small Grains,Small Grains
+100,Sparse Vegetation,Sparse
+101,Tree Cover >= 10 and < 20%,Tree
+102,Tree Cover >= 20 and < 30%,Tree
+103,Tree Cover >= 30 and < 40%,Tree
+104,Tree Cover >= 40 and < 50%,Tree
+105,Tree Cover >= 50 and < 60%,Tree
+106,Tree Cover >= 60 and < 70%,Tree
+107,Tree Cover >= 70 and < 80%,Tree
+108,Tree Cover >= 80 and < 90%,Tree
+109,Tree Cover >= 90 and <= 100%,Tree
+111,Shrub Cover >= 10 and < 20%,Shrub
+112,Shrub Cover >= 20 and < 30%,Shrub
+113,Shrub Cover >= 30 and < 40%,Shrub
+114,Shrub Cover >= 40 and < 50%,Shrub
+115,Shrub Cover >= 50 and < 60%,Shrub
+116,Shrub Cover >= 60 and < 70%,Shrub
+117,Shrub Cover >= 70 and < 80%,Shrub
+118,Shrub Cover >= 80 and < 90%,Shrub
+119,Shrub Cover >= 90 and <= 100%,Shrub
+121,Herb Cover >= 10 and < 20%,Herb
+122,Herb Cover >= 20 and < 30%,Herb
+123,Herb Cover >= 30 and < 40%,Herb
+124,Herb Cover >= 40 and < 50%,Herb
+125,Herb Cover >= 50 and < 60%,Herb
+126,Herb Cover >= 60 and < 70%,Herb
+127,Herb Cover >= 70 and < 80%,Herb
+128,Herb Cover >= 80 and < 90%,Herb
+129,Herb Cover >= 90 and <= 100%,Herb
+255,Background,Background
+85,Urban-Recreational Grasses,Recreational Grasses
+32,Quarries-Strip Mines-Gravel Pits,Quarries-Strip Mines-Gravel Pits
+80,Agriculture - General,General Ag
+20,Developed - General,General Urban
+84,Fallow,Fallow
+0,Tree Cover < 10%,NA
+13,NA,Urban Deciduous Forest
+14,NA,Urban Evergreen Forest
+15,NA,Urban Mixed Forest
+16,NA,Urban Herbaceous
+17,NA,Urban Shrubland
+25,NA,Roads
+60,NA,CDL
+61,NA,CDL
+62,NA,CDL
+63,NA,CDL
+64,NA,CDL
+65,NA,CDL
+66,NA,CDL
+67,NA,CDL
+75,NA,NLCD
+76,NA,NLCD
+78,NA,NLCD
+95,NA,NLCD
+28,NA,NLCD
+29,NA,NLCD
+30,NA,NLCD
+33,NA,Sparse
+69,NA,CDL
+68,NA,CDL

@@ -13,31 +13,31 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # The filter and mutate steps below convert the 1% binned EVC codes to 10% codes
   evcColors <- read_csv(evcColorsPath) %>%
     transmute(
-      evcCode = VALUE,
+      EVC = VALUE,
       Color = paste("255", R, G, B, sep = ",")
     ) %>%
     # Only the codes above 100 differ between the two EVC code systems
     # Of these differing codes, we keep every 10th (eg. 10%, 20%, etc )
-    filter(evcCode < 100 | evcCode %% 10 == 0) %>%
+    filter(EVC < 100 | EVC %% 10 == 0) %>%
     # The 1% resolution code stores lifeform (tree, shrub, etc) in the 100th's digit,
     # The 10% stores this in the 10th's digit, so we divide by 10
     # Finally we add 90 to shift the correct color to the the correct lifeform
     mutate(
-      evcCode = if_else(evcCode <= 100,
-                        true = evcCode,
-                        false = evcCode / 10 + 90),
-      evcCode = as.character(evcCode)
+      EVC = if_else(EVC <= 100,
+                        true = EVC,
+                        false = EVC / 10 + 90)
     )
+  
+  ## Load table of all valid combinatiosn of Map Zone, EVT, EVH, and EVC
+  allowedStates <- read_csv(allowedStatesPath)
 
   ## Generate a table of all unique transitions
 
   # Should be unique for every VDIST, PrimaryStratum, EvT, SourceStateClass
-  transitionTable <- read_xlsx(transitionTablePath, col_types = "text") %>%
+  transitionTable <- read_csv(transitionTablePath) %>%
     # Select and rename variables of importance
     dplyr::select(MZ, VDIST, EVT7B, StratumIDSource = EVT7B_Name,
            EVCB, EVHB, EVCR, EVHR) %>%
-    # Turn all factors into strings
-    mutate_if(is.factor, as.character) %>%
     # Change the naming convention of MapZones e.g. from "1" to "MZ01"
     mutate(SecondaryStratumID = paste0("MZ", str_pad(MZ, 2, "left", "0"))) %>%
     # Keep only unique rows
@@ -45,14 +45,12 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   ## Generate look-up tables for EVC and EVH codes and names
 
-  EVClookup <- read_xlsx(evcTablePath, col_types = "text") %>%
-    # Turn factors into characters
-    mutate_if(is.factor, as.character) %>%
+  EVClookup <- read_csv(evcTablePath) %>%
     # Make unique names for when class names are repeated
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(EVT_LIFEFORM, "_", VALUE))) %>%
     # Select relevant columns and rename with stsim relevant column names
     dplyr::select(VALUE, CLASSNAMES) %>%
-    rename(EVC_ID = VALUE, StateLabelXID = CLASSNAMES) %>%
+    rename(EVC = VALUE, StateLabelXID = CLASSNAMES) %>%
     # Shorten EVC names for cleaner SyncroSim UI
     mutate(
       StateLabelXDescription = StateLabelXID,
@@ -63,11 +61,10 @@ initializeSsimLibrary <- function(libraryName, projectName) {
       StateLabelXID = str_replace(StateLabelXID, "Herb Cover >=",  "Hb")
     )
 
-  EVHlookup <- read_xlsx(evhTablePath, col_types = "text") %>%
-    mutate_if(is.factor, as.character) %>%
+  EVHlookup <- read_csv(evhTablePath) %>%
     mutate(CLASSNAMES = coalesce(CLASSNAMES, str_c(LIFEFORM, "_", VALUE))) %>%
     dplyr::select(VALUE, CLASSNAMES) %>%
-    rename(EVH_ID = VALUE, StateLabelYID = CLASSNAMES) %>%
+    rename(EVH = VALUE, StateLabelYID = CLASSNAMES) %>%
     # Shorten EVH names for cleaner SyncroSim UI
     mutate(
       StateLabelYDescription = StateLabelYID,
@@ -84,16 +81,16 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   transitionTable <- transitionTable %>%
 
     # First join EVC B and R, renaming appropriately
-    left_join(EVClookup, by = c("EVCB" = "EVC_ID")) %>%
+    left_join(EVClookup, by = c("EVCB" = "EVC")) %>%
     rename(EVCB_Name = StateLabelXID) %>%
-    left_join(EVClookup, by = c("EVCR" = "EVC_ID")) %>%
+    left_join(EVClookup, by = c("EVCR" = "EVC")) %>%
     rename(EVCR_Name = StateLabelXID) %>%
     dplyr::select(-StateLabelXDescription.x, -StateLabelXDescription.y) %>%
 
     # Similarly for EVH
-    left_join(EVHlookup, by = c("EVHB" = "EVH_ID")) %>%
+    left_join(EVHlookup, by = c("EVHB" = "EVH")) %>%
     rename(EVHB_Name = StateLabelYID) %>%
-    left_join(EVHlookup, by = c("EVHR" = "EVH_ID")) %>%
+    left_join(EVHlookup, by = c("EVHR" = "EVH")) %>%
     rename(EVHR_Name = StateLabelYID) %>%
     dplyr::select(-StateLabelYDescription.x, -StateLabelYDescription.y) %>%
 
@@ -105,13 +102,41 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     mutate(Probability = 1)
 
   # Build the SyncroSim Library ---------------------------------------------
+  
+  # Ensure ST-Sim is installed
+  addPackage("stsim")
 
-  # Create library with a project ("Definitions") and a scenario ("Test")
+  # Create library and project
   dir.create("library/", showWarnings = FALSE)
   ssimSession <- session(ssimDir)
   mylibrary <- ssimLibrary(libraryName, session = ssimSession, overwrite = TRUE)
   myproject <- rsyncrosim::project(mylibrary, projectName, overwrite = TRUE)
   myscenario <- scenario(myproject, subScenarioName, overwrite = TRUE)
+  
+  # Create a folder for the Sub Scenario and save the folder ID number
+  subScenarioFolderID <-rsyncrosim::command(
+    args = list(
+      create = NULL,
+      folder = NULL,
+      lib = filepath(mylibrary),
+      name = "Sub Scenarios",
+      tpid = projectId(myproject)),
+    session = ssimSession) %>%
+    # "\\d+" is a regular expression to match numbers
+    str_extract("\\d+") %>%
+    as.integer
+  
+  # Move the Sub Scenario into the folder
+  rsyncrosim::command(
+    args = list(
+      move = NULL,
+      scenario = NULL,
+      lib = filepath(mylibrary),
+      name = "Sub Scenarios",
+      sid = scenarioId(myscenario),
+      tfid = subScenarioFolderID),
+    session = ssimSession) %>%
+    invisible()
 
   # Set owner
   owner(mylibrary) <- ssimOwner
@@ -146,7 +171,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # Important to take the unique values every time
   # Filter this dataframe by EVT values that are actually present in the input
 
-
   primary <- data.frame(ID = transitionTable$EVT7B,
                         Name = transitionTable$StratumIDSource) %>%
     unique()
@@ -155,7 +179,7 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # TODO: An issue here where some IDs do not have colors and some colors do not
   # have matching IDs.
 
-  primaryWithColors <- read_xlsx(evtColorTablePath, col_types = "text") %>%
+  primaryWithColors <- read_csv(evtColorTablePath) %>%
     # Select relevant columns
     dplyr::select(VALUE, R, G, B) %>%
     # Take unique and rename for later joining
@@ -194,41 +218,46 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   saveDatasheet(myproject, state_y, "stsim_StateLabelY")
 
-  # Generate unique State IDS based on the combination of X and Y state
-  # To do this, we "paste" the X and Y state IDs together by multiplying
-  # EVC by 1000 and adding it to EVH
-
-  stateIDs <- c((as.numeric(transitionTable$EVCB)*1000 + as.numeric(transitionTable$EVHB)),
-                (as.numeric(transitionTable$EVCR)*1000 + as.numeric(transitionTable$EVHR)))
-
   # Build the datasheet
-  stateClasses <- data.frame(
-    ID = stateIDs,
-    Name = c(transitionTable$StateClassIDSource, transitionTable$StateClassIDDest),
-    StateLabelXID = c(transitionTable$EVCB_Name, transitionTable$EVCR_Name),
-    evcCode = c(transitionTable$EVCB, transitionTable$EVCR),
-    StateLabelYID = c(transitionTable$EVHB_Name, transitionTable$EVHR_Name)) %>%
-    left_join(evcColors, by = "evcCode") %>% # Use EVC to decide state color
-    dplyr::select(-evcCode) %>%                     # Remove code used to add colors
-    unique()
+
+  stateClasses <- allowedStates %>%
+    # Add missing states
+    bind_rows(
+      tibble(
+        EVC = c(100),
+        EVH = c(110))) %>%
+    # Join relevant data
+    left_join(EVClookup) %>%
+    left_join(EVHlookup) %>%
+    left_join(evcColors) %>%
+    # Generate unique State IDS based on the combination of X and Y state
+    # To do this, we "paste" the X and Y state IDs together by multiplying
+    # EVC by 1000 and adding it to EVH 
+    mutate(
+      ID = EVC * 1000 + EVH,
+      Name = str_c(StateLabelXID, " : ", StateLabelYID)) %>%
+    # Reorder and remove unneeded columns
+    select(ID, Name, StateLabelXID, StateLabelYID, Color) %>%
+    # Keep only unique values
+    unique() %>%
+    as.data.frame()
 
   saveDatasheet(myproject, stateClasses, "stsim_StateClass")
 
   ## +Transition Types and Groups ------------------------------------------------
 
   # We gather disturbance types from the VDIST table
-  vdistLookup <-  read_xlsx(vdistTablePath, col_types = "text") %>%
+  vdistLookup <-  read_csv(vdistTablePath) %>%
     # Select only what we need, then rename
-    dplyr::select(value, d_type, d_severity, d_time, R, G, B) %>%
     rename(ID = value,  TransitionGroupID = d_type) %>%
-    # Turn all factors into charactors
-    mutate_if(is.factor, as.character) %>%
     # Filter out the NO Disturbance category
     filter(ID != 0) %>%
     # Create unique transition/disturbance name, and format color
     # The format of the name is : Group, Severity, Frequency
-    mutate(Name = paste(TransitionGroupID, d_severity, d_time, sep = " - ")) %>%
-    mutate(Color = paste("255", R, G, B, sep = ","))
+    mutate(
+      Name = paste(TransitionGroupID, d_severity, d_time, sep = " - "),
+      Color = paste("255", R, G, B, sep = ",")) %>%
+    select(ID, Name, TransitionGroupID, Color)
 
   # Select the relevant columns, and filter by disturbances that are actually
   # present in the input raster
@@ -243,7 +272,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # For groups, we append the disturbance class to the existing datasheet
 
   transitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
-    mutate_if(is.factor, as.character) %>%
     bind_rows(vdistLookup %>%
                 dplyr::select(Name = TransitionGroupID) %>%
                 unique()) %>%
@@ -291,9 +319,8 @@ initializeSsimLibrary <- function(libraryName, projectName) {
           str_detect(StateLabelXID, "80-90")   ~ "H",
           str_detect(StateLabelXID, "90-100")  ~ "I",
           str_detect(StateLabelXID, "< 10")    ~ "J", # J is reserved for uncommon cover labels
-          str_detect(StateLabelXID, "Sparse")  ~ "J", # J is reserved for uncommon cover labels
-          TRUE                                 ~  NA_character_),
-        letter = suppressWarnings(replace(letter, is.na(letter), str_to_upper(letters))),
+          str_detect(StateLabelXID, "Sparse")  ~ "J", # K is reserved for uncommon cover labels
+          TRUE                                 ~ "K"),
         number = case_when(
           str_detect(StateLabelYID, "Fr > ")   ~  1,
           str_detect(StateLabelYID, "Fr 25")   ~  2,
@@ -307,15 +334,16 @@ initializeSsimLibrary <- function(libraryName, projectName) {
           str_detect(StateLabelYID, "Hb > ")   ~ 10,
           str_detect(StateLabelYID, "Hb 0.5")  ~ 11,
           str_detect(StateLabelYID, "Hb < ")   ~ 12,
-          TRUE                                 ~ 13),
+          TRUE                                 ~ NA_real_),
+        number = suppressWarnings(replace(number, is.na(number), 13:100)),
         # Deal with mixed forms
-          mixedLifeForm = case_when(
-            str_detect(StateLabelXID, "Tr") & !str_detect(StateLabelYID, "Fr") ~ T,
-            str_detect(StateLabelXID, "Sh") & !str_detect(StateLabelYID, "Sh") ~ T,
-            str_detect(StateLabelXID, "Hb") & !str_detect(StateLabelYID, "Hb") ~ T,
-            T                                                                  ~ F),
-          number = if_else(mixedLifeForm, number+14, number),
-        # Done dealing with mixed lifeforms
+        mixedLifeForm = case_when(
+          str_detect(StateLabelXID, "Tr") & !str_detect(StateLabelYID, "Fr") ~ T,
+          str_detect(StateLabelXID, "Sh") & !str_detect(StateLabelYID, "Sh") ~ T,
+          str_detect(StateLabelXID, "Hb") & !str_detect(StateLabelYID, "Hb") ~ T,
+          T                                                                  ~ F),
+        number = if_else(mixedLifeForm, number+14, number),
+        # Clean up
         Location = str_c(letter, number)) %>%
       dplyr::select(Name, Location)
 
@@ -381,6 +409,21 @@ initializeSsimLibrary <- function(libraryName, projectName) {
                EnableMultiScenario = FALSE)
 
   saveDatasheet(myscenario, multiprocessing, "core_Multiprocessing")
+  
+  # Charts and Plots -----------------------------------------------------------
+  
+  # Load CSV describing how to build default charts
+  defaultCharts <-
+    read_csv(defaultChartsPath) %>%
+    as.data.frame()
+  
+  defaultMaps <-
+    read_csv(defaultMapsPath) %>%
+    as.data.frame()
+  
+  saveDatasheet(myproject, defaultCharts, "corestime_Charts")
+  saveDatasheet(myproject, defaultMaps, "corestime_Maps")
+  
 }
 
 buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, libraryName, projectName) {
@@ -388,17 +431,17 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   
   # Directory to store cleaned rasters
   # Note that the working directory is prepended since SyncroSim needs absolute paths
-  cleanRasterDirectory <- paste0(getwd(), "/data/clean/", runTag, "/")
+  cleanRasterDirectory <- str_c(getwd(), "/", cleanRasterDirectoryRelative, "/", runTag, "/")
   
   # Directory and prefix for FDIST binary rasters (spatial multipliers)
-  transitionMultiplierDirectory <- paste0(cleanRasterDirectory, "transitionMultipliers/")
+  transitionMultiplierDirectory <- str_c(cleanRasterDirectory, "transitionMultipliers/")
   
   # Clean Raster Paths
-  stateClassRasterPath <- paste0(cleanRasterDirectory, "StateClass.tif")
-  primaryStratumRasterPath <- paste0(cleanRasterDirectory, "EVT.tif")
-  secondaryStratumRasterPath <- paste0(cleanRasterDirectory, "MapZone.tif")
+  stateClassRasterPath <- str_c(cleanRasterDirectory, "StateClass.tif")
+  primaryStratumRasterPath <- str_c(cleanRasterDirectory, "EVT.tif")
+  secondaryStratumRasterPath <- str_c(cleanRasterDirectory, "MapZone.tif")
 
-  tilingRasterPath <- paste0(cleanRasterDirectory, "Tiling.tif")
+  tilingRasterPath <- str_c(cleanRasterDirectory, "Tiling.tif")
 
   # Build Scenario ------------------------------------------------------------
   ssimSession <- session(ssimDir)
@@ -412,7 +455,7 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   # Add the Sub Scenario as a dependency to import common model info
   dependency(myscenario, dependency = subScenarioName)
   
-  ## +Transition multipliers ---------------------------------------------------
+  ## +Transition spatial multipliers -------------------------------------------
   
   # Collect the names and cretae path files
   multiplierGroupNames <- 
@@ -436,6 +479,29 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   } else
     warning(paste0("There were no disturbances found in ", runTag,
                    ". This is not necessarily an error, please check the raw data."))
+  
+  ## +Transition Multipliers ---------------------------------------------------
+  
+  # Get a list of all disturbance types absent in the Map Zone
+  absentDisturbanceTypes <-
+   read_csv(vdistTablePath) %>%
+    # Select only what we need, then rename
+    rename(ID = value,  TransitionGroupID = d_type) %>%
+    # Filter out the NO Disturbance category
+    filter(ID != 0) %>%
+    # Create unique transition/disturbance name, and format color
+    # The format of the name is : Group, Severity, Frequency
+    transmute(Name = paste(TransitionGroupID, d_severity, d_time, sep = " - ")) %>%
+    pull %>%
+    str_c(" [Type]") %>%
+    setdiff(multiplierGroupNames)
+  
+  absentTransitionMultipliers <- data.frame(
+    TransitionGroupID = absentDisturbanceTypes,
+    Amount = 0)
+  
+  saveDatasheet(myscenario, absentTransitionMultipliers,
+                "stsim_TransitionMultiplierValue")
   
   ## +Initial conditions --------------------------------------------------------
   
