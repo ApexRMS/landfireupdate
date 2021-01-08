@@ -257,8 +257,8 @@ Geo Areas.
 
 | Column | Description                                                                   |
 |:-------|:------------------------------------------------------------------------------|
-| EVC    | An Existing Vegetaion Cover (EVC) code.                                       |
-| EVH    | An Existing Vegetaion Cover (EVH) code that can be paired with the given EVC. |
+| EVC    | An Existing Vegetation Cover (EVC) code.                                       |
+| EVH    | An Existing Vegetation Cover (EVH) code that can be paired with the given EVC. |
 
 #### <a name="Dict_Cross"></a> Disturbance Crosswalk.csv
 
