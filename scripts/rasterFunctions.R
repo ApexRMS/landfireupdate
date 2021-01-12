@@ -312,7 +312,7 @@ tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0
   tileRaster <- raster(templateRaster)
 
   # Write tiling to file row-by-row
-  tileRaster <- writeStart(tileRaster, filename,  overwrite=TRUE)
+  tileRaster <- writeStart(tileRaster, tempfilename,  overwrite=TRUE)
   for(i in seq(blockInfo$n)) {
     if(blockInfo$nrows[i] < tileHeight)
       oneRow <- oneRow[1:(ncol(tileRaster) * blockInfo$nrows[i])]
@@ -324,83 +324,7 @@ tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0
 
   # Mask raster by template
   tileRaster <-
-    maskRaster(tileRaster, tempfilename, maskingRaster = templateRaster)
+    maskRaster(tileRaster, filename, maskingRaster = templateRaster)
   
-  # Determine which tiles are too small after masking 
-  tileSizes <- tabulateRaster(tileRaster) %>%
-    mutate(small = freq < (tileHeight * tileWidth * minProportion))
-
-  smallTiles <- tileSizes %>%
-    filter(small) %>%
-    pull(value)
-  
-  largeTiles <-  tileSizes %>%
-    filter(!small) %>%
-    pull(value)
-
-  # For each tile that is below the cut-off, find the nearest full tile to
-  # consolidate into. Given a choice of equally distant large tiles, merge into
-  # the smallest.
-  neighboringTiles <- 
-    map_dbl(
-      smallTiles,
-      function(centerTile, nx, tileSizes, smallTiles, largeTiles) {
-        allNeighbors <- getLargeNeighbors(centerTile, nx, smallTiles, largeTiles)
-    
-        bestNeighbor <- tileSizes %>%
-          filter(value %in% allNeighbors) %>%
-          arrange(freq) %>% # arrange with smallest neighbor first
-          pull(value) %>%
-          `[`(1) # Only keep first value
-        
-        if(is.na(bestNeighbor)) { # If none of the neighbors are large enough, return the input
-          bestNeighbor <- centerTile
-          warning(paste0("While generating tiles for ", filename, "; No neighbors found for tile ", centerTile))
-        }
-        
-        return(bestNeighbor)
-      },
-      nx = nx,
-      tileSizes = tileSizes,
-      smallTiles = smallTiles,
-      largeTiles = largeTiles)
-  
-  # Reclassify the tiles that are too small to match their chosen neighboring tile
-  tileRaster <- reclassify(tileRaster, 
-                           rcl = matrix(c(smallTiles, neighboringTiles), ncol = 2),
-                           filename = filename,
-                           overwrite = TRUE)
-                        
   return(tileRaster)
-}
-
-# Generate a table of values present in a raster and their frequency
-# - values are assumed to be integers and the max value is known
-tabulateRaster <- function(inputRaster) {
-  # Calculate recommended block size of template
-  blockInfo <- blockSize(inputRaster)
-  
-  # Calculate frequency table in each block and consolidate
-  tables <- map(
-    seq(blockInfo$n),
-    ~ table(getValuesBlock(inputRaster,
-                            row   = blockInfo$row[.x],
-                            nrows = blockInfo$nrows[.x]))) %>%
-    map(as.data.frame) %>%
-    do.call(rbind, .) %>% # do.call is used to convert the list of tables to a sequence of arguments for `rbind`
-    rename(value = 1) %>%
-    group_by(value) %>%
-    summarize(freq = sum(Freq)) %>%
-    ungroup() %>%
-    mutate(value = value %>% as.character %>% as.numeric) %>% # Convert from factor to numeric
-    return
-}
-
-getLargeNeighbors <- function(centerTile, nx, smallTiles, largeTiles) {
-  neighbors <- c(centerTile - 1, centerTile + 1, centerTile - nx, centerTile + nx)
-  
-  if(length(intersect(neighbors, largeTiles)) == 0) # if none of the neighbors are large tiles
-    neighbors <- getLargeNeighbors(intersect(neighbors, smallTiles), nx, smallTiles, largeTiles) # recursively get neighbors of neighboring small tiles
-  
-  return(intersect(neighbors, largeTiles)) # return all large neighbors
 }
