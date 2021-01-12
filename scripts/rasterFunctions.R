@@ -170,6 +170,9 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   for(i in descendingBlockSizes)
     if(getValuesBlock(inputRaster, row = trimAbove, nrows = i) %>% is.na %>% all)
       trimAbove <- trimAbove + i
+  
+  # Pad if possible
+  trimAbove <- max(trimAbove - 2, 0)
 
   # Bottom  -------------------------------------------------------------------
   # Repeat from the bottom up, first finding a block that is not all NA
@@ -184,11 +187,11 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
 
   # Binary search for last row with data
   for(i in descendingBlockSizes)
-    if(getValuesBlock(inputRaster, row = trimBelow - i,nrows = i) %>% is.na %>% all)
+    if(getValuesBlock(inputRaster, row = trimBelow - i, nrows = i) %>% is.na %>% all)
       trimBelow <- trimBelow - i
 
   # Calculate height of the trimmed raster
-  outputRows <- trimBelow - trimAbove - 1
+  outputRows <- trimBelow - trimAbove
 
   # Left  --------------------------------------------------------------------
   # Search for the first block from the left with data
@@ -213,6 +216,9 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
        is.na %>%
        all)
       trimLeft <- trimLeft + i
+  
+  # Pad if possible
+  trimLeft <- max(trimLeft - 2, 0)
 
   # Right  --------------------------------------------------------------------
   # Repeat for the first block from the right with data
@@ -238,7 +244,7 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
        all)
       trimRight <- trimRight - i
 
-  # Calculate height of the trimmed raster
+  # Calculate width of the trimmed raster
   outputCols <- trimRight - trimLeft
 
   # Crop  ---------------------------------------------------------------------
