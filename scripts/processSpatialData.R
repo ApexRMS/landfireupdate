@@ -65,14 +65,16 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
            mapzoneRaster %>% ymax < cropExtent %>% ymax))
       stop("The chosen crop extent does not lie entirely with the chosen Geo Area. Please change the Geo Area or crop extent, or disable `cropToExtent`.")
       
-    mapzoneRaster <- crop(mapzoneRaster, cropExtent) %>%
-      writeRaster(mapzoneRasterPath, overwrite = T)
+    # This code assumes that the crop extent is fairly small
+    # This call of raster::crop will be very slow for large extents
+    mapzoneRaster <-
+      crop(mapzoneRaster, cropExtent, filename = mapzoneRasterPath, overwrite = T)
     
     if(!mapzoneToKeep %in% uniqueInRaster(mapzoneRaster))
       stop("The chosen Map Zone does not overlap with the crop extent. Please change the Map Zone or crop extent, or disable `cropToExtent`.")
   }
 
-  # Mask and trim mapzone map by the chosen mapzone
+  # Mask and trim Map Zone map by the chosen Map Zone
   # - Note that trimRaster also saves the raster to the cleaned raster directory
   mapzoneRaster <-
     maskByMapzone(
@@ -82,8 +84,30 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     trimRaster(
       filename = mapzoneRasterPath
     )
-
+  
+  # Crop and mask Disturbance map down to the Map Zone of interest
+  # Reclassify 0 (no disturbance) as NA for masking other maps
+  # Finally trim down to only include relevant cells
+  fdistRaster <-
+    cropRaster(fdistRaster, tempRasterPath, extent(mapzoneRaster)) %>%
+    maskRaster(fdistRasterPath, maskingRaster = mapzoneRaster) %>%
+    reclassify(
+      rcl = matrix(c(0L, NA_integer_), ncol = 2),
+      filename = tempRasterPath,
+      overwrite = TRUE) %>%
+    trimRaster(filename = fdistRasterPath)
+  
+  # Crop Map Zone map down to only cells that have been disturbed and then mask
+  # by the disturbance map
+  mapzoneRaster <-
+    cropRaster(mapzoneRaster, tempRasterPath, extent(fdistRaster)) %>%
+    maskRaster(mapzoneRasterPath, fdistRaster)
+  
   # Crop and mask data ----------------------------------------------------------
+
+  # At this point, both the FDIST and Map Zone maps have been cropped and masked
+  # to only the disturbed cells in the region of interest. Either could be used
+  # to crop and mask the remaining raster maps. Here the Map Zone map is used.
 
   # EVT
   evtRaster <-
@@ -99,11 +123,6 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   evhRaster <-
     cropRaster(evhRaster, tempRasterPath, extent(mapzoneRaster)) %>%
     maskRaster(evhRasterPath, maskingRaster = mapzoneRaster)
-
-  # FDIST
-  fdistRaster <-
-    cropRaster(fdistRaster, tempRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(fdistRasterPath, maskingRaster = mapzoneRaster)
 
   # Convert disturbance to VDIST ------------------------------------------------
 
