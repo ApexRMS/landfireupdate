@@ -1,70 +1,70 @@
-VALUE,CLASSNAMES,EVT_LIFEFORM
-11,Water,Water
-12,Snow-Ice,Snow-Ice
-21,Open Space Urban,Open Space Urban
-22,Low Intensity Urban,Low Intensity Urban
-23,Medium Intensity Urban,Medium Intensity Urban
-24,High Intensity Urban,High Intensity Urban
-31,Barren,Barren
-81,Pasture-Hay,Pasture-Hay
-82,Cultivated Crops,Cultivated Crops
-83,Small Grains,Small Grains
-100,Sparse Vegetation,Sparse
-101,Tree Cover >= 10 and < 20%,Tree
-102,Tree Cover >= 20 and < 30%,Tree
-103,Tree Cover >= 30 and < 40%,Tree
-104,Tree Cover >= 40 and < 50%,Tree
-105,Tree Cover >= 50 and < 60%,Tree
-106,Tree Cover >= 60 and < 70%,Tree
-107,Tree Cover >= 70 and < 80%,Tree
-108,Tree Cover >= 80 and < 90%,Tree
-109,Tree Cover >= 90 and <= 100%,Tree
-111,Shrub Cover >= 10 and < 20%,Shrub
-112,Shrub Cover >= 20 and < 30%,Shrub
-113,Shrub Cover >= 30 and < 40%,Shrub
-114,Shrub Cover >= 40 and < 50%,Shrub
-115,Shrub Cover >= 50 and < 60%,Shrub
-116,Shrub Cover >= 60 and < 70%,Shrub
-117,Shrub Cover >= 70 and < 80%,Shrub
-118,Shrub Cover >= 80 and < 90%,Shrub
-119,Shrub Cover >= 90 and <= 100%,Shrub
-121,Herb Cover >= 10 and < 20%,Herb
-122,Herb Cover >= 20 and < 30%,Herb
-123,Herb Cover >= 30 and < 40%,Herb
-124,Herb Cover >= 40 and < 50%,Herb
-125,Herb Cover >= 50 and < 60%,Herb
-126,Herb Cover >= 60 and < 70%,Herb
-127,Herb Cover >= 70 and < 80%,Herb
-128,Herb Cover >= 80 and < 90%,Herb
-129,Herb Cover >= 90 and <= 100%,Herb
-255,Background,Background
-85,Urban-Recreational Grasses,Recreational Grasses
-32,Quarries-Strip Mines-Gravel Pits,Quarries-Strip Mines-Gravel Pits
-80,Agriculture - General,General Ag
-20,Developed - General,General Urban
-84,Fallow,Fallow
-0,Tree Cover < 10%,NA
-13,NA,Urban Deciduous Forest
-14,NA,Urban Evergreen Forest
-15,NA,Urban Mixed Forest
-16,NA,Urban Herbaceous
-17,NA,Urban Shrubland
-25,NA,Roads
-60,NA,CDL
-61,NA,CDL
-62,NA,CDL
-63,NA,CDL
-64,NA,CDL
-65,NA,CDL
-66,NA,CDL
-67,NA,CDL
-75,NA,NLCD
-76,NA,NLCD
-78,NA,NLCD
-95,NA,NLCD
-28,NA,NLCD
-29,NA,NLCD
-30,NA,NLCD
-33,NA,Sparse
-69,NA,CDL
-68,NA,CDL
+VALUE,CLASSNAMES,EVT_LIFEFORM,CONTINUOUS
+0,Tree Cover < 10%,NA,110
+11,Water,Water,11
+12,Snow-Ice,Snow-Ice,12
+13,NA,Urban Deciduous Forest,13
+14,NA,Urban Evergreen Forest,14
+15,NA,Urban Mixed Forest,15
+16,NA,Urban Herbaceous,16
+17,NA,Urban Shrubland,17
+20,Developed - General,General Urban,20
+21,Open Space Urban,Open Space Urban,21
+22,Low Intensity Urban,Low Intensity Urban,22
+23,Medium Intensity Urban,Medium Intensity Urban,23
+24,High Intensity Urban,High Intensity Urban,24
+25,NA,Roads,25
+28,NA,NLCD,28
+29,NA,NLCD,29
+30,NA,NLCD,30
+31,Barren,Barren,31
+32,Quarries-Strip Mines-Gravel Pits,Quarries-Strip Mines-Gravel Pits,32
+33,NA,Sparse,33
+60,NA,CDL,60
+61,NA,CDL,61
+62,NA,CDL,62
+63,NA,CDL,63
+64,NA,CDL,64
+65,NA,CDL,65
+66,NA,CDL,66
+67,NA,CDL,67
+68,NA,CDL,68
+69,NA,CDL,69
+75,NA,NLCD,75
+76,NA,NLCD,76
+78,NA,NLCD,78
+80,Agriculture - General,General Ag,80
+81,Pasture-Hay,Pasture-Hay,81
+82,Cultivated Crops,Cultivated Crops,82
+83,Small Grains,Small Grains,83
+84,Fallow,Fallow,84
+85,Urban-Recreational Grasses,Recreational Grasses,85
+95,NA,NLCD,95
+100,Sparse Vegetation,Sparse,100
+101,Tree Cover >= 10 and < 20%,Tree,115
+102,Tree Cover >= 20 and < 30%,Tree,125
+103,Tree Cover >= 30 and < 40%,Tree,135
+104,Tree Cover >= 40 and < 50%,Tree,145
+105,Tree Cover >= 50 and < 60%,Tree,155
+106,Tree Cover >= 60 and < 70%,Tree,165
+107,Tree Cover >= 70 and < 80%,Tree,175
+108,Tree Cover >= 80 and < 90%,Tree,185
+109,Tree Cover >= 90 and <= 100%,Tree,195
+111,Shrub Cover >= 10 and < 20%,Shrub,215
+112,Shrub Cover >= 20 and < 30%,Shrub,225
+113,Shrub Cover >= 30 and < 40%,Shrub,235
+114,Shrub Cover >= 40 and < 50%,Shrub,245
+115,Shrub Cover >= 50 and < 60%,Shrub,255
+116,Shrub Cover >= 60 and < 70%,Shrub,265
+117,Shrub Cover >= 70 and < 80%,Shrub,275
+118,Shrub Cover >= 80 and < 90%,Shrub,285
+119,Shrub Cover >= 90 and <= 100%,Shrub,295
+121,Herb Cover >= 10 and < 20%,Herb,315
+122,Herb Cover >= 20 and < 30%,Herb,325
+123,Herb Cover >= 30 and < 40%,Herb,335
+124,Herb Cover >= 40 and < 50%,Herb,345
+125,Herb Cover >= 50 and < 60%,Herb,355
+126,Herb Cover >= 60 and < 70%,Herb,365
+127,Herb Cover >= 70 and < 80%,Herb,375
+128,Herb Cover >= 80 and < 90%,Herb,385
+129,Herb Cover >= 90 and <= 100%,Herb,395
+255,Background,Background,-9999
