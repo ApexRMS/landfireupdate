@@ -272,20 +272,22 @@ Geo Areas.
 
 #### <a name="Dict_EVC"></a> EVC LUT.csv
 
-| Column       | Description                                       |
-|:-------------|:--------------------------------------------------|
-| VALUE        | An Existing Vegetation Cover (EVC) code.          |
-| CLASSNAMES   | A matching name for the cover code.               |
-| EVT_LIFEFORM | A grouping variable describing the lifeform type. |
+| Column       | Description                                                                                       |
+|:-------------|:--------------------------------------------------------------------------------------------------|
+| VALUE        | An Existing Vegetation Cover (EVC) code.                                                          |
+| CLASSNAMES   | A matching name for the cover code.                                                               |
+| EVT_LIFEFORM | A grouping variable describing the lifeform type.                                                 |
+| CONTINUOUS   | A matching continuous Existing Vegetation Cover (EVC) code to use during Geo Area reconstruction. |
 
 #### <a name="Dict_EVH"></a> EVH LUT.csv
 
-| Column       | Description                                       |
-|:-------------|:--------------------------------------------------|
-| VALUE        | An Existing Vegetation Cover (EVH) code.          |
-| CLASSNAMES   | A matching name for the cover code.               |
-| LIFEFORM     | A grouping variable describing the lifeform type. |
-| HC_ID        | Not used.                                         |
+| Column       | Description                                                                                        |
+|:-------------|:---------------------------------------------------------------------------------------------------|
+| VALUE        | An Existing Vegetation Cover (EVH) code.                                                           |
+| CLASSNAMES   | A matching name for the cover code.                                                                |
+| LIFEFORM     | A grouping variable describing the lifeform type.                                                  |
+| HC_ID        | Not used.                                                                                          |
+| CONTINUOUS   | A matching continuous Existing Vegetation Height (EVC) code to use during Geo Area reconstruction. |
 
 
 #### <a name="Dict_VDIST"></a> VDIST LUT.csv
@@ -328,10 +330,12 @@ Geo-Area-specific folder.
 | [Transition Table.csv](#Dict_Transition) | This table defines how every combination of Existing Vegetation Cover (EVC), Height (EVH), and Type (EVT) responds to a given disturbance (VDist). |
 | [EVT Colors.csv](#Dict_EVT)              | This table is used to assign colors to Existing Vegetation Type (EVT) codes. These are used when rendering raster maps.                            |
 | Map Zones.tif                            | This is the raster map of Map Zones found within the Geo Area.                                                                                     |
-| EVC.tif                                  | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area.                                                                |
-| EVH.tif                                  | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area.                                                               |
+| EVC.tif                                  | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area using the EVC class codes.                                      |
+| EVH.tif                                  | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area using EVH class codes.                                         |
 | EVT.tif                                  | This is the raster map of Existing Vegetation Types (EVT) for the entire Geo Area.                                                                 |
 | FDIST.tif                                | This is the raster map of Fuel Disturbances (FDist) for the entire Geo Area.                                                                       |
+| Continuous EVC.tif                       | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area using the continuous EVC codes.                                 |
+| Continuous EVH.tif                       | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area using the continuous EVH codes.                                |
 
 #### <a name="Dict_Transition"></a> Transition Table.csv
 

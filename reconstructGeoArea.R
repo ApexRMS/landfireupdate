@@ -11,6 +11,7 @@ library(rsyncrosim) # for building and connecting to SyncroSim files
 library(raster)     # provides functions for manipulating rasters
 library(rgdal)      # provides some optional dependencies for raster
 library(tidyverse)  # provides general data manipulation functions
+library(yaml)       # used to read configuration file
 
 # Load configuration options and global constants
 source("scripts/constants.R")
@@ -22,14 +23,22 @@ source("scripts/rasterFunctions.R")
 
 message("Preparing stitched raster map output folder.")
 
-# Create directory to store stitched raster maps
+# Create directory and paths to store stitched raster maps
 dir.create(stitchedRasterDirectory, showWarnings = F)
 stateClassSitchedRasterPath <- paste0(stitchedRasterDirectory, "/StateClass.tif")
-EVCSitchedRasterPath <- paste0(stitchedRasterDirectory, "/EVC.tif")
-EVHSitchedRasterPath <- paste0(stitchedRasterDirectory, "/EVH.tif")
+evcStitchedRasterPath <- paste0(stitchedRasterDirectory, "/EVC.tif")
+evhStitchedRasterPath <- paste0(stitchedRasterDirectory, "/EVH.tif")
+evcContinuousRasterPath <- paste0(stitchedRasterDirectory, "/Continuous EVC.tif")
+evhContinuousRasterPath <- paste0(stitchedRasterDirectory, "/Continuous EVH.tif")
+evcOverlaidRasterPath <- paste0(stitchedRasterDirectory, "/Overlaid EVC.tif")
+evhOverlaidRasterPath <- paste0(stitchedRasterDirectory, "/Overlaid EVH.tif")
 
 # Calculate final extent of the stitched rasters
 fullExtent <- extent(raster(mapzoneRawRasterPath))
+
+# Load necessary raw raster maps
+evcContinuousRawRaster <- raster(evcContinuousRawRasterPath)
+evhContinuousRawRaster <- raster(evhContinuousRawRasterPath)
 
 # Extract Data from SyncroSim Library ------------------------------------------
 
@@ -106,7 +115,7 @@ mergeArgs <- c(stateClassRasters,                      # the rasters to stitch t
 if(length(stateClassRasters) == 1) {
   stateClassSitchedRaster <- writeRaster(stateClassRasters[[1]], stateClassSitchedRasterPath, overwrite = T)
 } else {
-  stateClassSitchedRaster <- do.call(merge, mergeArgs)
+  stateClassSitchedRaster <- do.call(raster::merge, mergeArgs)
 }
 
 # Generate EVC and EVH from State Class ----------------------------------------
@@ -114,15 +123,15 @@ if(length(stateClassRasters) == 1) {
 message("Separating out EVC and EVH.")
 
 # Create empty rasters to hold EVC and EVH data
-EVCSitchedRaster <-  raster(stateClassSitchedRaster)
-EVHSitchedRaster <-  raster(stateClassSitchedRaster)
+evcStitchedRaster <-  raster(stateClassSitchedRaster)
+evhStitchedRaster <-  raster(stateClassSitchedRaster)
 
 ## Split state class raster into manageable chunks
 blockInfo <- blockSize(stateClassSitchedRaster)
 
 ## Calculate EVC and EVH from State Class block-by-block and write the results to their respective files
-EVCSitchedRaster <- writeStart(EVCSitchedRaster, EVCSitchedRasterPath, overwrite=TRUE)
-EVHSitchedRaster <- writeStart(EVHSitchedRaster, EVHSitchedRasterPath, overwrite=TRUE)
+evcStitchedRaster <- writeStart(evcStitchedRaster, evcStitchedRasterPath, overwrite=TRUE)
+evhStitchedRaster <- writeStart(evhStitchedRaster, evhStitchedRasterPath, overwrite=TRUE)
 
 for(i in seq(blockInfo$n)) {
   stateClassValues <-
@@ -131,11 +140,71 @@ for(i in seq(blockInfo$n)) {
   EVCValues <- as.integer(stateClassValues / 1000) # EVC is the first three digits of the six digit state class code
   EVHValues <- stateClassValues %% 1000            # EVH is the last three digits, `%%` is the modulo, or remainder function
   
-  EVCSitchedRaster <- writeValues(EVCSitchedRaster, EVCValues, blockInfo$row[i])
-  EVHSitchedRaster <- writeValues(EVHSitchedRaster, EVHValues, blockInfo$row[i])
+  evcStitchedRaster <- writeValues(evcStitchedRaster, EVCValues, blockInfo$row[i])
+  evhStitchedRaster <- writeValues(evhStitchedRaster, EVHValues, blockInfo$row[i])
 }
 
-EVCSitchedRaster <- writeStop(EVCSitchedRaster)
-EVHSitchedRaster <- writeStop(EVHSitchedRaster)
+evcStitchedRaster <- writeStop(evcStitchedRaster)
+evhStitchedRaster <- writeStop(evhStitchedRaster)
 
-message("Done reconstructing Geo Area!")
+# Convert EVC and EVH to continuous codes --------------------------------------
+
+message("Converting EVC and EVH to continuous codes.")
+
+# Setup the two crosswalks from class codes to continuous codes
+evcCrosswalk <- 
+  read_csv(evcTablePath) %>%
+    select(from = VALUE, to = CONTINUOUS) %>%
+    as.matrix
+
+evhCrosswalk <- 
+  read_csv(evhTablePath) %>%
+    select(from = VALUE, to = CONTINUOUS) %>%
+    as.matrix
+
+# Reclassify both rasters using the constructed crosswalks
+evcContinuousRaster <-
+  reclassify(
+    evcStitchedRaster,
+    evcCrosswalk,
+    filename = evcContinuousRasterPath,
+    overwrite = T)
+
+evhContinuousRaster <-
+  reclassify(
+    evhStitchedRaster,
+    evhCrosswalk,
+    filename = evhContinuousRasterPath,
+    overwrite = T)
+
+message("Done converting to continuous codes!")
+
+# Overlay disturbed EVC and EVH over initial EVC and EVH -----------------------
+
+message("Overlaying disturbed EVC and EVH.")
+
+# Use raster::merge() to overlay the new continuous data over the old continuous
+# EVC and EVH raster maps
+evcOverlaidRaster <-
+  raster::merge(
+    evcContinuousRaster,
+    evcContinuousRawRaster,
+    filename = evcOverlaidRasterPath,
+    ext = fullExtent,
+    overwrite = T)
+
+evhOverlaidRaster <-
+  raster::merge(
+    evhContinuousRaster,
+    evhContinuousRawRaster,
+    filename = evhOverlaidRasterPath,
+    ext = fullExtent,
+    overwrite = T)
+
+message("Done overlaying distrubed cells!")
+
+# Wrap up ----------------------------------------------------------------------
+
+message(str_c("Done reconstructing Geo Area! ", 
+              "Stitched raster maps can be found in ",
+              stitchedRasterDirectory))

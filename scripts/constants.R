@@ -73,11 +73,13 @@ if(!rawRasterDirectory %>% dir.exists)
   stop("The raw data subfolder was not found within input data folder! Please see the README for how the input data folder should be organized.")
 
 # Raw input rasters
-mapzoneRawRasterPath <- str_c(rawRasterDirectory, "Map Zones.tif")
-evtRawRasterPath     <- str_c(rawRasterDirectory, "EVT.tif")
-evhRawRasterPath     <- str_c(rawRasterDirectory, "EVH.tif")
-evcRawRasterPath     <- str_c(rawRasterDirectory, "EVC.tif")
-fdistRawRasterPath   <- str_c(rawRasterDirectory, "FDIST.tif")
+mapzoneRawRasterPath       <- str_c(rawRasterDirectory, "Map Zones.tif")
+evtRawRasterPath           <- str_c(rawRasterDirectory, "EVT.tif")
+evhRawRasterPath           <- str_c(rawRasterDirectory, "EVH.tif")
+evcRawRasterPath           <- str_c(rawRasterDirectory, "EVC.tif")
+fdistRawRasterPath         <- str_c(rawRasterDirectory, "FDIST.tif")
+evcContinuousRawRasterPath <- str_c(rawRasterDirectory, "Continuous EVC.tif")
+evhContinuousRawRasterPath <- str_c(rawRasterDirectory, "Continuous EVH.tif")
 
 # Check that all input rasters are present
 if(!mapzoneRawRasterPath %>% file.exists)
@@ -90,6 +92,10 @@ if(!evcRawRasterPath %>% file.exists)
   stop("Could not find the raw EVC raster map. Please see the README for how input data should be organized.")
 if(!fdistRawRasterPath %>% file.exists)
   stop("Could not find the raw FDIST raster map. Please see the README for how input data should be organized.")
+if(!evhContinuousRawRasterPath %>% file.exists)
+  stop("Could not find the raw continuous EVH raster map. Please see the README for how input data should be organized.")
+if(!evcContinuousRawRasterPath %>% file.exists)
+  stop("Could not find the raw continuous EVC raster map. Please see the README for how input data should be organized.")
 
 # Raw non-spatial data directory
 rawNonSpatialDirectory <- str_c(rawRasterDirectory, "nonspatial/")
