@@ -293,8 +293,15 @@ saveDistLayer <- function(distValue, distName, fullRaster, transitionMultiplierD
 tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0.2) {
   # Calculate recommended block size of template
   blockInfo <- blockSize(templateRaster)
+  
+  # Check that the blockSize is meaningful
+  # - This should only matter for very small rasters, such as in test mode
+  if(max(blockInfo$nrows) == 1)
+    blockInfo <- list(row = 1, nrows = nrow(templateRaster), n = 1)
+  
+  # Extract number of rows
   ny <- blockInfo$n
-
+  
   # Calculate dimensions of each tile
   tileHeight <- blockInfo$nrows[1]
   tileWidth <- ceiling(ncol(templateRaster) / nx)
