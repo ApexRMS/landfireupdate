@@ -32,9 +32,9 @@ if (config$ssimJobs %>% as.integer %>% is.na | config$ssimJobs %>% as.integer < 
 }
 
 # Check that the number of tiling columns is valid
-if(as.integer(config$tileCols) %>% is.na) {
-  warning("Invalid number of tiling columns in config file. Using 20 columns.")
-  config$tileCols <- 20
+if(as.integer(config$tileSize) %>% is.na) {
+  warning("Invalid number of tile size in config file. Using default tile size of 250.")
+  config$tileSize <- 250
 }
 
 # Check whether or not crop to a smaller extent for testing
@@ -166,7 +166,7 @@ if(cropToExtent) {
 # A tiling mask is produced to allow for Spatial Multiprocessing in SyncroSim
 # The size of the rows is dictated by the size of the raster and memory constraints,
 # but the number of columns can be set here
-tileCols <- as.integer(config$tileCols)
+tileSize <- as.integer(config$tileSize * 1000)
 
 # As part of the processing step, cleaned and cropped rasters are built.
 # This is the directory they will be organized in. Each Map Zone will have it's

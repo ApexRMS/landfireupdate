@@ -290,7 +290,7 @@ saveDistLayer <- function(distValue, distName, fullRaster, transitionMultiplierD
 # - minProportion is used to determine the size threshold for consolidating tiles
 #   that are too small into neighboring tiles. Represented as a porportion of a
 #   full tile
-tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0.2) {
+tilize <- function(templateRaster, filename, tempfilename, tileSize) {
   # Calculate recommended block size of template
   blockInfo <- blockSize(templateRaster)
   
@@ -299,12 +299,13 @@ tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0
   if(max(blockInfo$nrows) == 1)
     blockInfo <- list(row = 1, nrows = nrow(templateRaster), n = 1)
   
-  # Extract number of rows
-  ny <- blockInfo$n
-  
   # Calculate dimensions of each tile
   tileHeight <- blockInfo$nrows[1]
-  tileWidth <- ceiling(ncol(templateRaster) / nx)
+  tileWidth <- floor(tileSize / tileHeight)
+  
+  # Calculate number of rows and columns
+  ny <- blockInfo$n
+  nx <- ceiling(ncol(templateRaster) / tileWidth)
 
   # Generate a string of zeros the width of one tile
   oneTileWidth <- rep(0, tileWidth)
@@ -319,7 +320,7 @@ tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0
   tileRaster <- raster(templateRaster)
 
   # Write tiling to file row-by-row
-  tileRaster <- writeStart(tileRaster, tempfilename,  overwrite=TRUE)
+  tileRaster <- writeStart(tileRaster, filename,  overwrite=TRUE)
   for(i in seq(blockInfo$n)) {
     if(blockInfo$nrows[i] < tileHeight)
       oneRow <- oneRow[1:(ncol(tileRaster) * blockInfo$nrows[i])]
@@ -331,7 +332,52 @@ tilize <- function(templateRaster, filename, tempfilename, nx, minProportion = 0
 
   # Mask raster by template
   tileRaster <-
-    maskRaster(tileRaster, filename, maskingRaster = templateRaster)
+    maskRaster(tileRaster, tempfilename, maskingRaster = templateRaster)
+  
+  # Consolidate small tiles into larger groups
+  # - We want a map from the original tile IDs to new consolidated tile IDs
+  reclassification <-
+    # Find the number of cells in each tile ID
+    tabulateRaster(tileRaster) %>%
+    # Sort by size
+    arrange(freq) %>%
+    # Consolidate into groups up to size tileSize
+    mutate(
+      cumulativeCells = cumsum(freq),
+      newGroup        = ceiling(cumulativeCells / tileSize)) %>%
+    # Clean up
+    dplyr::select(from = value, to = newGroup) %>%
+    as.matrix()
+  
+ # Reclassify the tiling raster to the new consolidated IDs
+  tileRaster <-
+    reclassify(
+      tileRaster,
+      reclassification,
+      filename = filename,
+      overwrite = T)
   
   return(tileRaster)
+}
+
+# Generate a table of values present in a raster and their frequency
+# - values are assumed to be integers and the max value is known
+tabulateRaster <- function(inputRaster) {
+  # Calculate recommended block size of template
+  blockInfo <- blockSize(inputRaster)
+  
+  # Calculate frequency table in each block and consolidate
+  tables <- map(
+    seq(blockInfo$n),
+    ~ table(getValuesBlock(inputRaster,
+                           row   = blockInfo$row[.x],
+                           nrows = blockInfo$nrows[.x]))) %>%
+    map(as.data.frame) %>%
+    do.call(rbind, .) %>% # do.call is used to convert the list of tables to a sequence of arguments for `rbind`
+    rename(value = 1) %>%
+    group_by(value) %>%
+    summarize(freq = sum(Freq)) %>%
+    ungroup() %>%
+    mutate(value = value %>% as.character %>% as.numeric) %>% # Convert from factor to numeric
+    return
 }

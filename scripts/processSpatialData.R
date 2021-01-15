@@ -180,7 +180,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
       mapzoneRaster,
       tilingRasterPath,
       tempRasterPath,
-      nx = tileCols)
+      tileSize = tileSize)
   
   # Remove temp file
   unlink(tempRasterPath)

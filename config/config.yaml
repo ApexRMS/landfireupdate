@@ -36,8 +36,9 @@ nThreads:
 # The default number of cores to use to *run* the SyncroSim library
 ssimJobs: 8
 
-# The number of columns to split each Map Zone into for spatial multiprocessing in SyncroSim
-tileCols: 2
+# The approximate size of the tiles to be used for spatial multiprocessing in SyncroSim
+# - The units are thousands of cells
+tileSize: 250
 
 # Testing Options --------------------------------------------------------------
 

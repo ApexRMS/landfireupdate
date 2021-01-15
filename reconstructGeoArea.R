@@ -183,6 +183,15 @@ message("Done converting to continuous codes!")
 
 message("Overlaying disturbed EVC and EVH.")
 
+# If in test mode, crop down the raw continuous EVC and EVH maps
+if(cropToExtent) {
+  evcContinuousRawRaster <- crop(evcContinuousRawRaster, cropExtent)
+  evhContinuousRawRaster <- crop(evhContinuousRawRaster, cropExtent)
+  
+  # Also update the extent to use for merging
+  fullExtent <- cropExtent
+}
+
 # Use raster::merge() to overlay the new continuous data over the old continuous
 # EVC and EVH raster maps
 evcOverlaidRaster <-
