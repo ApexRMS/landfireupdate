@@ -10,6 +10,7 @@
 library(rsyncrosim) # for building and connecting to SyncroSim files
 library(raster)     # provides functions for manipulating rasters
 library(rgdal)      # provides some optional dependencies for raster
+library(logr)       # for generating logs with RScript
 library(tidyverse)  # provides general data manipulation functions
 library(yaml)       # used to read configuration file
 
@@ -19,9 +20,13 @@ source("scripts/constants.R")
 # Load custom raster functions optimized for working with large rasters
 source("scripts/rasterFunctions.R")
 
+# Begin logging ------------------------------------------------------------
+
+logFile <- log_open(logFilePath)
+
 # Generate Directories and Paths -----------------------------------------------
 
-message("Preparing stitched raster map output folder.")
+log_print("Preparing stitched raster map output folder.")
 
 # Create directory and paths to store stitched raster maps
 dir.create(stitchedRasterDirectory, showWarnings = F)
@@ -42,7 +47,7 @@ evhContinuousRawRaster <- raster(evhContinuousRawRasterPath)
 
 # Extract Data from SyncroSim Library ------------------------------------------
 
-message("Loading data from SyncroSim.")
+log_print("Loading data from SyncroSim.")
 
 # Connect to the SyncroSim Library
 ssimSession <- session(ssimDir)
@@ -99,7 +104,7 @@ stateClassRasters <-
 
 # Stitch together State Class raster -------------------------------------------
 
-message("Stitching raster maps.")
+log_print("Stitching raster maps.")
 
 # Append arguments for `raster::merge()` to the previously generated list of rasters
 # This will allow us to pass a variable number of arguments to `raster::merge()`
@@ -120,7 +125,7 @@ if(length(stateClassRasters) == 1) {
 
 # Generate EVC and EVH from State Class ----------------------------------------
 
-message("Separating out EVC and EVH.")
+log_print("Separating out EVC and EVH.")
 
 # Create empty rasters to hold EVC and EVH data
 evcStitchedRaster <-  raster(stateClassSitchedRaster)
@@ -149,7 +154,7 @@ evhStitchedRaster <- writeStop(evhStitchedRaster)
 
 # Convert EVC and EVH to continuous codes --------------------------------------
 
-message("Converting EVC and EVH to continuous codes.")
+log_print("Converting EVC and EVH to continuous codes.")
 
 # Setup the two crosswalks from class codes to continuous codes
 evcCrosswalk <- 
@@ -177,11 +182,9 @@ evhContinuousRaster <-
     filename = evhContinuousRasterPath,
     overwrite = T)
 
-message("Done converting to continuous codes!")
-
 # Overlay disturbed EVC and EVH over initial EVC and EVH -----------------------
 
-message("Overlaying disturbed EVC and EVH.")
+log_print("Overlaying disturbed EVC and EVH.")
 
 # If in test mode, crop down the raw continuous EVC and EVH maps
 if(cropToExtent) {
@@ -210,10 +213,10 @@ evhOverlaidRaster <-
     ext = fullExtent,
     overwrite = T)
 
-message("Done overlaying distrubed cells!")
-
 # Wrap up ----------------------------------------------------------------------
 
-message(str_c("Done reconstructing Geo Area! ", 
+log_print(str_c("Done reconstructing Geo Area! ", 
               "Stitched raster maps can be found in ",
               stitchedRasterDirectory))
+
+log_close()
