@@ -56,7 +56,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # Are there combinations of EVC, EVH, EVT, MZ, and VDIST present in the rasters
   # for which there are no rules?
   
-  # Note that this requires the 'data/clean' subdirectory to still be intact
+  # Note that this requires the 'data/clean' folder to still be intact
   
   ## +Generate list of rules present -------------------------------------------
   

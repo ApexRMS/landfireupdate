@@ -339,14 +339,12 @@ tilize <- function(templateRaster, filename, tempfilename, tileSize) {
   reclassification <-
     # Find the number of cells in each tile ID
     tabulateRaster(tileRaster) %>%
-    # Sort by size
-    arrange(freq) %>%
+    # Sort by ID to approximately group tiles by proximity
+    arrange(value) %>%
     # Consolidate into groups up to size tileSize
-    mutate(
-      cumulativeCells = cumsum(freq),
-      newGroup        = ceiling(cumulativeCells / tileSize)) %>%
-    # Clean up
-    dplyr::select(from = value, to = newGroup) %>%
+    transmute(
+      from = value,
+      to   = consolidateGroups(freq, tileSize)) %>%
     as.matrix()
   
  # Reclassify the tiling raster to the new consolidated IDs
@@ -380,4 +378,27 @@ tabulateRaster <- function(inputRaster) {
     ungroup() %>%
     mutate(value = value %>% as.character %>% as.numeric) %>% # Convert from factor to numeric
     return
+}
+
+# Takes a vector of sizes (input) and a maximum size per group (threshold) and
+# returns a vector of integers assigning the inputs to groups up to size threshold
+# - Used to consolidate tiling groups into more even groups
+consolidateGroups <- function(input, threshold) {
+  # Initialized counters and output
+  counter <- 1
+  cumulator <- 0
+  output <- integer(length(input))
+  
+  # For each input, decide whether or not to start a new group
+  # Store that decision in output
+  for(i in seq_along(input)) {
+    cumulator <- cumulator + input[i]
+    if(cumulator > threshold) {
+      cumulator<- input[i]
+      counter <- counter + 1
+    }
+    output[i] <- counter
+  }
+  
+  return(output)
 }
