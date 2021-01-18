@@ -402,3 +402,34 @@ consolidateGroups <- function(input, threshold) {
   
   return(output)
 }
+
+separateStateClass <- function(stateClassRaster, evcRasterPath, evhRasterPath) {
+  # Create empty rasters to hold EVC and EVH data
+  evcRaster <-  raster(stateClassRaster)
+  evhRaster <-  raster(stateClassRaster)
+
+  ## Split state class raster into manageable chunks
+  blockInfo <- blockSize(stateClassRaster)
+
+  ## Calculate EVC and EVH from State Class block-by-block and write the results to their respective files
+  evcRaster <- writeStart(evcRaster, evcRasterPath, overwrite=TRUE)
+  evhRaster <- writeStart(evhRaster, evhRasterPath, overwrite=TRUE)
+  
+  for(i in seq(blockInfo$n)) {
+    stateClassValues <-
+      getValuesBlock(stateClassRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i])
+    
+    evcValues <- as.integer(stateClassValues / 1000) # EVC is the first three digits of the six digit state class code
+    evhValues <- stateClassValues %% 1000            # EVH is the last three digits, `%%` is the modulo, or remainder function
+    
+    evcRaster <- writeValues(evcRaster, evcValues, blockInfo$row[i])
+    evhRaster <- writeValues(evhRaster, evhValues, blockInfo$row[i])
+  }
+  
+  # End writing to rasters
+  evcRaster <- writeStop(evcRaster)
+  evhRaster <- writeStop(evhRaster)
+  
+  # Silent return
+  invisible()
+}
