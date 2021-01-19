@@ -1,4 +1,4 @@
-# Landfire Update
+﻿# Landfire Update
 
 This project contains code to update LANDFIRE raster maps of Existing Vegetation Cover (EVC) and
 and Existing Vegetation Height (EVH) using Fuel Disturbance (FDist) data and transition rules. This process is
@@ -210,13 +210,15 @@ Altogether, the folder should have the following structure:
 
 ```
 Geo Area Name
-|
+│
 └───raw
     │   Map Zones.tif
     │   EVC.tif
     │   EVH.tif
     │   EVT.tif
     │   FDIST.tif
+    │   Continuous EVC.tif
+    │   Continuous EVH.tif
     │
     └───nonspatial
         │   Transition Table.csv
@@ -227,6 +229,123 @@ Geo Area Name
 Please see the [Data Dictionary](#Dictionary) section below for a description of
 these input files and the example data files linked in the [Setup](#Setup-1) section for
 the expected format of each file.
+
+### <a name="Input_Example"></a>Importing New Data
+
+Below is a description of the steps that were taken to prepare the example data archive
+for the South Central Geo Area.
+
+#### Setup
+
+To begin, create a folder for the Geo Area (`data/SC/` in this example) as well as the
+necessary subfolders, `raw/` and `raw/nonspatial`. The folder structure will look like
+this:
+
+```
+SC
+│
+└───raw
+    │
+    └───nonspatial
+        │   
+
+```
+
+#### Spatial Data
+
+Next, we will populate the spatial data, which consists of seven raster maps of
+the entire Geo Area. These maps are provided by LANDFIRE and must be downloaded,
+extracted, moved into the `raw/` subfolder of the corresponding Geo Area data
+folder and renamed to be recognized by the script.
+
+For each of these seven maps, the following table lists the original file and
+archive names for the SC Geo Area.
+
+| Cleaned File Name  | Name of Archive Containing the File | Original File Name |
+|:-------------------|:------------------------------------|:-------------------|
+| Map Zones.tif      | sc_mapzone_tiff.zip                 | sc_mapzone.tif     |
+| EVC.tif            | sc_evc2.0class1.4_tiff.zip          | sc_evc_m.tif       |
+| EVH.tif            | sc_evh2.0class1.4_tiff.zip          | sc_evh_m.tif       |
+| EVT.tif            | sc_evt2.0_tiff.zip                  | sc_evt20.tif       |
+| FDIST.tif          | sc_fdist2020_tiff.zip               | sc_fdist.tif       |
+| Continuous EVC.tif | sc_evc2.0_tiff.zip                  | sc_evc20.tif       |
+| Continuous EVH.tif | sc_evh2.0_tiff.zip                  | sc_evh20.tif       |
+
+To use this table, download the zip archives listed in the second column. Next,
+extract the contents and copy the file listed in the third column into the
+`raw/` subfolder created in the previous section. Finally rename the files
+to the clean names listed in the first column.
+
+For example, to prepare the raster map of Map Zones in the SC Geo Area for the
+example data archive, I first downloaded and extracted `sc_mapzone_tiff.zip`.
+In the uncompressed folder, I found and moved the file `sc_mapzone.tif` into
+the folder `data/SC/raw/`. Finally, I renamed this raster map to
+`Map Zones.tif`. After repeating this process for all seven maps, the SC data
+folder should have the following structure:
+
+```
+SC
+│
+└───raw
+    │   Map Zones.tif
+    │   EVC.tif
+    │   EVH.tif
+    │   EVT.tif
+    │   FDIST.tif
+    │   Continuous EVC.tif
+    │   Continuous EVH.tif
+    │
+    └───nonspatial
+        │
+
+```
+
+#### Non-Spatial Data
+
+Next, we will prepare the two non-spatial data files needed for each Geo Area,
+the transition table and the Existing Vegetation Type (EVT) color look up
+table. Both of these files are provided by LANDFIRE as tables within a
+Microsoft Access Database file. These Access database tables must be
+exported, converted to Comma Separated Value (CSV) format, moved into the
+`raw/nonspatial/` subfolder of the corresponding Geo Area data folder and
+renamed to be recognized for the script.
+
+Both tables needed for the SC Geo Area were found within the
+`SC_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_KCH_2020_12_18.accdb`
+database file. The following table connects the non-spatial data file names
+with their original table names in the Access database.
+
+| Cleaned File Name    | Original Table Name within Database |
+|:---------------------|:------------------------------------|
+| Transition Table.csv | vegtransf_rv02i_d                   |
+| EVT Colors.csv       | sc_evt200                           |
+
+To use this table, open the Access database file using Microsoft Access and
+locate the tables listed in the second column. Right-click each table and
+select `Export` > `Excel` to export the tables to Excel (*.xlsx) format. Open
+the resulting Excel spreadsheets in Microsoft Excel and use the `File` > 
+`Save As` dialog to convert the file to a CSV file. Finally, move the files to
+the `raw/nonspatial/` subfolder and rename the files to the clean file names
+listed in the first column.
+
+For example, to prepare the transition table for the SC Geo Area, I first
+downloaded the Access database file. I located the `vegtransf_rv02i_d` table
+within this database, exported it into an Excel file using Access, and then
+used Excel to convert the file into a CSV. I moved this CSV file into the
+folder `data/SC/raw/nonspatial/` and renamed it to `Transition Table.csv`.
+After repeating these steps for both nonspatial datasets, you should have
+all the necessary data to process the entire Geo Area.
+
+#### Updating the Config File
+
+Once the data files for a new Geo Area have been prepared, it is important to
+update the configuration file `config/config.yaml` to reflect these changes.
+Please refer to the [Configuration](#Configuration-1) section for details, but
+be sure to update the path to the new data folder (`dataFolder`), the list of
+map zones to generate scenarios for (`mapzonesToKeep`), and the SyncroSim
+library and project names (`libraryName` and `projectName`, respectively). The
+crop extent used for testing (`cropExtentPath`) must also be updated to use
+testing mode with a new Geo Area.
 
 ## <a name="Dictionary"></a>Data Dictionary
 
