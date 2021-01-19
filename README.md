@@ -1,4 +1,4 @@
-﻿# Landfire Update
+# Landfire Update
 
 This project contains code to update LANDFIRE raster maps of Existing Vegetation Cover (EVC) and
 and Existing Vegetation Height (EVH) using Fuel Disturbance (FDist) data and transition rules. This process is
@@ -227,19 +227,19 @@ Geo Area Name
 ```
 
 Please see the [Data Dictionary](#Dictionary) section below for a description of
-these input files and the example data files linked in the [Setup](#Setup-1) section for
-the expected format of each file.
+these input files and the example data files linked in the [Setup](#Setup-1)
+section for the expected format of each file.
 
 ### <a name="Input_Example"></a>Importing New Data
 
-Below is a description of the steps that were taken to prepare the example data archive
-for the South Central Geo Area.
+Below is a description of the steps that were taken to prepare the example data
+archive for the South Central Geo Area.
 
 #### Setup
 
-To begin, create a folder for the Geo Area (`data/SC/` in this example) as well as the
-necessary subfolders, `raw/` and `raw/nonspatial`. The folder structure will look like
-this:
+To begin, create a folder for the Geo Area (`data/SC/` in this example) as well
+as the necessary subfolders, `raw/` and `raw/nonspatial/`. The folder structure
+will look like this:
 
 ```
 SC
@@ -302,13 +302,11 @@ SC
 
 #### Non-Spatial Data
 
-Next, we will prepare the two non-spatial data files needed for each Geo Area,
-the transition table and the Existing Vegetation Type (EVT) color look up
-table. Both of these files are provided by LANDFIRE as tables within a
-Microsoft Access Database file. These Access database tables must be
-exported, converted to Comma Separated Value (CSV) format, moved into the
-`raw/nonspatial/` subfolder of the corresponding Geo Area data folder and
-renamed to be recognized for the script.
+Next, we will prepare the two non-spatial data files needed for each Geo Are.
+Both of these files are provided by LANDFIRE as tables within a Microsoft Access
+database file. These Access database tables must be exported, converted to Comma
+Separated Value (CSV) format, moved into the `raw/nonspatial/` subfolder of the
+corresponding Geo Area data folder and renamed to be recognized for the script.
 
 Both tables needed for the SC Geo Area were found within the
 `SC_GeoArea_VegTransitions_Update_for_Remap_KCH_complete_KCH_2020_12_18.accdb`
