@@ -190,9 +190,6 @@ evhContinuousRasters <-
 # Return to sequential operation
 plan(sequential)
 
-# Remove unneeded temporary files ----------------------------------------------
-unlink(categoricalTempFolder, recursive = TRUE)
-
 # Stitch and overlay disturbed EVC and EVH over initial EVC and EVH ------------
 
 log_print("Stitching and overlaying raster maps.")
@@ -228,8 +225,6 @@ evcOverlaidRaster <- do.call(raster::merge, evcMergeArgs)
 evhOverlaidRaster <- do.call(raster::merge, evhMergeArgs)
 
 # Wrap up ----------------------------------------------------------------------
-
-unlink(continuousTempFolder, recursive = TRUE)
 
 log_print(str_c("Done reconstructing Geo Area! ", 
               "Stitched raster maps can be found in ",

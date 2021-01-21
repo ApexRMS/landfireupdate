@@ -1,12 +1,12 @@
 # Landfire Update
 
-This project contains code to update LANDFIRE raster maps of Existing Vegetation Cover (EVC) and
-and Existing Vegetation Height (EVH) using Fuel Disturbance (FDist) data and transition rules. This process is
-broken into three principal tasks: generating a SyncroSim library that organizes
-these inputs and transition rules by Map Zone; running the SyncroSim library to
-forecast these new vegetation parameters by Map Zone; and reconstructing
-EVC and EVH maps for the entire Geo Area from the maps generated
-for each Map Zone.
+This project contains code to update LANDFIRE raster maps of Existing Vegetation
+Cover (EVC) and and Existing Vegetation Height (EVH) using Fuel Disturbance
+(FDist) data and transition rules. This process is broken into three principal
+tasks: generating a SyncroSim library that organizes these inputs and transition
+rules by Map Zone; running the SyncroSim library to forecast these new
+vegetation parameters by Map Zone; and reconstructing EVC and EVH maps for the
+entire Geo Area from the maps generated for each Map Zone.
 
 Below are the instructions to setup, configure, and run the code.
 
@@ -29,7 +29,7 @@ Below are the instructions to setup, configure, and run the code.
 ### Dependencies
 
 These scripts require working installations of R and SyncroSim, and were
-developed on R version v4.0.3 and SyncroSim v2.0.23. Additionally the following
+developed on R version v4.0.3 and SyncroSim v2.0.24. Additionally the following
 R packages must be installed: `rsyncrosim`, `tidyverse`, `raster`,  `furrr`,
 `rgdal`, `logr`, `yaml`. The ST-Sim package (v3.2.25) must also be installed in
 SyncroSim. The instructions to run the script assume you will be using [RStudio](https://rstudio.com/),
@@ -39,19 +39,15 @@ however, this is not a strict requirement.
 
 A number of data files are required that are not included on the GitHub repository due
 to size constraints. These files have been compressed into a zip folder that can
-be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Data%20Files%20-%202021-01-08.zip).
-Please note that this file is quite large (~1.1GB).
+be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/LANDFIRE%20Update%20Example%20Data%20Files%20-%202021-01-19.zip).
+Please note that this file is quite large (~5.5GB).
 
 The zip folder also contains the expected paths of the files, and so it is
 recommended to extract the zip file directly into the root of this git
-repository. In other words, the `data/` and `library/` subdirectories should be
-present in the same directory as this README after extraction, not inside
-another folder (such as `LANDFIRE Update Data Files/`).
-
-This archive also includes an example SyncroSim library (`library/NW Geo Area Update.ssim`)
-generated using this repository for Map Zone 19. This example library can be
-run directly in SyncroSim without running any of the R scripts. The default
-configuration (described below) should reproduce this library exactly.
+repository. In other words, the `data/` folder should be present in the same
+folder as this README after extraction, not inside another folder (such as
+`LANDFIRE Update Data Files/`). This data archive includes all the input data
+files needed to process the SC and NW Geo Areas.
 
 ## Configuration
 
@@ -104,8 +100,8 @@ is strongly memory limited. Accordingly, setting too many jobs here can lead to
 Out-of-Memory errors. Please refer to the [Suggested Configuration](#Suggested)
 Section below for suggestions on setting `ssimJobs`.
 
-Finally, `tileCols` can be used to decide how finely the raster maps are split
-up for the spatial multiprocessing in SyncroSim. Higher values will decrease
+Finally, `tileSize` can be used to decide how finely the raster maps are split
+up for the spatial multiprocessing in SyncroSim. Lower values will decrease
 memory usage in SyncroSim (to a point), but will generally increase run time.
 
 ### Testing Options
@@ -130,20 +126,17 @@ The suggested run configuration will depend on the available compute resources.
 Below is a table outlining some general recommendations and the corresponding
 expected run times.
 
-
-| Min. Processors | Min. Memory | SyncroSim Jobs | Tiling Columns | Approx. Run Time for NW Geo Area | Approx. Run Time for Map Zone 19 |
-|----------------:|------------:|---------------:|---------------:|---------------------------------:|---------------------------------:|
-|               2 |        32GB |              1 |             20 |                       40 - 48 d  |                        80 - 95 h |
-|               4 |        64GB |              2 |             20 |                       20 - 24 d  |                        40 - 50 h |
-|               4 |       100GB |              4 |             20 |                       10 - 12 d  |                        20 - 25 h |
-|               8 |       160GB |              8 |             20 |                         5 - 6 d  |                        11 - 12 h |
-|              16 |       256GB |             16 |             10 |                         2 - 3 d  |                            ~ 5 h |
-|              32 |       512GB |             32 |             10 |                           ~24 h  |                            ~ 2 h |
-|              64 |      1024GB |             64 |             10 |                           ~16 h  |                          ~ 1.5 h |
+| Min. Processors | Min. Memory | SyncroSim Jobs | Tile Size | Approx. Run Time for NW Geo Area | Approx. Run Time for Map Zone 19 |
+|----------------:|------------:|---------------:|----------:|---------------------------------:|---------------------------------:|
+|               4 |        32GB |              2 |       150 |                         4 - 5 d  |                          4 - 8 h |
+|               4 |        64GB |              4 |       150 |                         2 - 3 d  |                          2 - 4 h |
+|               8 |       128GB |              8 |       250 |                           ~ 1 d  |                          1 - 2 h |
+|              16 |       256GB |             16 |       250 |                       12 - 18 h  |                           ~ 45 m |
+|              32 |       512GB |             32 |       250 |                        8 - 12 h  |                           ~ 30 m |
 
 To use this table, find the last row for which you have at least the minimum
 number of available processors *and* minimum amount of memory. Set the number of
-SyncroSim jobs (`ssimJobs`) and tiling columns (`tileCols`) accordingly in the
+SyncroSim jobs (`ssimJobs`) and tile sizes (`tileSize`) accordingly in the
 config file. The remaining two columns provide ranges for the expected run times.
 
 ## <a name="Running"></a>Running the Update
