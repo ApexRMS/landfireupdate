@@ -225,8 +225,8 @@ section for the expected format of each file.
 
 ### <a name="Input_Example"></a>Importing New Data
 
-Below is a description of the steps that were taken to prepare the example data
-archive for the South Central Geo Area.
+Below is a description of the steps to prepare data for updating a Geo Area 
+using the South Central Geo Area as an example.
 
 #### Setup
 
@@ -325,7 +325,26 @@ within this database, exported it into an Excel file using Access, and then
 used Excel to convert the file into a CSV. I moved this CSV file into the
 folder `data/SC/raw/nonspatial/` and renamed it to `Transition Table.csv`.
 After repeating these steps for both nonspatial datasets, you should have
-all the necessary data to process the entire Geo Area.
+all the necessary data to process the entire Geo Area. with your folder/file 
+structure shown below.
+
+```
+SC
+│
+└───raw
+    │   Map Zones.tif
+    │   EVC.tif
+    │   EVH.tif
+    │   EVT.tif
+    │   FDIST.tif
+    │   Continuous EVC.tif
+    │   Continuous EVH.tif
+    │
+    └───nonspatial
+        │  Transition Table.csv
+        |  EVT Colors.csv
+
+```
 
 #### Updating the Config File
 
