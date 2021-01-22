@@ -325,7 +325,7 @@ within this database, exported it into an Excel file using Access, and then
 used Excel to convert the file into a CSV. I moved this CSV file into the
 folder `data/SC/raw/nonspatial/` and renamed it to `Transition Table.csv`.
 After repeating these steps for both nonspatial datasets, you should have
-all the necessary data to process the entire Geo Area. with your folder/file 
+all the necessary data to process the entire Geo Area, with your folder/file 
 structure shown below.
 
 ```
