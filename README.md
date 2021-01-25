@@ -15,13 +15,15 @@ Below are the instructions to setup, configure, and run the code.
 #### [Setup](#Setup-1)
 
 #### [Configuration](#Configuration-1)
- 
+
 #### [Suggeted Configuration](#Suggested)
- 
+
 #### [Running the Update](#Running)
- 
+
+#### [Error Checking](#QA)
+
 #### [Input Data Structure](#InputStructure)
- 
+
 #### [Data Dictionary](#Dictionary)
 
 ## Setup
@@ -173,6 +175,45 @@ in the configuration.
 
 NOTE that using the GUI is optional and the scenario can also be run directly 
 through the SyncroSim commandline or by using the rsyncrosim package for R.
+
+## <a name="QA"></a>Error Checking
+
+A number of automated checks are incorporated into the library building process
+to catch transition issues prior to simulation. These tests are described here:
+
+### Duplicate Rules Check
+
+The Geo-Area-specific input file `Transition Table.csv` defines transition rules
+for cells as a function of the disturbance (VDIST), Existing Vegetation Cover
+(EVC), Existing Vegetation Height (EVH), Existing Vegetation Type (EVT), and Map
+Zone. This check ensures that each combination of inputs maps to a unique output
+EVC and EVH. If there are multiple transition rules for a given set of inputs,
+the script will throw an error and stop building the library.
+
+### Missing Rule Check
+
+This test finds every combination of disturbance (VDIST), Existing Vegetation
+Cover (EVC), Existing Vegetation Height (EVH), Existing Vegetation Type (EVT),
+and Map Zone that are present in the cleaned raster maps. By comparing this
+table to the table of all defined transition rules, this test identifies all
+the disturbed cells which are missing an explicit transition rule. This table of
+missing transition rules is written to the `library/` folder and a warning is
+given if any missing rules were found.
+
+### Invalid State Class Check
+
+This test finds every combination of Existing Vegetation Cover (EVC) and
+Existing Vegetation Height (EVH) that is present in the cleaned raster maps and
+ensures that they are valid combinations. For example, a cell with 50% forest
+cover should not have a corresponding shrub vegetation height code. A table of
+the invalid states and the Map Zones in which they were found are written to the
+`library/` folder and a warning is given if any invalid states were found.
+
+Flagged states that should be considered valid can be appended to the
+`data/shared/All Combinations.csv` file to avoid future warnings. See the
+[Data Dictionary](#Dictionary) section for more information about this file.
+Flagged states that truly are invalid are indicative of errors in the raw EVC or
+EVH map for the Geo Area.
 
 ## <a name="InputStructure"></a>Input Data Structure
 
