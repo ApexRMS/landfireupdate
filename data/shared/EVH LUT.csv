@@ -38,5 +38,5 @@ VALUE,CLASSNAMES,LIFEFORM,HC_ID,CONTINUOUS
 109,Forest Height 5 to 10 meters,Tree,6,108
 110,Forest Height 10 to 25 meters,Tree,7,118
 111,Forest Height 25 to 50 meters,Tree,8,138
-112,Forest Height > 50 meters,Tree,8,175
+112,Forest Height > 50 meters,Tree,8,150
 255,Background,Background,0,-9999

@@ -122,6 +122,26 @@ Map Zones to be kept must at least partially overlap the chosen extent.
 installation. This is primarily of use on Linux machines. Leave this cell empty
 to use the default installation directory.
 
+### Conversion of Categorical to Continuous EVC and EVH
+
+As part of the final reconstruction of the entire Geo Area, the categorical
+Existing Vegetation Cover (EVC) and Existing Vegetation Height (EVH) codes are
+converted to their continuous code counterparts. While this conversion is
+straightforward for some categorical codes, there is some degree of choice for
+others.
+
+To view and configure this conversion, refer to the `data/shared/EVC LUT.csv`
+and `data/shared/EVH LUT.csv` look up tables. The first column, `VALUE`, lists
+all valid categorical codes for EVC and EVH respectively while the final column,
+`CONTINUOUS`, lists the continuous code that corresponding categorical value
+will be converted to. Please do *not* edit any of the columns in these tables
+except for the final column, `CONTINUOUS`. Please refer to the
+[Data Dictionary](#Dictionary) section for more details about these and other
+data files.
+
+If changes are made to the conversion rules after completing a run, they can be
+applied retroactively by rerunning the `reconstructGeoArea.R` script.
+
 ## <a name="Suggested"></a>Suggested Configuration
 
 The suggested run configuration will depend on the available compute resources.
