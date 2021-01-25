@@ -39,17 +39,34 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # Are there mixed life form or other invalid state classes?
   # - Mixed life form states can be identified by vegetation cover (x state) labels
   #   that don't match their vegetation height (y state) labels
-  # - Probably not necessary given how states are now constructed, but is pretty quick
   allowedStates <- read_csv(allowedStatesPath) %>%
     mutate(ID = EVC * 1000 + EVH) %>%
     pull(ID)
   
-  numInvalidStates <-
-   !(stateClasses %in% allowedStates) %>%
-    sum
+  # Begin parallel processing
+  plan(multisession, workers = nThreads)
   
-  if(numInvalidStates != 0)
-    stop("Found invalid state classes! Please check the transition table non-spatial input!")
+  invalidStates <- future_map_dfr(
+    runTags,
+    ~ tibble(
+      `Map Zone` = .x,
+      state = uniqueInRaster(raster(str_c(cleanRasterDirectoryRelative, .x, "/StateClass.tif")))),
+    .options = furrr_options(seed = TRUE)) %>%
+    filter(!(state %in% allowedStates)) %>%
+    mutate(
+      EVC = as.integer(state / 1000),
+      EVH = state %% 1000) %>%
+    left_join(read_csv(evcTablePath) %>% dplyr::select(EVC = VALUE, EVC_NAME = CLASSNAMES), by = "EVC") %>%
+    left_join(read_csv(evhTablePath) %>% dplyr::select(EVH = VALUE, EVH_NAME = CLASSNAMES), by = "EVH") %>%
+    rename(`Invalid State Class` = state)
+  
+  # Return to sequential operation
+  plan(sequential)
+
+  # Output
+  write_csv(invalidStates, str_c("library/", runLibrary, " Invalid States.csv"))
+  if(nrow(invalidStates) >= 1)
+    warning("Found one or more invalid state classes! Table of invalid combinations of EVC and EVH written to `library/", runLibrary, " Invalid States.csv`")
   
   # Check for missing rules ---------------------------------------------------
   
