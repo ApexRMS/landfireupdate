@@ -8,6 +8,7 @@ dataFolder: data/NW
 
 # List of Map Zones to be included in the run
 mapzonesToKeep:
+# # NW Map Zones
 #  -  1
 #  -  2
 #  -  7
@@ -20,6 +21,16 @@ mapzonesToKeep:
 #  - 21
 #  - 22
 #  - 29
+# # SC Map Zones
+# - 26
+# - 27
+# - 32
+# - 33
+# - 34
+# - 35
+# - 36
+# - 38
+# - 43
 
 # SyncroSim Object Names -------------------------------------------------------
 
