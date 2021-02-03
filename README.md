@@ -78,6 +78,11 @@ Zones in the NW Geo Area are listed here but are commented out, with the excepti
 of Map Zone 19. You can remove these comments to run the entire NW Geo Area. For
 all other Geo Areas you must update the list of Map Zones to keep.
 
+Finally, `tsdToRemove` is another itemized list that is used to decide which if
+any Time Since Distrubance (TSD) codes to filter out of the FDIST layer during
+processing. This can be used to exclude older disturbances for the update, such
+as those that have already been accounted for in the raw vegetation maps.
+
 ### SyncroSim Object Names
 
 These are the names of the SyncroSim library and project that will be built by

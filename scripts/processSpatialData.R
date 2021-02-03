@@ -85,6 +85,26 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
       filename = mapzoneRasterPath
     )
   
+  # In preparation for using the FDIST layer as a mask, we need to construct a
+  # matrix describing which cells in the FDIST we wish to assign a value of NA
+  # - This will include 0 (no disturbance) but also any TSD codes we wish to
+  #   remove from the analysis
+  # - The format of this matrix is dictated by the `raster::reclassify()` function
+  # - Note: the final digit of the FDIST code is just the TSD code
+  fdistToRemove <-
+    read_csv(distCrosswalkPath) %>%
+    filter((FDIST %% 10) %in% tsdToRemove) %>% # Note: (x %% 10) is just the last digit of x
+    pull(FDIST) %>%
+    as.integer()
+  
+  fdistReclassification <-
+    matrix(
+      c(0L,
+        fdistToRemove,
+        rep(NA_integer_, length(fdistToRemove) + 1)),
+      ncol = 2)
+    
+
   # Crop and mask Disturbance map down to the Map Zone of interest
   # Reclassify 0 (no disturbance) as NA for masking other maps
   # Finally trim down to only include relevant cells
@@ -92,7 +112,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     cropRaster(fdistRaster, tempRasterPath, extent(mapzoneRaster)) %>%
     maskRaster(fdistRasterPath, maskingRaster = mapzoneRaster) %>%
     reclassify(
-      rcl = matrix(c(0L, NA_integer_), ncol = 2),
+      rcl = fdistReclassification,
       filename = tempRasterPath,
       overwrite = TRUE) %>%
     trimRaster(filename = fdistRasterPath)

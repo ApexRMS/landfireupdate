@@ -16,6 +16,9 @@ if(!config$dataFolder %>% dir.exists)
 if(!config$mapzonesToKeep %>% is.integer)
   stop("Invalid list of Map Zones to keep. Please check config file.")
 
+if(!all(config$tsdToRemove %in% 1:3))
+  stop("Invalid list of TSD codes to filter out. Please check config file.")
+
 # Check that the number of requested R threads is valid
 if(config$nThreads %>% is.null) {
   nThreads <- future::availableCores()
@@ -56,6 +59,8 @@ runTags <- str_c("Map Zone ", mapzonesToKeep)
 
 # The name of the SyncroSim library to store the scenario, etc. in
 runLibrary <- config$libraryName
+
+tsdToRemove <- config$tsdToRemove
 
 # SyncroSim installation directory
 # - If left blank (NA), convert to NULL to use default installation location
