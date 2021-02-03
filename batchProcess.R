@@ -45,6 +45,9 @@ logFile <- log_open(logFilePath)
 
 log_print("Starting pre-process!")
 
+# Remove old folder of cleaned data to avoid mixing data from runs
+unlink(file.path(cleanRasterDirectoryRelative), recursive = T)
+
 # This function is safe to parallelize
 # Begin parallel processing
 plan(multisession, workers = nThreads)
