@@ -308,9 +308,17 @@ SC
 #### Spatial Data
 
 Next, we will populate the spatial data, which consists of seven raster maps of
-the entire Geo Area. These maps are provided by LANDFIRE and must be downloaded,
-extracted, moved into the `raw/` subfolder of the corresponding Geo Area data
-folder and renamed to be recognized by the script.
+the entire Geo Area. These maps are provided by LANDFIRE but must be masked by
+Geo Area. Wendell Hann and Katherine Hegewisch from the University of Idaho have
+already done this masking for us in ArcGIS and converted the output to GeoTiff 
+format. As part of this pre-processing, they also removed a handful of EVC and
+EVH cells that were mistakenly coded 0 or 255. Finally, these masked files were
+made available to Apex RMS through the University of Idaho OwnCloud server.
+Please contact Wendel or Katherine to get access to these files.
+
+These pre-porcessed files were then downloaded, decompressed, moved into the
+`raw/` subfolder of the corresponding Geo Area data folder and renamed in order
+to be recognized by the script.
 
 For each of these seven maps, the following table lists the original file and
 archive names for the SC Geo Area.
@@ -445,10 +453,10 @@ Geo Areas.
 
 #### <a name="Dict_Combinations"></a> All Combinations.csv
 
-| Column | Description                                                                   |
-|:-------|:------------------------------------------------------------------------------|
-| EVC    | An Existing Vegetation Cover (EVC) code.                                       |
-| EVH    | An Existing Vegetation Cover (EVH) code that can be paired with the given EVC. |
+| Column | Description                                                                     |
+|:-------|:--------------------------------------------------------------------------------|
+| EVC    | An Existing Vegetation Cover (EVC) code.                                        |
+| EVH    | An Existing Vegetation Height (EVH) code that can be paired with the given EVC. |
 
 #### <a name="Dict_Cross"></a> Disturbance Crosswalk.csv
 
@@ -473,11 +481,11 @@ Geo Areas.
 
 | Column       | Description                                                                                        |
 |:-------------|:---------------------------------------------------------------------------------------------------|
-| VALUE        | An Existing Vegetation Cover (EVH) code.                                                           |
+| VALUE        | An Existing Vegetation Height (EVH) code.                                                          |
 | CLASSNAMES   | A matching name for the cover code.                                                                |
 | LIFEFORM     | A grouping variable describing the lifeform type.                                                  |
 | HC_ID        | Not used.                                                                                          |
-| CONTINUOUS   | A matching continuous Existing Vegetation Height (EVC) code to use during Geo Area reconstruction. |
+| CONTINUOUS   | A matching continuous Existing Vegetation Height (EVH) code to use during Geo Area reconstruction. |
 
 
 #### <a name="Dict_VDIST"></a> VDIST LUT.csv
