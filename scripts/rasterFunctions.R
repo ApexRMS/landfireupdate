@@ -65,6 +65,9 @@ cropRaster <- function(inputRaster, filename, outputExtent) {
   # Calculate offset from original
   offsetAbove <- round((ymax(extent(inputRaster)) - ymax(outputExtent)) / res(inputRaster)[2])
   offsetLeft <-  round((xmin(outputExtent) - xmin(extent(inputRaster))) / res(inputRaster)[1])
+  
+  if(offsetAbove < 0 | offsetLeft < 0)
+    stop("Attempting to crop a smaller raster to a larger extent. This should not happen and could cause unexpected behaviour.")
 
   ## Split output into manageable chunks and fill with data from input
   blockInfo <- blockSize(outputRaster)
