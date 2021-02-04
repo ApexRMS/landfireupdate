@@ -37,6 +37,9 @@ evhCategoricalTempFolder <- str_c(stitchedRasterDirectory, "categorical/evh/")
 evcContinuousTempFolder  <- str_c(stitchedRasterDirectory, "continuous/evc/")
 evhContinuousTempFolder  <- str_c(stitchedRasterDirectory, "continuous/evh/")
 
+# Delete outputs from previous run to avoid mixing results
+unlink(file.path(stitchedRasterDirectory), recursive = T)
+
 # Create directory and paths to store stitched raster maps
 dir.create(stitchedRasterDirectory, showWarnings = F)
 dir.create(categoricalTempFolder, showWarnings = F)
@@ -190,6 +193,9 @@ evhContinuousRasters <-
 # Return to sequential operation
 plan(sequential)
 
+# We can now remove the categorical EVC and EVH folder
+unlink(file.path(categoricalTempFolder), recursive = T)
+
 # Stitch and overlay disturbed EVC and EVH over initial EVC and EVH ------------
 
 log_print("Stitching and overlaying raster maps.")
@@ -223,6 +229,9 @@ evhMergeArgs <- c(evhContinuousRasters,                   # the updated continuo
 # EVC and EVH raster maps
 evcOverlaidRaster <- do.call(raster::merge, evcMergeArgs)
 evhOverlaidRaster <- do.call(raster::merge, evhMergeArgs)
+
+# Finally we can remove the unmerged continuous EVC and EVH folder
+unlink(file.path(continuousTempFolder), recursive = T)
 
 # Wrap up ----------------------------------------------------------------------
 
