@@ -32,6 +32,13 @@ mapzonesToKeep:
 # - 38
 # - 43
 
+# List of Time Since Distrubance (TSD) codes to filter out
+# - TSD1 = One Year
+# - TSD2 = Two to Five Years
+# - TSD3 = Six to Ten Years
+tsdToRemove:
+  - 3
+
 # SyncroSim Object Names -------------------------------------------------------
 
 # The names to use for the SyncroSim Library and Project.
