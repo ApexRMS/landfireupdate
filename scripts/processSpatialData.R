@@ -33,9 +33,17 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   vdistInfoPath <- str_c(cleanRasterDirectory, "VDIST.csv")
 
   # Load non-spatial data --------------------------------------------------
-  distCrosswalk <-   read_csv(distCrosswalkPath) %>%
+  distCrosswalk <- read_csv(distCrosswalkPath) %>%
     mutate(name = paste(d_type, d_severity, d_time, sep = " - ")) %>%
     dplyr::select(fdist = FDIST, vdist = VDIST, name)
+  
+  evcCrosswalk <- read_csv(evcCrosswalkPath) %>%
+    rename(from = "CONTINUOUS", to = "CATEGORICAL") %>%
+    as.matrix
+  
+  evhCrosswalk <- read_csv(evhCrosswalkPath) %>%
+    rename(from = "CONTINUOUS", to = "CATEGORICAL") %>%
+    as.matrix
 
   # Load spatial data -------------------------------------------------------
 
@@ -134,15 +142,21 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     cropRaster(evtRaster, tempRasterPath, extent(mapzoneRaster)) %>%
     maskRaster(evtRasterPath, maskingRaster = mapzoneRaster)
 
+  # In addition to cropping and masking the EVC and EVH raster maps, we also
+  # need to convert the continuous codes to categorical using their respective
+  # crosswalks
+  
   # EVC
   evcRaster <-
-    cropRaster(evcRaster, tempRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(evcRasterPath, maskingRaster = mapzoneRaster)
+    cropRaster(evcRaster, evcRasterPath, extent(mapzoneRaster)) %>%
+    maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
+    reclassify(evcCrosswalk, filename = evcRasterPath, overwrite = T)
 
   # EVH
   evhRaster <-
-    cropRaster(evhRaster, tempRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(evhRasterPath, maskingRaster = mapzoneRaster)
+    cropRaster(evhRaster, evhRasterPath, extent(mapzoneRaster)) %>%
+    maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
+    reclassify(evhCrosswalk, filename = evhRasterPath, overwrite = T)
 
   # Convert disturbance to VDIST ------------------------------------------------
 

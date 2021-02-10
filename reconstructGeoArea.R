@@ -53,8 +53,8 @@ dir.create(evhContinuousTempFolder, showWarnings = F)
 fullExtent <- extent(raster(mapzoneRawRasterPath))
 
 # Load necessary raw raster maps
-evcContinuousRawRaster <- raster(evcContinuousRawRasterPath)
-evhContinuousRawRaster <- raster(evhContinuousRawRasterPath)
+evcContinuousRawRaster <- raster(evcRawRasterPath)
+evhContinuousRawRaster <- raster(evhRawRasterPath)
 
 # Create names for the output rasters
 evcOverlaidRasterPath <- str_c(stitchedRasterDirectory, "EVC.tif")

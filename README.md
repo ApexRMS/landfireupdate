@@ -276,8 +276,6 @@ Geo Area Name
     │   EVH.tif
     │   EVT.tif
     │   FDIST.tif
-    │   Continuous EVC.tif
-    │   Continuous EVH.tif
     │
     └───nonspatial
         │   Transition Table.csv
@@ -328,15 +326,13 @@ to be recognized by the script.
 For each of these seven maps, the following table lists the original file and
 archive names for the SC Geo Area.
 
-| Cleaned File Name  | Name of Archive Containing the File | Original File Name |
-|:-------------------|:------------------------------------|:-------------------|
-| Map Zones.tif      | sc_mapzone_tiff.zip                 | sc_mapzone.tif     |
-| EVC.tif            | sc_evc2.0class1.4_tiff.zip          | sc_evc_m.tif       |
-| EVH.tif            | sc_evh2.0class1.4_tiff.zip          | sc_evh_m.tif       |
-| EVT.tif            | sc_evt2.0_tiff.zip                  | sc_evt20.tif       |
-| FDIST.tif          | sc_fdist2020_tiff.zip               | sc_fdist.tif       |
-| Continuous EVC.tif | sc_evc2.0_tiff.zip                  | sc_evc20.tif       |
-| Continuous EVH.tif | sc_evh2.0_tiff.zip                  | sc_evh20.tif       |
+| Cleaned File Name | Name of Archive Containing the File | Original File Name |
+|:------------------|:------------------------------------|:-------------------|
+| Map Zones.tif     | sc_mapzone_tiff.zip                 | sc_mapzone.tif     |
+| EVC.tif           | sc_evc2.0_tiff.zip                  | sc_evc20.tif       |
+| EVH.tif           | sc_evh2.0_tiff.zip                  | sc_evh20.tif       |
+| EVT.tif           | sc_evt2.0_tiff.zip                  | sc_evt20.tif       |
+| FDIST.tif         | sc_fdist2020_tiff.zip               | sc_fdist.tif       |
 
 To use this table, download the zip archives listed in the second column. Next,
 extract the contents and copy the file listed in the third column into the
@@ -359,8 +355,6 @@ SC
     │   EVH.tif
     │   EVT.tif
     │   FDIST.tif
-    │   Continuous EVC.tif
-    │   Continuous EVH.tif
     │
     └───nonspatial
         │
@@ -411,8 +405,6 @@ SC
     │   EVH.tif
     │   EVT.tif
     │   FDIST.tif
-    │   Continuous EVC.tif
-    │   Continuous EVH.tif
     │
     └───nonspatial
         │  Transition Table.csv
@@ -445,16 +437,18 @@ within these subsections.
 These common files are stored in the `data/Shared/` folder and are used for all
 Geo Areas.
 
-| File Name                                    | Description                                                                                                              |
-|:---------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|
-| [All Combinations.csv](#Dict_Combinations)   | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.             |
-| [Disturbance Crosswalk.csv](#Dict_Cross)     | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.             |
-| [EVC LUT.csv](#Dict_EVC)                     | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                     |
-| [EVH LUT.csv](#Dict_EVH)                     | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                    |
-| [VDIST LUT.csv](#Dict_VDIST)                 | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                       |
-| [EVC Colors.csv](#Dict_EVCcol)               | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps. |
-| [Default SyncroSim Charts.csv](#Dict_Charts) | This table is used to build the default SyncroSim charts for visualizing the run results.                                |
-| [Default SyncroSim Maps.csv](#Dict_Charts)   | This table is used to build the default SyncroSim maps for visualizing the run results.                                  |
+| File Name                                    | Description                                                                                                                                                                 |
+|:---------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [All Combinations.csv](#Dict_Combinations)   | This table provides every valid combination of EVC and EVH. This is used to check for invalid state classes.                                                                |
+| [Disturbance Crosswalk.csv](#Dict_Cross)     | This crosswalk is used to convert between Fuel Disturbance (FDist) and Vegetation Disturbance (VDist) codes.                                                                |
+| [EVC Crosswalk.csv](#Dict_evcCross)          | This crosswalk is used to convert from the continuous Existing Vegetation Cover (EVC) codes used in the raster maps to the categorical codes used by the transition rules.  |
+| [EVH Crosswalk.csv](#Dict_evhCross)          | This crosswalk is used to convert from the continuous Existing Vegetation Height (EVH) codes used in the raster maps to the categorical codes used by the transition rules. |
+| [EVC LUT.csv](#Dict_EVC)                     | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                                                                        |
+| [EVH LUT.csv](#Dict_EVH)                     | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                                                                       |
+| [VDIST LUT.csv](#Dict_VDIST)                 | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                                                                          |
+| [EVC Colors.csv](#Dict_EVCcol)               | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps.                                                    |
+| [Default SyncroSim Charts.csv](#Dict_Charts) | This table is used to build the default SyncroSim charts for visualizing the run results.                                                                                   |
+| [Default SyncroSim Maps.csv](#Dict_Charts)   | This table is used to build the default SyncroSim maps for visualizing the run results.                                                                                     |
 
 #### <a name="Dict_Combinations"></a> All Combinations.csv
 
@@ -472,6 +466,20 @@ Geo Areas.
 | d_type     | The type of disturbance.                  |
 | d_severity | The severity of the disturbance.          |
 | d_time     | The time since the disturbance.           |
+
+#### <a name="Dict_evcCross"></a> EVC Crosswalk.csv
+
+| Column      | Description                                                         |
+|:------------|:--------------------------------------------------------------------|
+| CONTINUOUS  | A continuous Existing Vegetation Cover (EVC) code.                  |
+| CATEGORICAL | The corresponding categorical Existing Vegetation Cover (EVC) code. |
+
+#### <a name="Dict_evhCross"></a> EVH Crosswalk.csv
+
+| Column      | Description                                                          |
+|:------------|:---------------------------------------------------------------------|
+| CONTINUOUS  | A continuous Existing Vegetation Height (EVH) code.                  |
+| CATEGORICAL | The corresponding categorical Existing Vegetation Height (EVH) code. |
 
 #### <a name="Dict_EVC"></a> EVC LUT.csv
 
@@ -533,12 +541,10 @@ Geo-Area-specific folder.
 | [Transition Table.csv](#Dict_Transition) | This table defines how every combination of Existing Vegetation Cover (EVC), Height (EVH), and Type (EVT) responds to a given disturbance (VDist). |
 | [EVT Colors.csv](#Dict_EVT)              | This table is used to assign colors to Existing Vegetation Type (EVT) codes. These are used when rendering raster maps.                            |
 | Map Zones.tif                            | This is the raster map of Map Zones found within the Geo Area.                                                                                     |
-| EVC.tif                                  | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area using the EVC class codes.                                      |
-| EVH.tif                                  | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area using EVH class codes.                                         |
+| EVC.tif                                  | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area using the continuous EVC codes.                                 |
+| EVH.tif                                  | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area using the continuous EVH codes.                                |
 | EVT.tif                                  | This is the raster map of Existing Vegetation Types (EVT) for the entire Geo Area.                                                                 |
 | FDIST.tif                                | This is the raster map of Fuel Disturbances (FDist) for the entire Geo Area.                                                                       |
-| Continuous EVC.tif                       | This is the raster map of Existing Vegetation Covers (EVC) for the entire Geo Area using the continuous EVC codes.                                 |
-| Continuous EVH.tif                       | This is the raster map of Existing Vegetation Heights (EVH) for the entire Geo Area using the continuous EVH codes.                                |
 
 #### <a name="Dict_Transition"></a> Transition Table.csv
 
