@@ -217,12 +217,14 @@ evcMergeArgs <- c(evcContinuousRasters,                   # the updated continuo
                   evcContinuousRawRaster,                 # the undisturbed continuous data 
                   filename = evcOverlaidRasterPath,       # output file name
                   ext = fullExtent,                       # the final extent of the raster
+                  datatype = 'INT2S',                     # used signed integers for output
                   overwrite = T)
 
 evhMergeArgs <- c(evhContinuousRasters,                   # the updated continuous data
                   evhContinuousRawRaster,                 # the undisturbed continuous data 
                   filename = evhOverlaidRasterPath,       # output file name
                   ext = fullExtent,                       # the final extent of the raster
+                  datatype = 'INT2S',                     # used signed integers for output
                   overwrite = T)
 
 # Use raster::merge() to overlay the new continuous data over the old continuous
