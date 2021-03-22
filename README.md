@@ -134,8 +134,11 @@ actual transitions are based on categorical EVC and EVH codes. As part of the
 pre-processing, the input continuous maps are converted to categorical maps as
 needed using the included crosswalk tables. To view and configure this
 conversion, please refer to `data/shared/EVC Crosswalk.csv` and `data/shared/EVH Crosswalk.csv`.
-Please refer to the [Data Dictionary](#Dictionary) section for more details
-about these and other data files.
+The first column `CONTINUOUS`, lists all valid continuous codes for EVC and EVH
+respectively, and the second column, `CATEGORICAL`, lists the categorical code
+that the corresponding continuous code will be converted to. Please refer to the
+[Data Dictionary](#Dictionary) section for more details about these and other
+data files.
 
 ### Conversion of Categorical to Continuous EVC and EVH
 
