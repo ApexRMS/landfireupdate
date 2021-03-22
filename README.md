@@ -127,6 +127,16 @@ Map Zones to be kept must at least partially overlap the chosen extent.
 installation. This is primarily of use on Linux machines. Leave this cell empty
 to use the default installation directory.
 
+### Conversion of Continuous to Categorical EVC and EVH
+
+Although continuous EVC and EVH maps are required as inputs for the update, the
+actual transitions are based on categorical EVC and EVH codes. As part of the
+pre-processing, the input continuous maps are converted to categorical maps as
+needed using the included crosswalk tables. To view and configure this
+conversion, please refer to `data/shared/EVC Crosswalk.csv` and `data/shared/EVH Crosswalk.csv`.
+Please refer to the [Data Dictionary](#Dictionary) section for more details
+about these and other data files.
+
 ### Conversion of Categorical to Continuous EVC and EVH
 
 As part of the final reconstruction of the entire Geo Area, the categorical
