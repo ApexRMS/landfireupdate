@@ -234,9 +234,16 @@ This test finds every combination of disturbance (VDIST), Existing Vegetation
 Cover (EVC), Existing Vegetation Height (EVH), Existing Vegetation Type (EVT),
 and Map Zone that are present in the cleaned raster maps. By comparing this
 table to the table of all defined transition rules, this test identifies all
-the disturbed cells which are missing an explicit transition rule. This table of
-missing transition rules is written to the `library/` folder and a warning is
-given if any missing rules were found.
+the disturbed cells which are missing an explicit transition rule.
+
+This table of missing transition rules is then split into a table of missing 
+rules that are known not to be problematic and a table of unexpected missing
+rules. Both are written to the `library/` folder and a warning is issued if any
+unexpected missing rules were found.
+
+Currently, only mechanical disturbances in herb cover and any disturbances in
+urban, developed, and orchard vegetation types are recognized as known
+disturbances.
 
 ### Invalid State Class Check
 
