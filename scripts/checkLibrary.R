@@ -109,10 +109,9 @@ checkLibrary <- function(libraryName, projectName, runTags) {
     filter(
       # Mechanical Add or Remove in Herbs is not meaningful
       (str_detect(VDIST_NAME, "Mechanical") & str_detect(EVC_NAME, "Herb")) |
-      # Urban, Orchard, and Developed ares do not follow standard succession rules
-      str_detect(EVT_NAME, "Urban") |
-      str_detect(EVT_NAME, "Orchard") |
-      str_detect(EVT_NAME, "Developed"))
+      # Transitions in EVC / EVH less than 100 (developed areas and non-fuels) are not meaningful
+      EVC < 100 |
+      EVH < 100)
   write_csv(knownMissingRules, str_c("library/", runLibrary, " Known Missing Rules.csv"))
   
   # Find and save the complement of missing rules
