@@ -104,7 +104,21 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # Return to sequential operation
   plan(sequential)
 
-  write_csv(allMissingRules, str_c("library/", runLibrary, " Missing Rules.csv"))
+  # Separate out rules that are known to be okay if missing
+  knownMissingRules <- allMissingRules %>%
+    filter(
+      # Mechanical Add or Remove in Herbs is not meaningful
+      (str_detect(VDIST_NAME, "Mechanical") & str_detect(EVC_NAME, "Herb")) |
+      # Urban, Orchard, and Developed ares do not follow standard succession rules
+      str_detect(EVT_NAME, "Urban") |
+      str_detect(EVT_NAME, "Orchard") |
+      str_detect(EVT_NAME, "Developed"))
+  write_csv(knownMissingRules, str_c("library/", runLibrary, " Known Missing Rules.csv"))
+  
+  # Find and save the complement of missing rules
+  allMissingRules %>%
+    anti_join(knownMissingRules) %>%
+    write_csv(str_c("library/", runLibrary, " Missing Rules.csv"))
   message(str_c("Table of missing rules written to `library/", runLibrary, " Missing Rules.csv`"))
 }
 
