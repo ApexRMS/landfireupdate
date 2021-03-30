@@ -221,11 +221,6 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   # Build the datasheet
 
   stateClasses <- allowedStates %>%
-    # Add missing states
-    bind_rows(
-      tibble(
-        EVC = c(100),
-        EVH = c(110))) %>%
     # Join relevant data
     left_join(EVClookup) %>%
     left_join(EVHlookup) %>%
@@ -373,6 +368,16 @@ initializeSsimLibrary <- function(libraryName, projectName) {
                   StateClassIDSource, StateClassIDDest,
                   TransitionTypeID, Probability) %>%
     as.data.frame()
+  
+  # Find the unique set of all state classes listed in the transition table
+  transitionStateClasses <- unique(c(probabilisticTransitions$StateClassIDSource, probabilisticTransitions$StateClassIDDest))
+  
+  # Check if any of these state classes are not listed in the set of valid state classses
+  invalidStates <- transitionStateClasses[!transitionStateClasses %in% stateClasses$Name]
+  
+  if(length(invalidStates) > 0)
+    stop(str_c("One or more unexpected combinations of EVC and EVH were found in the transition table. ",
+               str_c(invalidStates, collapse = "; ")))
 
   saveDatasheet(myscenario, probabilisticTransitions, "stsim_Transition")
 
