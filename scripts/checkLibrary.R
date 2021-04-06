@@ -24,15 +24,16 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # Are there any states with duplicate rules?
   # - within each EVT, mapzone, and transition type, there should only be one rule
   #   (ie. one row) for each state class
-  numDuplicateRules <-
+  duplicateRules <-
     rules %>%
     group_by(StratumIDSource, SecondaryStratumID, TransitionTypeID, StateClassIDSource) %>%
     summarise(unique = (n() == 1)) %>%
-    filter(!unique) %>%
-    nrow
+    filter(!unique)
   
-  if(numDuplicateRules > 0)
+  if(nrow(duplicateRules) > 0) {
+    write_csv(duplicateRules, str_c("library/", runLibrary, " Duplicate Rules.csv"))
     stop("Found duplicate rules for one or more states! Please check the `probabilisticTransitions` data.frame!")
+  }
   
   # Check for invalid state classes --------------------------------------------
   
