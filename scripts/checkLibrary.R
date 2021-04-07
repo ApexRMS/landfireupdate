@@ -32,7 +32,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   
   if(nrow(duplicateRules) > 0) {
     write_csv(duplicateRules, str_c("library/", runLibrary, " Duplicate Rules.csv"))
-    stop("Found duplicate rules for one or more states! Please check the `probabilisticTransitions` data.frame!")
+    stop("Found duplicate rules for one or more states! Table of duplicate rules written to `library/", runLibrary, " Duplicate Rules.csv`")
   }
   
   # Check for invalid state classes --------------------------------------------

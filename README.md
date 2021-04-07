@@ -226,7 +226,9 @@ for cells as a function of the disturbance (VDIST), Existing Vegetation Cover
 (EVC), Existing Vegetation Height (EVH), Existing Vegetation Type (EVT), and Map
 Zone. This check ensures that each combination of inputs maps to a unique output
 EVC and EVH. If there are multiple transition rules for a given set of inputs,
-the script will throw an error and stop building the library.
+the script will throw an error and stop building the library. The script will
+also a log file to the `library/` folder if any duplicate rules are found to
+help identify the duplicates.
 
 ### Missing Rule Check
 
