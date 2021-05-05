@@ -402,12 +402,19 @@ with their original table names in the Access database.
 | EVT Colors.csv       | sc_evt200                           |
 
 To use this table, open the Access database file using Microsoft Access and
-locate the tables listed in the second column. Right-click each table and
-select `Export` > `Excel` to export the tables to Excel (*.xlsx) format. Open
-the resulting Excel spreadsheets in Microsoft Excel and use the `File` > 
-`Save As` dialog to convert the file to a CSV file. Finally, move the files to
-the `raw/nonspatial/` subfolder and rename the files to the clean file names
-listed in the first column.
+locate the tables listed in the second column. Select the table from the
+navigator on the left and open the `External Data` tab in the main toolbar at
+the top of the window. In this tab, select `Text File` to export the table to a
+text file. In the dialog window that opens, use the `Browse...` button to save
+the files to the `raw/nonspatial` subfolder and use the textbox to rename the
+files to the cleaned file names listed in the table above. Ensure that the
+`Export data with formatting and layout` checkbox is *not* checked, and press
+`OK` to continue. In the next window, selected `Delimited` to use comma-separated
+values and hit `Next`. In this window, ensure that `Comma` is selected in the
+delimiter section, check the `Include Field Names on First Row` checkbox, and
+set the `Text Qualifier` value to `{none}`. Finally, hit `Next` one last time,
+double check that the correct folder and cleaned file name is set in the
+`Export to file` text box, and hit `Finish`.
 
 For example, to prepare the transition table for the SC Geo Area, I first
 downloaded the Access database file. I located the `vegtransf_rv02i_d` table
