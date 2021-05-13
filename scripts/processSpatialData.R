@@ -112,13 +112,36 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
         rep(NA_integer_, length(fdistToRemove) + 1)),
       ncol = 2)
     
+  # In preparation for using the EVT layer as a mask, we need to construct a
+  # matrix describing which cells in the EVT layer we wish to assign a value of NA
+  # - These are just the recently disturbed EVT
+  # - The format of this matrix is dictated by the `raster::reclassify()` function
+  evtToRemove <-
+    read_csv(recentlyDisturbedPath) %>%
+    pull(EVT) %>%
+    as.integer()
+  
+  evtReclassification <-
+    matrix(
+      c(evtToRemove,
+        rep(NA_integer_, length(evtToRemove))),
+      ncol = 2)
+    
 
-  # Crop and mask Disturbance map down to the Map Zone of interest
+  # Crop and mask EVT and Disturbance layer down to the Map Zone of interest
   # Reclassify 0 (no disturbance) as NA for masking other maps
   # Finally trim down to only include relevant cells
+  evtRaster <-
+    cropRaster(evtRaster, evtRasterPath, extent(mapzoneRaster)) %>%
+    maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
+    reclassify(
+      rcl = evtReclassification,
+      filename = evtRasterPath,
+      overwrite = TRUE)
+  
   fdistRaster <-
     cropRaster(fdistRaster, tempRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(fdistRasterPath, maskingRaster = mapzoneRaster) %>%
+    maskRaster(fdistRasterPath, maskingRaster = evtRaster) %>%
     reclassify(
       rcl = fdistReclassification,
       filename = tempRasterPath,
@@ -138,6 +161,8 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   # to crop and mask the remaining raster maps. Here the Map Zone map is used.
 
   # EVT
+  # - Note that the EVT must be cropped and masked again since it was never
+  #   trimmed or masked by FDIST
   evtRaster <-
     cropRaster(evtRaster, tempRasterPath, extent(mapzoneRaster)) %>%
     maskRaster(evtRasterPath, maskingRaster = mapzoneRaster)

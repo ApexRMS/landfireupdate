@@ -113,14 +113,15 @@ if(!evtColorTablePath %>% file.exists)
 # Load shared non-spatial data
 sharedNonSpatialDirectory <- "data/shared/"
 
-allowedStatesPath   <- str_c(sharedNonSpatialDirectory, "All Combinations.csv")
-distCrosswalkPath   <- str_c(sharedNonSpatialDirectory, "Disturbance Crosswalk.csv")
-evcCrosswalkPath   <- str_c(sharedNonSpatialDirectory, "EVC Crosswalk.csv")
-evhCrosswalkPath   <- str_c(sharedNonSpatialDirectory, "EVH Crosswalk.csv")
-evcTablePath        <- str_c(sharedNonSpatialDirectory, "EVC LUT.csv")
-evhTablePath        <- str_c(sharedNonSpatialDirectory, "EVH LUT.csv")
-vdistTablePath      <- str_c(sharedNonSpatialDirectory, "VDIST LUT.csv")
-evcColorsPath       <- str_c(sharedNonSpatialDirectory, "EVC Colors.csv")
+allowedStatesPath     <- str_c(sharedNonSpatialDirectory, "All Combinations.csv")
+distCrosswalkPath     <- str_c(sharedNonSpatialDirectory, "Disturbance Crosswalk.csv")
+evcCrosswalkPath      <- str_c(sharedNonSpatialDirectory, "EVC Crosswalk.csv")
+evhCrosswalkPath      <- str_c(sharedNonSpatialDirectory, "EVH Crosswalk.csv")
+evcTablePath          <- str_c(sharedNonSpatialDirectory, "EVC LUT.csv")
+evhTablePath          <- str_c(sharedNonSpatialDirectory, "EVH LUT.csv")
+vdistTablePath        <- str_c(sharedNonSpatialDirectory, "VDIST LUT.csv")
+evcColorsPath         <- str_c(sharedNonSpatialDirectory, "EVC Colors.csv")
+recentlyDisturbedPath <- str_c(sharedNonSpatialDirectory, "Recently Disturbed EVT.csv")
 
 if(!allowedStatesPath %>% file.exists)
   stop("Could not find the file `All Combinations.csv`. This file provides every valid combination of EVT, EVC, EVH, and Map Zone. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
@@ -138,6 +139,8 @@ if(!vdistTablePath %>% file.exists)
   stop("Could not find the file `VDIST LUT.csv`. This file is used to connect disturbance codes to names and disturbance types. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
 if(!evcColorsPath %>% file.exists)
   stop("Could not find the file `EVC Colors.csv`. This file is used to connect EVC codes to colors for mapping. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+if(!recentlyDisturbedPath %>% file.exists)
+  stop("Could not find the file `Recently Disturbed EVT.csv`. This file provides the list of EVT codes for recently disturbed cells. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
 
 # Default Maps and Charts -----------------------------------------------
 defaultChartsPath <- str_c(sharedNonSpatialDirectory, "Default SyncroSim Charts.csv")
