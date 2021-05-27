@@ -475,6 +475,7 @@ Geo Areas.
 | [EVC LUT.csv](#Dict_EVC)                     | This look-up table is used connect to Existing Vegetation Cover (EVC) codes to human-readable names.                                                                        |
 | [EVH LUT.csv](#Dict_EVH)                     | This look-up table is used connect to Existing Vegetation Height (EVH) codes to human-readable names.                                                                       |
 | [VDIST LUT.csv](#Dict_VDIST)                 | This look-up table is used connect to Vegetation Disturbace (VDist) codes to human-readable names.                                                                          |
+| [Recently Disturbed EVT.csv](#Dict_EVTRec)   | This table is used to identify recently disturbed cells that should be filtered out from the raster maps prior to simulation.                                               |
 | [EVC Colors.csv](#Dict_EVCcol)               | This table is used to assign colors to Existing Vegetation Cover (EVC) codes. These are used when rendering raster maps.                                                    |
 | [Default SyncroSim Charts.csv](#Dict_Charts) | This table is used to build the default SyncroSim charts for visualizing the run results.                                                                                   |
 | [Default SyncroSim Maps.csv](#Dict_Charts)   | This table is used to build the default SyncroSim maps for visualizing the run results.                                                                                     |
@@ -541,6 +542,12 @@ Geo Areas.
 | R          | The Red component of the disturbance color as an integer from 0 to 255.   |
 | G          | The Green component of the disturbance color as an integer from 0 to 255. |
 | B          | The Blue component of the disturbance color as an integer from 0 to 255.  |
+
+#### <a name="Dict_EVTRec"></a> Recently Disturbed EVT.csv
+
+| Column | Description                                                            |
+|:-------|:-----------------------------------------------------------------------|
+| EVT    | An Existing Vegetation code that identifies a recently disturbed cell. |
 
 #### <a name="Dict_EVCcol"></a> EVC Colors.csv
 
