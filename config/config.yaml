@@ -21,16 +21,6 @@ mapzonesToKeep:
 #  - 21
 #  - 22
 #  - 29
-# # SC Map Zones
-# - 26
-# - 27
-# - 32
-# - 33
-# - 34
-# - 35
-# - 36
-# - 38
-# - 43
 
 # List of Time Since Distrubance (TSD) codes to filter out
 # - TSD1 = One Year

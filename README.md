@@ -42,14 +42,15 @@ however, this is not a strict requirement.
 A number of data files are required that are not included on the GitHub repository due
 to size constraints. These files have been compressed into a zip folder that can
 be downloaded [here](https://s3.us-west-2.amazonaws.com/apexrms.com.public/Data/A236/Example%20NW%20Data%20-%202021-02-11.zip).
-Please note that this file is quite large (~5.5GB).
+Please note that this file is quite large (~2.2GB).
 
 The zip folder also contains the expected paths of the files, and so it is
 recommended to extract the zip file directly into the root of this git
 repository. In other words, the `data/` folder should be present in the same
 folder as this README after extraction, not inside another folder (such as
 `LANDFIRE Update Data Files/`). This data archive includes all the input data
-files needed to process the SC and NW Geo Areas.
+files needed to process the NW Geo Area. The default configuration is set to run
+a small test section of Map Zone 19 in the NW Geo Area.
 
 ## Configuration
 
