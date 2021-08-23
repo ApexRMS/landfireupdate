@@ -54,3 +54,12 @@ VDIST,FDIST,d_type,d_severity,d_time
 331,631,Mechanical Remove,High,One Year
 332,632,Mechanical Remove,High,Two to Five Years
 333,633,Mechanical Remove,High,Six to Ten Years
+311,711,Mechanical Remove,Low,One Year
+312,712,Mechanical Remove,Low,Two to Five Years
+313,713,Mechanical Remove,Low,Six to Ten Years
+321,721,Mechanical Remove,Moderate,One Year
+322,722,Mechanical Remove,Moderate,Two to Five Years
+323,723,Mechanical Remove,Moderate,Six to Ten Years
+331,731,Mechanical Remove,High,One Year
+332,732,Mechanical Remove,High,Two to Five Years
+333,733,Mechanical Remove,High,Six to Ten Years
