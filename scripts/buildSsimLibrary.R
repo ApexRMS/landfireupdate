@@ -43,6 +43,23 @@ initializeSsimLibrary <- function(libraryName, projectName) {
     # Keep only unique rows
     unique()
 
+  # Check that EVT names are uniquely assigned to EVT IDs
+  nonUniqueEVT <- transitionTable %>%
+    dplyr::select(EVT7B, StratumIDSource) %>%
+    unique() %>%
+    dplyr::group_by(EVT7B) %>%
+    dplyr::summarize(n = n(), names = list(StratumIDSource)) %>%
+    dplyr::filter(n > 1)
+
+  if(nrow(nonUniqueEVT) > 0) {
+    # Build a neatly formatted list of non-unique EVT IDs and corresponding names
+    nonUniqueEVTNames <- nonUniqueEVT %>%
+      pmap_chr(function(EVT7B, n, names) str_c(EVT7B, " : \"", str_c(names, collapse = "\" ; \""), "\"")) %>%
+      str_c(collapse = "\n")
+
+    stop("One or more EVT IDs in the transition table are assigned to multiple EVT Names. Please correct the following:\n", nonUniqueEVTNames)
+  }
+
   ## Generate look-up tables for EVC and EVH codes and names
 
   EVClookup <- read_csv(evcTablePath) %>%
