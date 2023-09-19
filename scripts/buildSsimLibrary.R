@@ -482,13 +482,13 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
   # Collect the names and cretae path files
   multiplierGroupNames <- 
     transitionMultiplierDirectory %>%
-    list.files %>%
+    list.files("tif$") %>%
     str_sub(end = -5) %>%
     str_c(" [Type]")
   
   multiplierFileNames <- 
     transitionMultiplierDirectory %>%
-    list.files(full.names = T)
+    list.files("tif$", full.names = T)
   
   # Compose and save the data frame
   if(length(multiplierFileNames) > 0) {
