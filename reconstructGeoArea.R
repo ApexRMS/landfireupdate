@@ -75,16 +75,16 @@ myproject <- rsyncrosim::project(mylibrary, projectName)
 # Create a sink to capture verbose output
 sink("temp.sink")
 
-resultScenarios <- scenario(mylibrary) %>%
+resultScenarios <- scenario(mylibrary, summary = T) %>%
   
 
   # Only consider result scenarios
-  filter(isResult == "Yes") %>%
+  filter(IsResult == "Yes") %>%
   
   # Examine run logs to see which runs failed
   mutate(
     failed = map_lgl(
-      scenarioId,
+      ScenarioID,
       ~ scenario(mylibrary, .x) %>%
         runLog %>%
         str_detect("Failure"))) %>%
@@ -93,9 +93,9 @@ resultScenarios <- scenario(mylibrary) %>%
   filter(failed == FALSE) %>%
   
   # Only keep last run from each parent scenario
-  group_by(parentID) %>%
-  filter(scenarioId == max(scenarioId)) %>%
-  pull(scenarioId)
+  group_by(ParentID) %>%
+  filter(ScenarioID == max(ScenarioID)) %>%
+  pull(ScenarioID)
 
 # Close and delete sink
 sink()
