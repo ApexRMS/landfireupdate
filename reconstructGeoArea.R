@@ -8,12 +8,13 @@
 # Setup -----------------------------------------------------------------------
 
 library(rsyncrosim) # for building and connecting to SyncroSim files
-library(raster)     # provides functions for manipulating rasters
-library(rgdal)      # provides some optional dependencies for raster
+library(terra)     # provides functions for manipulating rasters
 library(furrr)      # for parallel iteration
 library(logr)       # for generating logs with RScript
 library(tidyverse)  # provides general data manipulation functions
 library(yaml)       # used to read configuration file
+
+terraOptions(memmax = 3)
 
 # Load configuration options and global constants
 source("scripts/constants.R")
@@ -50,11 +51,11 @@ dir.create(evcContinuousTempFolder, showWarnings = F)
 dir.create(evhContinuousTempFolder, showWarnings = F)
 
 # Calculate final extent of the stitched rasters
-fullExtent <- extent(raster(mapzoneRawRasterPath))
+fullExtent <- ext(rast(mapzoneRawRasterPath))
 
 # Load necessary raw raster maps
-evcContinuousRawRaster <- raster(evcRawRasterPath)
-evhContinuousRawRaster <- raster(evhRawRasterPath)
+evcContinuousRawRaster <- rast(evcRawRasterPath)
+evhContinuousRawRaster <- rast(evhRawRasterPath)
 
 # Create names for the output rasters
 evcOverlaidRasterPath <- str_c(stitchedRasterDirectory, "EVC.tif")
@@ -107,14 +108,16 @@ if(length(resultScenarios) == 0)
     "SyncroSim scenarios and that the library and project name set in the ",
     "config file match those of the maps you are trying to reconstruct."))
 
-# Pull out the relevant raster from each result scenario as a list
+# Pull out the relevant raster from each result scenario as a list without using raster
+libraryOutputPrefix <- str_c(libraryName, ".ssim.output/Scenario-")
 stateClassRasters <- 
   map(resultScenarios,
-    ~ datasheetRaster(
-        scenario(mylibrary, .x), 
-        datasheet = "OutputSpatialState", 
-        iteration = 1, 
-        timestep = maximumTimestep)
+    function(sid) 
+      datasheet(scenario(mylibrary, sid), "OutputSpatialState") %>%
+      dplyr::filter(Timestep == 1) %>%
+      pull(Filename) %>%
+      str_c(libraryOutputPrefix, sid, "/stsim_OutputSpatialState/", .) %>%
+      rast()
   )
 
 # Keep track of the number of Map Zones for later
@@ -130,7 +133,9 @@ log_print(str_c("Found ", mapzoneCount, " valid scenario(s)! Please check that t
 log_print("Separating out EVC and EVH.")
 
 # Begin parallel processing
-plan(multisession, workers = nThreads)
+# plan(multisession, workers = nThreads)
+# Note: Currently running sequentially due to potential parallel access issues with terra
+plan(sequential)
 
 future_pwalk(
   list(
@@ -148,8 +153,8 @@ plan(sequential)
 log_print("Converting EVC and EVH to continuous codes.")
 
 # Load necessary rasters
-evcRasters <- map(str_c(evcCategoricalTempFolder, rasterFileNames), raster)
-evhRasters <- map(str_c(evhCategoricalTempFolder, rasterFileNames), raster)
+evcRasters <- map(str_c(evcCategoricalTempFolder, rasterFileNames), rast)
+evhRasters <- map(str_c(evhCategoricalTempFolder, rasterFileNames), rast)
 
 # Generate necessary file names
 evcContRasterPaths <- str_c(evcContinuousTempFolder, rasterFileNames)
@@ -167,7 +172,9 @@ evhCrosswalk <-
     as.matrix
 
 # Begin parallel processing
-plan(multisession, workers = nThreads)
+# plan(multisession, workers = nThreads)
+# Note: Currently running sequentially due to potential parallel access issues with terra
+plan(seqential)
 
 # Reclassify both rasters using the constructed crosswalks and raster::reclassify()
 evcContinuousRasters <-
@@ -175,7 +182,7 @@ evcContinuousRasters <-
     list(
       x = evcRasters,
       filename = evcContRasterPaths),
-    reclassify,
+    classify,
     rcl = evcCrosswalk,
     overwrite = TRUE,
     .options = furrr_options(seed = TRUE))
@@ -185,7 +192,7 @@ evhContinuousRasters <-
     list(
       x = evhRasters,
       filename = evhContRasterPaths),
-    reclassify,
+    classify,
     rcl = evhCrosswalk,
     overwrite = TRUE,
     .options = furrr_options(seed = TRUE))
@@ -216,21 +223,21 @@ if(cropToExtent) {
 evcMergeArgs <- c(evcContinuousRasters,                   # the updated continuous data
                   evcContinuousRawRaster,                 # the undisturbed continuous data 
                   filename = evcOverlaidRasterPath,       # output file name
-                  ext = fullExtent,                       # the final extent of the raster
-                  datatype = 'INT2S',                     # used signed integers for output
-                  overwrite = T)
+                  #ext = fullExtent,                      # the final extent of the raster - Note: not recognized by terra::merge
+                  wopt = list(list(datatype = 'INT2S',    # used signed integers for output
+                               overwrite = T)))
 
 evhMergeArgs <- c(evhContinuousRasters,                   # the updated continuous data
                   evhContinuousRawRaster,                 # the undisturbed continuous data 
                   filename = evhOverlaidRasterPath,       # output file name
-                  ext = fullExtent,                       # the final extent of the raster
-                  datatype = 'INT2S',                     # used signed integers for output
-                  overwrite = T)
+                  #ext = fullExtent,                      # the final extent of the raster - Note: not recognized by terra::merge
+                  wopt = list(list(datatype = 'INT2S',    # used signed integers for output
+                               overwrite = T)))
 
 # Use raster::merge() to overlay the new continuous data over the old continuous
 # EVC and EVH raster maps
-evcOverlaidRaster <- do.call(raster::merge, evcMergeArgs)
-evhOverlaidRaster <- do.call(raster::merge, evhMergeArgs)
+evcOverlaidRaster <- do.call(terra::merge, evcMergeArgs)
+evhOverlaidRaster <- do.call(terra::merge, evhMergeArgs)
 
 # Finally we can remove the unmerged continuous EVC and EVH folder
 unlink(file.path(continuousTempFolder), recursive = T)

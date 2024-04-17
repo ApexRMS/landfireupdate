@@ -1,3 +1,0 @@
-Name,IsReadOnly,Timesteps,Iteration,NumPanesX,NumPanesY,ShowScenarioName,ShowScenarioID,ShowIndicatorLabel,ShowTimestepLabel,ShowTimestepPrefix,ViewExtent,Criteria
-EVT,FALSE,1,1,3,3,FALSE,FALSE,FALSE,FALSE,FALSE,ssimextent|-0.2060988|-0.3091483|9.704082,stsim_str
-FIre and State Class,FALSE,"0,1",1,3,3,FALSE,FALSE,FALSE,FALSE,FALSE,NA,stsim_sc|stsim_tg-710-itemid-710-itemsrc-stsim_TransitionGroup

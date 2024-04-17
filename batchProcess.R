@@ -11,8 +11,7 @@
 # Setup -----------------------------------------------------------------------
 
 library(rsyncrosim) # for building and connecting to SyncroSim files
-library(raster)     # provides functions for manipulating rasters
-library(rgdal)      # provides some optional dependencies for raster
+library(terra)     # provides functions for manipulating rasters
 library(furrr)      # for parallel iteration
 library(logr)       # for generating logs with RScript
 library(tidyverse)  # provides general data manipulation functions
@@ -20,6 +19,8 @@ library(yaml)       # used to parse the config file
 
 # Load configuration options and global constants
 source("scripts/constants.R")
+
+terraOptions(memmax = 3.5)
 
 # Load custom raster functions optimized for working with large rasters
 source("scripts/rasterFunctions.R")
@@ -72,9 +73,18 @@ plan(sequential)
 
 log_print("Starting layerizing of disturbances!")
 
-# It is more efficient to parallelize this step within each Map Zone, see
-# `scripts/layerizeDisturbance.R` for more info
-walk(runTags, layerizeDisturbance)
+# Note: Temporarily restructuring parallelization for new layerizing code
+# # It is more efficient to parallelize this step within each Map Zone, see
+# # `scripts/layerizeDisturbance.R` for more info
+
+# This function is safe to parallelize
+# Begin parallel processing
+plan(multisession, workers = nThreads)
+
+future_walk(runTags, layerizeDisturbance, .options = furrr_options(seed = TRUE))
+
+# Return to sequential operation
+plan(sequential)
 
 # Build SyncroSim Library --------------------------------------------------
 

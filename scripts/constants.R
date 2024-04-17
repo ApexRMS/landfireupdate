@@ -26,6 +26,8 @@ if(config$nThreads %>% is.null) {
 } else if (config$nThreads %>% as.integer %>% is.na | config$nThreads %>% as.integer < 1) {
   nThreads <- future::availableCores()
   warning("Invalid number of threads requested. Using all available cores to build SyncroSim Library")
+} else {
+  nThreads <- config$nThreads
 }
 
 # Check that the number of requested SyncroSim jobs is valid
@@ -143,13 +145,16 @@ if(!recentlyDisturbedPath %>% file.exists)
   stop("Could not find the file `Recently Disturbed EVT.csv`. This file provides the list of EVT codes for recently disturbed cells. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
 
 # Default Maps and Charts -----------------------------------------------
-defaultChartsPath <- str_c(sharedNonSpatialDirectory, "Default SyncroSim Charts.csv")
-defaultMapsPath   <- str_c(sharedNonSpatialDirectory, "Default SyncroSim Maps.csv")
 
-if(!defaultChartsPath %>% file.exists)
-  stop("Could not find the file `Default SyncroSim Charts.csv`. This file describes how the default charts in SyncroSim should be built. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
-if(!defaultMapsPath %>% file.exists)
-  stop("Could not find the file `Default SyncroSim Maps.csv`. This file describes how the default maps in SyncroSim should be built. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+# Note: Temporarily removed
+
+# defaultChartsPath <- str_c(sharedNonSpatialDirectory, "Default SyncroSim Charts.csv")
+# defaultMapsPath   <- str_c(sharedNonSpatialDirectory, "Default SyncroSim Maps.csv")
+# 
+# if(!defaultChartsPath %>% file.exists)
+#   stop("Could not find the file `Default SyncroSim Charts.csv`. This file describes how the default charts in SyncroSim should be built. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
+# if(!defaultMapsPath %>% file.exists)
+#   stop("Could not find the file `Default SyncroSim Maps.csv`. This file describes how the default maps in SyncroSim should be built. This file should be provided by the GitHub repo, please check that the project repository is up to date.")
 
 # Output Raster Options ---------------------------------------------------
 

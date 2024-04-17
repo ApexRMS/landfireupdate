@@ -282,12 +282,17 @@ initializeSsimLibrary <- function(libraryName, projectName) {
 
   ## Transition Groups
   # For groups, we append the disturbance class to the existing datasheet
+  # Note: ST-Sim no longer requires the tranisiton [Type] groups to be returned 
 
-  transitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
-    bind_rows(vdistLookup %>%
-                dplyr::select(Name = TransitionGroupID) %>%
-                unique()) %>%
-    as.data.frame()
+  # transitionGroups <- datasheet(myproject, "stsim_TransitionGroup") %>%
+  #   bind_rows(vdistLookup %>%
+  #               dplyr::select(Name = TransitionGroupID) %>%
+  #               unique()) %>%
+  #   as.data.frame()
+  
+  transitionGroups <- vdistLookup %>%
+    dplyr::select(Name = TransitionGroupID) %>%
+    unique()
 
   saveDatasheet(myproject, transitionGroups, "stsim_TransitionGroup")
 
@@ -434,17 +439,19 @@ initializeSsimLibrary <- function(libraryName, projectName) {
   
   # Charts and Plots -----------------------------------------------------------
   
-  # Load CSV describing how to build default charts
-  defaultCharts <-
-    read_csv(defaultChartsPath) %>%
-    as.data.frame()
+  # Note: Temporarily removed until these can be updated for SyncroSim 2.5
   
-  defaultMaps <-
-    read_csv(defaultMapsPath) %>%
-    as.data.frame()
-  
-  saveDatasheet(myproject, defaultCharts, "corestime_Charts")
-  saveDatasheet(myproject, defaultMaps, "corestime_Maps")
+  # # Load CSV describing how to build default charts
+  # defaultCharts <-
+  #   read_csv(defaultChartsPath) %>%
+  #   as.data.frame()
+  # 
+  # defaultMaps <-
+  #   read_csv(defaultMapsPath) %>%
+  #   as.data.frame()
+  # 
+  # saveDatasheet(myproject, defaultCharts, "corestime_Charts")
+  # saveDatasheet(myproject, defaultMaps, "corestime_Maps")
   
 }
 

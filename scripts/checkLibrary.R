@@ -51,7 +51,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
     runTags,
     ~ tibble(
       `Map Zone` = .x,
-      state = uniqueInRaster(raster(str_c(cleanRasterDirectoryRelative, .x, "/StateClass.tif")))),
+      state = unique(rast(str_c(cleanRasterDirectoryRelative, .x, "/StateClass.tif"))) %>% simplify),
     .options = furrr_options(seed = TRUE)) %>%
     filter(!(state %in% allowedStates)) %>%
     mutate(
@@ -93,8 +93,11 @@ checkLibrary <- function(libraryName, projectName, runTags) {
     as.numeric
 
   # Begin parallel processing across scenarios
-  plan(multisession, workers = nThreads)
-
+  # plan(multisession, workers = nThreads)
+  
+  # Note: This is currently not memory safe, so limiting thread number for now
+  plan(sequential)
+  
   allMissingRules <- future_map_dfr( # *_dfr indicates the results should be combined using `bind_rows()`
     runTags,
     listMissingRules,
@@ -139,10 +142,10 @@ listMissingRules <- function(runTag, ruleCodes) {
   ## +Find codes presen in Map Zone --------------------------------------------
   
   mapzoneCodes <- getUniqueCodes(
-    state = raster(stateClassRasterPath),
-    evt =   raster(evtRasterPath),
-    mz =    raster(mapzoneRasterPath),
-    vdist = raster(vdistRasterPath)
+    state = rast(stateClassRasterPath),
+    evt =   rast(evtRasterPath),
+    mz =    rast(mapzoneRasterPath),
+    vdist = rast(vdistRasterPath)
   )
   
   ## +Generate human-readable table of missing rules ---------------------------
@@ -167,25 +170,25 @@ listMissingRules <- function(runTag, ruleCodes) {
 # - Note that rasters are assumed to have identical extents, resolutions, etc.
 getUniqueCodes <- function(state, evt, mz, vdist) {
   # Choose number of blocks to split rasters into when processing to limit memory
-  blockInfo <- blockSize(state)
+  blockInfo <- blocks(state)
   
   # Calculate unique values in each block
   map(
     seq(blockInfo$n),
     function(i) {
       unique(
-        getValuesBlock(state,
-                       row   = blockInfo$row[i],
-                       nrows = blockInfo$nrows[i]) * 1e9 +
-        getValuesBlock(evt,
-                       row   = blockInfo$row[i],
-                       nrows = blockInfo$nrows[i]) * 1e5 +
-        getValuesBlock(mz,
-                         row   = blockInfo$row[i],
-                         nrows = blockInfo$nrows[i]) * 1e3 +
-        getValuesBlock(vdist,
-                         row   = blockInfo$row[i],
-                         nrows = blockInfo$nrows[i])
+        values(state,
+               row   = blockInfo$row[i],
+               nrows = blockInfo$nrows[i]) * 1e9 +
+        values(evt,
+               row   = blockInfo$row[i],
+               nrows = blockInfo$nrows[i]) * 1e5 +
+        values(mz,
+               row   = blockInfo$row[i],
+               nrows = blockInfo$nrows[i]) * 1e3 +
+        values(vdist,
+               row   = blockInfo$row[i],
+               nrows = blockInfo$nrows[i])
       )
     }) %>%
     # Consolidate values from each block

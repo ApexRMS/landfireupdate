@@ -11,24 +11,29 @@ maskByMapzone <- function(inputRaster, maskValue, filename){
   # Integer mask values save memory
   maskValue <- as.integer(maskValue)
 
-  # Let raster::blockSize() decide appropriate blocks to break the raster into
-  blockInfo <- blockSize(inputRaster)
-
   # Generate empty raster with appropriate dimensions
-  outputRaster <- raster(inputRaster)
+  outputRaster <- rast(inputRaster)
 
-  # Calculate mask and write to output block-by-block
-  outputRaster <- writeStart(outputRaster, filename, overwrite=TRUE)
-
-  for(i in seq(blockInfo$n)) {
-    blockMask <-
-      getValuesBlock(inputRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i]) %>%
-      `==`(maskValue) %>%
-      if_else(true = maskValue, false = NA_integer_)
-    outputRaster <- writeValues(outputRaster, blockMask, blockInfo$row[i])
-  }
-
-  outputRaster <- writeStop(outputRaster)
+  rcl <- matrix(
+    c(-999,          maskValue-0.5,   maskValue,  # Left bound (open)
+      maskValue-0.5,     maskValue,         999,  # Right bound (closed)
+      NA_integer_,       maskValue, NA_integer_), # Final value
+    ncol = 3)
+  
+  outputRaster <- classify(inputRaster, rcl = rcl, right = TRUE, overwrite = TRUE, filename = filename)
+  
+  # # Calculate mask and write to output block-by-block
+  # blockInfo <- writeStart(outputRaster, filename, overwrite=TRUE)
+  # 
+  # for(i in seq(blockInfo$n)) {
+  #   blockMask <-
+  #     values(inputRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i]) %>%
+  #     `==`(maskValue) %>%
+  #     if_else(true = maskValue, false = NA_integer_)
+  #   writeValues(outputRaster, v = blockMask, start = blockInfo$row[i], nrows = blockInfo$nrows[i])
+  # }
+  # 
+  # writeStop(outputRaster)
 
   return(outputRaster)
 }
@@ -37,14 +42,15 @@ maskByMapzone <- function(inputRaster, maskValue, filename){
 # - ignore are the levels to exclude from the output
 uniqueInRaster <- function(inputRaster, ignore = NA) {
   # Choose number of blocks to split rasters into when processing to limit memory
-  blockInfo <- blockSize(inputRaster)
+  blockInfo <- blocks(inputRaster)
 
   # Calculate unique values in each block
   map(
     seq(blockInfo$n),
-    ~ unique(getValuesBlock(inputRaster,
-                            row   = blockInfo$row[.x],
-                            nrows = blockInfo$nrows[.x]))) %>%
+    ~ unique(values(inputRaster,
+                    row   = blockInfo$row[.x],
+                    nrows = blockInfo$nrows[.x])) %>%
+      as.numeric) %>%
   # Consolidate values from each block
   flatten_dbl %>%
   unique() %>%
@@ -59,7 +65,7 @@ uniqueInRaster <- function(inputRaster, ignore = NA) {
 # - Requires an output filename, slower than raster::crop for small rasters
 cropRaster <- function(inputRaster, filename, outputExtent) {
   # Create empty raster to hold output
-  outputRaster <-  raster(inputRaster) %>%
+  outputRaster <-  rast(inputRaster) %>%
     crop(outputExtent)
 
   # Calculate offset from original
@@ -70,12 +76,9 @@ cropRaster <- function(inputRaster, filename, outputExtent) {
     stop("Attempting to crop a smaller raster to a larger extent. This should not happen and could cause unexpected behaviour.")
 
   ## Split output into manageable chunks and fill with data from input
-  blockInfo <- blockSize(outputRaster)
-
-  outputRaster <- writeStart(outputRaster, filename, overwrite=TRUE)
+  blockInfo <- writeStart(outputRaster, filename, overwrite=TRUE)
 
   for(i in seq(blockInfo$n))
-    outputRaster <-
     writeValues(outputRaster,
                 getValuesBlock(inputRaster,
                                row   = blockInfo$row[i] + offsetAbove,
@@ -84,7 +87,7 @@ cropRaster <- function(inputRaster, filename, outputExtent) {
                                ncols = ncol(outputRaster)),
                 blockInfo$row[i])
 
-  outputRaster <- writeStop(outputRaster)
+  writeStop(outputRaster)
 
   return(outputRaster)
 }
@@ -105,22 +108,20 @@ maskRaster <- function(inputRaster, filename, maskingRaster){
   outputRaster <-  raster(inputRaster)
 
   ## Split output into manageable chunks and fill with data from input
-  blockInfo <- blockSize(outputRaster)
-
   ## Calculate mask and write to output block-by-block
-  outputRaster <- writeStart(outputRaster, filename, overwrite=TRUE)
+  blockInfo <- writeStart(outputRaster, filename, overwrite=TRUE)
 
   # Each block of the mask raster is converted into a multiplicative mask
   # and multiplied with the corresponding block of the input raster
   for(i in seq(blockInfo$n)) {
     maskedBlock <-
-      getValuesBlock(maskingRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i]) %>%
+      values(maskingRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i]) %>%
       maskify %>%
-      `*`(getValuesBlock(inputRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i]))
-    outputRaster <- writeValues(outputRaster, maskedBlock, blockInfo$row[i])
+      `*`(values(inputRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i]))
+    writeValues(outputRaster, maskedBlock, blockInfo$row[i], nrows = blockInfo$nrows[i])
   }
 
-  outputRaster <- writeStop(outputRaster)
+  writeStop(outputRaster)
 
   return(outputRaster)
 }
@@ -142,6 +143,9 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   # find the single first column with data. This is effectively a binary search
   # once the first (largest) block with non-NA data is found.
 
+  # Note: Temporarily replace by:
+  # outputRaster <- trim(inputRaster, filename = filename, overwrite = T)
+  
   # Setup --------------------------------------------------------------------
   # Decide how to split input into manageable blocks
   maxBlockSize <- 2^(maxBlockSizePower)
@@ -161,9 +165,9 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   # Top ----------------------------------------------------------------------
   # Search for the first block from the top with data
   while(
-    getValuesBlock(inputRaster,
-                   row = trimAbove,
-                   nrows = maxBlockSize) %>%
+    values(inputRaster,
+           row = trimAbove,
+           nrows = maxBlockSize) %>%
     is.na %>%
     all
   )
@@ -171,18 +175,18 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
 
   # Now do a binary search for the first row with data
   for(i in descendingBlockSizes)
-    if(getValuesBlock(inputRaster, row = trimAbove, nrows = i) %>% is.na %>% all)
+    if(values(inputRaster, row = trimAbove, nrows = i) %>% is.na %>% all)
       trimAbove <- trimAbove + i
   
   # Pad if possible
-  trimAbove <- max(trimAbove - 2, 0)
+  trimAbove <- max(trimAbove - 2, 1)
 
   # Bottom  -------------------------------------------------------------------
   # Repeat from the bottom up, first finding a block that is not all NA
   while(
-    getValuesBlock(inputRaster,
-                   row = trimBelow - maxBlockSize,
-                   nrows = maxBlockSize) %>%
+    values(inputRaster,
+           row = trimBelow - maxBlockSize,
+           nrows = maxBlockSize) %>%
     is.na %>%
     all
   )
@@ -190,7 +194,7 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
 
   # Binary search for last row with data
   for(i in descendingBlockSizes)
-    if(getValuesBlock(inputRaster, row = trimBelow - i, nrows = i) %>% is.na %>% all)
+    if(values(inputRaster, row = trimBelow - i, nrows = i) %>% is.na %>% all)
       trimBelow <- trimBelow - i
 
   # Calculate height of the trimmed raster
@@ -199,11 +203,11 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   # Left  --------------------------------------------------------------------
   # Search for the first block from the left with data
   while(
-    getValuesBlock(inputRaster,
-                   col   = trimLeft,
-                   ncols = maxBlockSize,
-                   row   = trimAbove,
-                   nrows = outputRows) %>%
+    values(inputRaster,
+           col   = trimLeft,
+           ncols = maxBlockSize,
+           row   = trimAbove,
+           nrows = outputRows) %>%
     is.na %>%
     all
   )
@@ -211,26 +215,26 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
 
   # Now do a binary search for the first row with data
   for(i in descendingBlockSizes)
-    if(getValuesBlock(inputRaster,
-                      col   = trimLeft,
-                      ncols = i,
-                      row   = trimAbove,
-                      nrows = outputRows) %>%
+    if(values(inputRaster,
+              col   = trimLeft,
+              ncols = i,
+              row   = trimAbove,
+              nrows = outputRows) %>%
        is.na %>%
        all)
       trimLeft <- trimLeft + i
   
   # Pad if possible
-  trimLeft <- max(trimLeft - 2, 0)
+  trimLeft <- max(trimLeft - 2, 1)
 
   # Right  --------------------------------------------------------------------
   # Repeat for the first block from the right with data
   while(
-    getValuesBlock(inputRaster,
-                   col   = trimRight - maxBlockSize,
-                   ncols = maxBlockSize,
-                   row   = trimAbove,
-                   nrows = outputRows) %>%
+    values(inputRaster,
+           col   = trimRight - maxBlockSize,
+           ncols = maxBlockSize,
+           row   = trimAbove,
+           nrows = outputRows) %>%
     is.na %>%
     all
   )
@@ -238,11 +242,11 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
 
   # Now do a binary search for the first row with data
   for(i in descendingBlockSizes)
-    if(getValuesBlock(inputRaster,
-                      col   = trimRight - i,
-                      ncols = i,
-                      row   = trimAbove,
-                      nrows = outputRows) %>%
+    if(values(inputRaster,
+              col   = trimRight - i,
+              ncols = i,
+              row   = trimAbove,
+              nrows = outputRows) %>%
        is.na %>%
        all)
       trimRight <- trimRight - i
@@ -253,15 +257,17 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
   # Crop  ---------------------------------------------------------------------
   
   # Don't crop if there is nothing to crop
-  if(trimAbove == 1 & trimLeft == 1 & trimBelow == nrow(inputRaster) + 1 & trimRight == ncol(inputRaster) + 1)
-    return(writeRaster(inputRaster, filename = filename, overwrite = T))
+  if(trimAbove == 1 & trimLeft == 1 & trimBelow == nrow(inputRaster) + 1 & trimRight == ncol(inputRaster) + 1) {
+    writeRaster(inputRaster, filename = filename, overwrite = T)
+    return(inputRaster)
+  }
 
   # Convert trim variables to x,y min,max
   outXmin <- xmin(extent(inputRaster)) + trimLeft * res(inputRaster)[1]
   outXmax <- outXmin + outputCols *  res(inputRaster)[1]
   outYmax <- ymax(extent(inputRaster)) - trimAbove * res(inputRaster)[2]
   outYmin <- outYmax - outputRows * res(inputRaster)[2]
-
+  
   return(
     cropRaster(
       inputRaster,
@@ -278,11 +284,24 @@ trimRaster <- function(inputRaster, filename, maxBlockSizePower = 11){
 # value to keep
 # - Used to binarize disturbance maps for use as spatial multipliers in SyncroSim
 saveDistLayer <- function(distValue, distName, fullRaster, transitionMultiplierDirectory) {
-  writeRaster(
-    layerize(fullRaster, classes = distValue),
-    paste0(transitionMultiplierDirectory, distName, ".tif"),
-    overwrite = TRUE
-  )
+  # Construct output name
+  outputRasterName <- paste0(transitionMultiplierDirectory, distName, ".tif")
+  
+  # Construct reclassification matrix to binarize layer
+  rcl <- matrix(
+    c(-Inf,          distValue-0.5,   distValue,  # Left bound (open)
+      distValue-0.5,     distValue,         Inf,  # Right bound (closed)
+                  0,             1,           0), # Final value
+    ncol = 3)
+  
+  # Binarize and save
+  classify(fullRaster, rcl = rcl, filename = outputRasterName, overwrite = TRUE)
+  
+  # writeRaster(
+  #   layerize(fullRaster, classes = distValue),
+  #   paste0(transitionMultiplierDirectory, distName, ".tif"),
+  #   overwrite = TRUE
+  # )
 }
 
 # Function to generate a tiling mask given template
@@ -295,7 +314,7 @@ saveDistLayer <- function(distValue, distName, fullRaster, transitionMultiplierD
 #   full tile
 tilize <- function(templateRaster, filename, tempfilename, tileSize) {
   # Calculate recommended block size of template
-  blockInfo <- blockSize(templateRaster)
+  blockInfo <- blocks(templateRaster)
   
   # Check that the blockSize is meaningful
   # - This should only matter for very small rasters, such as in test mode
@@ -320,22 +339,22 @@ tilize <- function(templateRaster, filename, tempfilename, tileSize) {
     rep(tileHeight)
 
   # Write an empty raster with the correct metadata to file
-  tileRaster <- raster(templateRaster)
+  tileRaster <- rast(templateRaster)
 
   # Write tiling to file row-by-row
-  tileRaster <- writeStart(tileRaster, filename,  overwrite=TRUE)
+  writeStart(tileRaster, filename,  overwrite=TRUE)
   for(i in seq(blockInfo$n)) {
     if(blockInfo$nrows[i] < tileHeight)
       oneRow <- oneRow[1:(ncol(tileRaster) * blockInfo$nrows[i])]
-    #browser()
-    tileRaster <- writeValues(tileRaster, oneRow, blockInfo$row[i])
+
+    writeValues(tileRaster, oneRow, blockInfo$row[i], blockInfo$nrows[i])
     oneRow <- oneRow + nx
   }
   tileRaster <- writeStop(tileRaster)
 
   # Mask raster by template
   tileRaster <-
-    maskRaster(tileRaster, tempfilename, maskingRaster = templateRaster)
+    mask(tileRaster, mask = templateRaster, filename = tempfilename, overwrite = TRUE)
   
   # Consolidate small tiles into larger groups
   # - We want a map from the original tile IDs to new consolidated tile IDs
@@ -352,7 +371,7 @@ tilize <- function(templateRaster, filename, tempfilename, tileSize) {
   
  # Reclassify the tiling raster to the new consolidated IDs
   tileRaster <-
-    reclassify(
+    classify(
       tileRaster,
       reclassification,
       filename = filename,
@@ -365,14 +384,14 @@ tilize <- function(templateRaster, filename, tempfilename, tileSize) {
 # - values are assumed to be integers and the max value is known
 tabulateRaster <- function(inputRaster) {
   # Calculate recommended block size of template
-  blockInfo <- blockSize(inputRaster)
+  blockInfo <- blocks(inputRaster)
   
   # Calculate frequency table in each block and consolidate
   tables <- map(
     seq(blockInfo$n),
-    ~ table(getValuesBlock(inputRaster,
-                           row   = blockInfo$row[.x],
-                           nrows = blockInfo$nrows[.x]))) %>%
+    ~ table(values(inputRaster,
+                   row   = blockInfo$row[.x],
+                   nrows = blockInfo$nrows[.x]))) %>%
     map(as.data.frame) %>%
     do.call(rbind, .) %>% # do.call is used to convert the list of tables to a sequence of arguments for `rbind`
     rename(value = 1) %>%
@@ -408,25 +427,25 @@ consolidateGroups <- function(input, threshold) {
 
 separateStateClass <- function(stateClassRaster, evcRasterPath, evhRasterPath) {
   # Create empty rasters to hold EVC and EVH data
-  evcRaster <-  raster(stateClassRaster)
-  evhRaster <-  raster(stateClassRaster)
+  evcRaster <-  rast(stateClassRaster)
+  evhRaster <-  rast(stateClassRaster)
 
   ## Split state class raster into manageable chunks
-  blockInfo <- blockSize(stateClassRaster)
+  blockInfo <- blocks(stateClassRaster)
 
   ## Calculate EVC and EVH from State Class block-by-block and write the results to their respective files
-  evcRaster <- writeStart(evcRaster, evcRasterPath, overwrite=TRUE)
-  evhRaster <- writeStart(evhRaster, evhRasterPath, overwrite=TRUE)
+  writeStart(evcRaster, evcRasterPath, overwrite=TRUE)
+  writeStart(evhRaster, evhRasterPath, overwrite=TRUE)
   
   for(i in seq(blockInfo$n)) {
     stateClassValues <-
-      getValuesBlock(stateClassRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i])
+      values(stateClassRaster, row = blockInfo$row[i], nrows = blockInfo$nrows[i])
     
     evcValues <- as.integer(stateClassValues / 1000) # EVC is the first three digits of the six digit state class code
     evhValues <- stateClassValues %% 1000            # EVH is the last three digits, `%%` is the modulo, or remainder function
     
-    evcRaster <- writeValues(evcRaster, evcValues, blockInfo$row[i])
-    evhRaster <- writeValues(evhRaster, evhValues, blockInfo$row[i])
+    writeValues(evcRaster, evcValues, blockInfo$row[i], nrows = blockInfo$nrows[i])
+    writeValues(evhRaster, evhValues, blockInfo$row[i], nrows = blockInfo$nrows[i])
   }
   
   # End writing to rasters

@@ -6,7 +6,7 @@
 
 processSpatialData <- function(mapzoneToKeep, runTag) {
   # Generate run-specific file paths ---------------------------------------
-  
+
   # Directory to store cleaned rasters
   # Note that the working directory is prepended since SyncroSim needs absolute paths
   cleanRasterDirectory <- str_c(getwd(), "/", cleanRasterDirectoryRelative, runTag, "/")
@@ -48,18 +48,18 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   # Load spatial data -------------------------------------------------------
 
   # Mapzones for north west GeoRegion
-  mapzoneRaster <- raster(mapzoneRawRasterPath)
+  mapzoneRaster <- rast(mapzoneRawRasterPath)
 
   # EVT, EVH, EVC
-  evtRaster <- raster(evtRawRasterPath)
-  evhRaster <- raster(evhRawRasterPath)
-  evcRaster <- raster(evcRawRasterPath)
+  evtRaster <- rast(evtRawRasterPath)
+  evhRaster <- rast(evhRawRasterPath)
+  evcRaster <- rast(evcRawRasterPath)
 
   # fdistRaster
-  fdistRaster <- raster(fdistRawRasterPath)
+  fdistRaster <- rast(fdistRawRasterPath)
 
   # Change the origin of mapzone raster
-  origin(mapzoneRaster) <- origin(evtRaster)
+  terra::origin(mapzoneRaster) <- terra::origin(evtRaster)
 
   # Setup mask --------------------------------------------------------------
   
@@ -89,7 +89,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
       inputRaster = mapzoneRaster,
       maskValue = mapzoneToKeep,
       filename = tempRasterPath) %>%
-    trimRaster(
+    trim(
       filename = mapzoneRasterPath
     )
   
@@ -132,27 +132,33 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   # Reclassify 0 (no disturbance) as NA for masking other maps
   # Finally trim down to only include relevant cells
   evtRaster <-
-    cropRaster(evtRaster, evtRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
-    reclassify(
+    # cropRaster(evtRaster, evtRasterPath, extent(mapzoneRaster)) %>%
+    # maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
+    crop(evtRaster, ext(mapzoneRaster), filename = evtRasterPath, overwrite = TRUE) %>%
+    mask(mask = mapzoneRaster, filename = tempRasterPath, overwrite = T) %>%
+    classify(
       rcl = evtReclassification,
       filename = evtRasterPath,
       overwrite = TRUE)
   
   fdistRaster <-
-    cropRaster(fdistRaster, tempRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(fdistRasterPath, maskingRaster = evtRaster) %>%
-    reclassify(
+    # cropRaster(fdistRaster, tempRasterPath, extent(mapzoneRaster)) %>%
+    # maskRaster(fdistRasterPath, maskingRaster = evtRaster) %>%
+    crop(fdistRaster, ext(mapzoneRaster), filename = tempRasterPath, overwrite = TRUE) %>%
+    mask(mask = evtRaster, filename = fdistRasterPath, overwrite = TRUE) %>%
+    classify(
       rcl = fdistReclassification,
       filename = tempRasterPath,
       overwrite = TRUE) %>%
-    trimRaster(filename = fdistRasterPath)
+    trim(filename = fdistRasterPath, overwrite = TRUE)
   
   # Crop Map Zone map down to only cells that have been disturbed and then mask
   # by the disturbance map
   mapzoneRaster <-
-    cropRaster(mapzoneRaster, tempRasterPath, extent(fdistRaster)) %>%
-    maskRaster(mapzoneRasterPath, fdistRaster)
+    # cropRaster(mapzoneRaster, tempRasterPath, extent(fdistRaster)) %>%
+    # maskRaster(mapzoneRasterPath, fdistRaster)
+    crop(mapzoneRaster, ext(fdistRaster), filename = tempRasterPath, overwrite = TRUE) %>%
+    mask(fdistRaster, filename = mapzoneRasterPath, overwrite = TRUE)
   
   # Crop and mask data ----------------------------------------------------------
 
@@ -164,8 +170,10 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   # - Note that the EVT must be cropped and masked again since it was never
   #   trimmed or masked by FDIST
   evtRaster <-
-    cropRaster(evtRaster, tempRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(evtRasterPath, maskingRaster = mapzoneRaster)
+    # cropRaster(evtRaster, tempRasterPath, extent(mapzoneRaster)) %>%
+    # maskRaster(evtRasterPath, maskingRaster = mapzoneRaster)
+    crop(evtRaster, ext(mapzoneRaster), filename = tempRasterPath, overwrite = TRUE) %>%
+    mask(mask = mapzoneRaster, filename = evtRasterPath, overwrite = TRUE)
 
   # In addition to cropping and masking the EVC and EVH raster maps, we also
   # need to convert the continuous codes to categorical using their respective
@@ -173,22 +181,27 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   
   # EVC
   evcRaster <-
-    cropRaster(evcRaster, evcRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
-    reclassify(evcCrosswalk, filename = evcRasterPath, overwrite = T)
+    # cropRaster(evcRaster, evcRasterPath, extent(mapzoneRaster)) %>%
+    # maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
+    crop(evcRaster, ext(mapzoneRaster), filename = evcRasterPath, overwrite = TRUE) %>%
+    mask(mask = mapzoneRaster, filename = tempRasterPath, overwrite = TRUE) %>%
+    classify(evcCrosswalk, filename = evcRasterPath, overwrite = T)
 
   # EVH
   evhRaster <-
-    cropRaster(evhRaster, evhRasterPath, extent(mapzoneRaster)) %>%
-    maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
-    reclassify(evhCrosswalk, filename = evhRasterPath, overwrite = T)
+    # cropRaster(evhRaster, evhRasterPath, extent(mapzoneRaster)) %>%
+    # maskRaster(tempRasterPath, maskingRaster = mapzoneRaster) %>%
+    crop(evhRaster, ext(mapzoneRaster), filename = evhRasterPath, overwrite = TRUE) %>%
+    mask(mask = mapzoneRaster, filename = tempRasterPath, overwrite = TRUE) %>%
+    classify(evhCrosswalk, filename = evhRasterPath, overwrite = T)
 
   # Convert disturbance to VDIST ------------------------------------------------
 
   # Split the FDIST raster into blocks to calculate the unique set of FDIST codes
   # present in the data without using excessive memory per thread
   # - We ignore NA (no data) as well as 0 (no disturbance)
-  fdistLevels <- uniqueInRaster(fdistRaster, ignore = c(0, NA))
+  # fdistLevels <- uniqueInRaster(fdistRaster, ignore = c(0, NA))
+  fdistLevels <- unique(fdistRaster) %>% simplify()
 
   # Check which fdist codes need to be reclassified to a different vdist code
   distReclassification <- distCrosswalk %>%
@@ -199,11 +212,18 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     as.matrix
 
   # Reclassify as necessary and save
-  vdistRaster <- reclassify(fdistRaster,
+  if(nrow(distReclassification) < 0) {
+    vdistRaster <- classify(fdistRaster,
                             distReclassification,
                             filename = vdistRasterPath,
                             overwrite = TRUE)
-
+  } else {
+    vdistRaster <- fdistRaster
+    writeRaster(vdistRaster,
+                filename = vdistRasterPath,
+                overwrite = TRUE)
+  }
+  
   # Generate list of unique VDIST codes
   vdistLevels <- distCrosswalk %>%
     filter(fdist %in% fdistLevels) %>%

@@ -24,12 +24,14 @@ layerizeDisturbance <- function(runTag) {
 
   # Load Data -----------------------------------------------------------------
   vdistInfo <- read_csv(vdistInfoPath)
-  vdistRaster <- raster(vdistRasterPath)
+  vdistRaster <- rast(vdistRasterPath)
 
   # Layerize disturbace raster -------------------------------------------------
 
-  # Begin parallel processing
-  plan(multisession, workers = nThreads)
+  # Note: Temporarily restructuring parallelization for compatibility with new layerizing code
+  # # Begin parallel processing
+  # #plan(multisession, workers = nThreads)
+  plan(sequential)
 
   # Split the VDIST raster into binary layers
   # One layer is constructed at a time per thread to limit memory use per thread
