@@ -90,7 +90,8 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
       maskValue = mapzoneToKeep,
       filename = tempRasterPath) %>%
     trim(
-      filename = mapzoneRasterPath
+      filename = mapzoneRasterPath,
+      overwrite = TRUE
     )
   
   # In preparation for using the FDIST layer as a mask, we need to construct a
@@ -202,6 +203,12 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
   # - We ignore NA (no data) as well as 0 (no disturbance)
   # fdistLevels <- uniqueInRaster(fdistRaster, ignore = c(0, NA))
   fdistLevels <- unique(fdistRaster) %>% simplify()
+  
+  # Check that all fdist codes are recognized
+  if (!all(fdistLevels %in% distCrosswalk$fdist)) {
+    unknown_fdists <- setdiff(fdistLevels, distCrosswalk$fdist)
+    stop("Found one or more unknown FDIST values in FDIST layer: ", str_c(unknown_fdists, collapse = " "))
+  }
 
   # Check which fdist codes need to be reclassified to a different vdist code
   distReclassification <- distCrosswalk %>%
@@ -212,7 +219,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
     as.matrix
 
   # Reclassify as necessary and save
-  if(nrow(distReclassification) < 0) {
+  if(nrow(distReclassification) > 0) {
     vdistRaster <- classify(fdistRaster,
                             distReclassification,
                             filename = vdistRasterPath,

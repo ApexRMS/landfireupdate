@@ -174,7 +174,7 @@ evhCrosswalk <-
 # Begin parallel processing
 # plan(multisession, workers = nThreads)
 # Note: Currently running sequentially due to potential parallel access issues with terra
-plan(seqential)
+plan(sequential)
 
 # Reclassify both rasters using the constructed crosswalks and raster::reclassify()
 evcContinuousRasters <-
