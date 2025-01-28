@@ -313,6 +313,15 @@ saveDistLayer <- function(distValue, distName, fullRaster, transitionMultiplierD
 #   that are too small into neighboring tiles. Represented as a porportion of a
 #   full tile
 tilize <- function(templateRaster, filename, tempfilename, tileSize) {
+  # Catch case where the Map Zone has no disturbances
+  # - && is used to allow early stopping (which is not supported by the vectorized &)
+  if (ncell(templateRaster) == 1 && is.na(templateRaster)[][1]) {
+    tileRaster <- rast(templateRaster)
+    set.values(tileRaster, 1, 1)
+    writeRaster(tileRaster, filename = filename, overwrite = T)
+    return(tileRaster)
+  }
+  
   # Calculate recommended block size of template
   blockInfo <- blocks(templateRaster)
   

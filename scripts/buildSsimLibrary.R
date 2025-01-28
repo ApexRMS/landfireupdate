@@ -472,6 +472,11 @@ buildSsimScenarios <- function(runTag, scenarioName, scenarioDescription, librar
 
   tilingRasterPath <- str_c(cleanRasterDirectory, "Tiling.tif")
 
+  # Don't build a scenario if the raster is empty (single NA cell)
+  stateClassRaster <- rast(stateClassRasterPath)
+  if (ncell(stateClassRaster) == 1 && is.na(stateClassRaster)[][1])
+    return()
+  
   # Build Scenario ------------------------------------------------------------
   ssimSession <- session(ssimDir)
   mylibrary <- ssimLibrary(libraryName, session = ssimSession)

@@ -151,7 +151,16 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
       rcl = fdistReclassification,
       filename = tempRasterPath,
       overwrite = TRUE) %>%
-    trim(filename = fdistRasterPath, overwrite = TRUE)
+    {
+      # Check that FIDST is not empty
+      if(!all(values(is.na(.)))) {
+        trim(., filename = fdistRasterPath, overwrite = TRUE)
+
+      # If FDIST is empty, crop to a single NA cell
+      } else {
+        crop(., ext(., cells = 1), filename = fdistRasterPath, overwrite = TRUE)
+      }
+    }
   
   # Crop Map Zone map down to only cells that have been disturbed and then mask
   # by the disturbance map
@@ -259,7 +268,7 @@ processSpatialData <- function(mapzoneToKeep, runTag) {
               overwrite = TRUE)
 
   # Tiling for spatial multiprocessing -------------------------------------
-
+  
   # Generate and write the tiling raster to file
   tileRaster <-
     tilize(
