@@ -31,10 +31,10 @@ Below are the instructions to setup, configure, and run the code.
 ### Dependencies
 
 These scripts require working installations of R and SyncroSim, and were
-developed on R version v4.3.3, SyncroSim v2.4.18, and rsyncrosim v1.4.2. 
+developed on R version v4.3.3, SyncroSim v3.0.21, and rsyncrosim v2.0.1. 
 Additionally the following R packages must be installed: `rsyncrosim`,
-`tidyverse`, `terra`,  `furrr`, `logr`, `yaml`, `raster`. The ST-Sim package
-(v3.3.14) must also be installed in SyncroSim. The instructions to run the
+`tidyverse`, `terra`,  `furrr`, `logr`, `yaml`. The ST-Sim package
+(v4.3.5) must also be installed in SyncroSim. The instructions to run the
 script assume you will be using [RStudio](https://rstudio.com/), however, this
 is not a strict requirement.
 

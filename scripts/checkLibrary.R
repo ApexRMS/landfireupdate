@@ -14,10 +14,10 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   
   # Load data sheets needed for checks common to all scenarios
   rules <- datasheet(myscenario, "stsim_Transition") %>%
-    dplyr::select(-Probability, StateClassIDDest)
+    dplyr::select(-Probability, StateClassIdDest)
   
   stateClasses <- datasheet(myproject, "stsim_StateClass") %>%
-    pull(ID)
+    pull(Id)
   
   # Check for duplicate rules --------------------------------------------------
   
@@ -26,7 +26,7 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   #   (ie. one row) for each state class
   duplicateRules <-
     rules %>%
-    group_by(StratumIDSource, SecondaryStratumID, TransitionTypeID, StateClassIDSource) %>%
+    group_by(StratumIdSource, SecondaryStratumId, TransitionTypeId, StateClassIdSource) %>%
     summarise(unique = (n() == 1)) %>%
     filter(!unique)
   
@@ -41,8 +41,8 @@ checkLibrary <- function(libraryName, projectName, runTags) {
   # - Mixed life form states can be identified by vegetation cover (x state) labels
   #   that don't match their vegetation height (y state) labels
   allowedStates <- read_csv(allowedStatesPath) %>%
-    mutate(ID = EVC * 1000 + EVH) %>%
-    pull(ID)
+    mutate(Id = EVC * 1000 + EVH) %>%
+    pull(Id)
   
   # Begin parallel processing
   plan(multisession, workers = nThreads)
