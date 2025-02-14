@@ -85,7 +85,7 @@ resultScenarios <- scenario(mylibrary, summary = T) %>%
   # Examine run logs to see which runs failed
   mutate(
     failed = map_lgl(
-      ScenarioID,
+      ScenarioId,
       ~ scenario(mylibrary, .x) %>%
         runLog %>%
         str_detect("Failure"))) %>%
@@ -94,9 +94,9 @@ resultScenarios <- scenario(mylibrary, summary = T) %>%
   filter(failed == FALSE) %>%
   
   # Only keep last run from each parent scenario
-  group_by(ParentID) %>%
-  filter(ScenarioID == max(ScenarioID)) %>%
-  pull(ScenarioID)
+  group_by(ParentId) %>%
+  filter(ScenarioId == max(ScenarioId)) %>%
+  pull(ScenarioId)
 
 # Close and delete sink
 sink()
@@ -109,15 +109,10 @@ if(length(resultScenarios) == 0)
     "config file match those of the maps you are trying to reconstruct."))
 
 # Pull out the relevant raster from each result scenario as a list without using raster
-libraryOutputPrefix <- str_c(libraryName, ".ssim.output/Scenario-")
 stateClassRasters <- 
   map(resultScenarios,
     function(sid) 
-      datasheet(scenario(mylibrary, sid), "OutputSpatialState") %>%
-      dplyr::filter(Timestep == 1) %>%
-      pull(Filename) %>%
-      str_c(libraryOutputPrefix, sid, "/stsim_OutputSpatialState/", .) %>%
-      rast()
+      datasheetSpatRaster(scenario(mylibrary, sid), "stsim_OutputSpatialState", timestep = 1)
   )
 
 # Keep track of the number of Map Zones for later
